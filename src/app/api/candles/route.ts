@@ -1,0 +1,96 @@
+// /api/candles — daily level data: seeded symbol rotation + Binance klines proxy
+import { NextResponse } from "next/server";
+import { hashString, mulberry32, utcDateStr } from "@/game/cc/rng";
+import type { Candle, CandleData } from "@/game/cc/types";
+
+const WATCHLIST = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT", "BNBUSDT"];
+const INTERVAL = "1w";
+const LIMIT = 220;
+
+interface CacheEntry { ts: number; candles: Candle[] }
+const cache = new Map<string, CacheEntry>();
+const TTL = 60 * 60 * 1000; // 1h
+
+function pickSeed(date: string) {
+  const h = hashString("cc-daily-v1:" + date);
+  const rnd = mulberry32(h);
+  const symbol = WATCHLIST[Math.floor(rnd() * WATCHLIST.length)];
+  return { symbol, rnd };
+}
+
+function syntheticCandles(date: string, count: number): Candle[] {
+  const { rnd } = pickSeed(date);
+  const out: Candle[] = [];
+  let price = 100 + rnd() * 400;
+  let drift = (rnd() - 0.5) * 0.02;
+  let t = Date.parse(date + "T00:00:00Z") - count * 7 * 86400000;
+  for (let i = 0; i < count; i++) {
+    if (rnd() < 0.08) drift = (rnd() - 0.5) * 0.04; // trend shifts
+    const o = price;
+    const move = drift + (rnd() - 0.5) * 0.06;
+    const c = Math.max(1, o * (1 + move));
+    const wick = Math.abs(move) * (0.4 + rnd()) + rnd() * 0.01;
+    const h = Math.max(o, c) * (1 + wick);
+    const l = Math.min(o, c) * (1 - wick);
+    out.push({ t: t + i * 7 * 86400000, o, h, l, c });
+    price = c;
+  }
+  return out;
+}
+
+async function fetchBinance(symbol: string): Promise<Candle[] | null> {
+  try {
+    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${INTERVAL}&limit=${LIMIT}`;
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as unknown[];
+    if (!Array.isArray(rows) || rows.length < 40) return null;
+    return rows.map((r) => {
+      const k = r as (string | number)[];
+      return {
+        t: Number(k[0]),
+        o: Number(k[1]),
+        h: Number(k[2]),
+        l: Number(k[3]),
+        c: Number(k[4]),
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get("date") ?? "")
+    ? (searchParams.get("date") as string)
+    : utcDateStr();
+
+  const { symbol } = pickSeed(date);
+  const key = `${symbol}:${date}`;
+  let source: "binance" | "synthetic" = "binance";
+  let candles: Candle[] = [];
+
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.ts < TTL) {
+    candles = hit.candles;
+  } else {
+    const live = await fetchBinance(symbol);
+    if (live) {
+      candles = live;
+      cache.set(key, { ts: Date.now(), candles: live });
+    } else {
+      candles = syntheticCandles(date, LIMIT);
+      source = "synthetic";
+      cache.set(key, { ts: Date.now(), candles });
+    }
+  }
+
+  const data: CandleData = {
+    seed: { date, symbol, interval: INTERVAL, source },
+    candles,
+  };
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "public, max-age=300" },
+  });
+}

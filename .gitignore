@@ -1,0 +1,48 @@
+# dependencies
+node_modules
+
+# next.js
+/.next/
+/out/
+/build
+
+# logs / build artifacts
+*.log
+dev.log
+server.log
+*.tsbuildinfo
+next-env.d.ts
+
+# env & secrets — NEVER commit
+.env*
+!.env.example
+.gh_token
+.gh_user
+.dvtoken
+
+# internal workspace (private research, tooling, archives — not part of the public game repo)
+/research/
+/ideation/
+/scripts/
+/archive/
+/.zscripts/
+/examples/
+/mini-services/
+/tests/
+/db/
+/download/
+/upload/
+/skills/
+/Caddyfile
+worklog.md
+prompt
+test
+local-*
+.claude
+.z-ai-config
+.vercel
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*

@@ -1,0 +1,57 @@
+// WebAudio synth — zero-asset sound design
+let ctx: AudioContext | null = null;
+
+function ac(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (!ctx) {
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (AC) ctx = new AC();
+  }
+  if (ctx?.state === "suspended") void ctx.resume();
+  return ctx;
+}
+
+export function unlockAudio() { ac(); }
+
+export function setMuted(m: boolean) {
+  if (ctx) ctx.suspend().catch(() => {});
+  if (!m) ctx?.resume().catch(() => {});
+}
+
+function blip(freq0: number, freq1: number, dur: number, type: OscillatorType, vol = 0.12) {
+  const a = ac();
+  if (!a) return;
+  const o = a.createOscillator();
+  const g = a.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq0, a.currentTime);
+  o.frequency.exponentialRampToValueAtTime(Math.max(1, freq1), a.currentTime + dur);
+  g.gain.setValueAtTime(vol, a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+  o.connect(g).connect(a.destination);
+  o.start();
+  o.stop(a.currentTime + dur + 0.02);
+}
+
+function noise(dur: number, vol = 0.14) {
+  const a = ac();
+  if (!a) return;
+  const len = Math.floor(a.sampleRate * dur);
+  const buf = a.createBuffer(1, len, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const g = a.createGain();
+  g.gain.value = vol;
+  src.connect(g).connect(a.destination);
+  src.start();
+}
+
+export const sfx = {
+  jump: () => blip(300, 540, 0.12, "square", 0.08),
+  land: () => blip(180, 140, 0.06, "triangle", 0.07),
+  crumble: () => noise(0.22, 0.12),
+  death: () => { blip(320, 60, 0.5, "sawtooth", 0.12); noise(0.3, 0.1); },
+  milestone: () => { blip(520, 780, 0.1, "square", 0.08); setTimeout(() => blip(660, 990, 0.12, "square", 0.08), 90); },
+};
