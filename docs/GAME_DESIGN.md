@@ -39,6 +39,24 @@ physics (60 Hz) — feel is prioritized over feature count (see CC-PLAN §7).
 - Multiplier: green-candle streaks (combo breaks on red or idle).
 - Persistence: local best + global leaderboard (`POST /api/leaderboard`).
 - Display: score chip in JetBrains Mono; death card shows score, symbol, date, rank.
+- Anti-cheat (server-side): score ≤ candles × 70 (physically reachable), name/date
+  sanitizing, per-IP rate limit (20/min), score cap 10M.
+
+## 4b. Daily Mutations (shipped, D8–9 pulled forward)
+
+One mutation per UTC date, derived from the same seed string as the level
+(`hash("cc-mutation:" + date + symbol)`), identical for every player:
+
+| ID | Name | Effect |
+|---|---|---|
+| clean | CLEAN CHART | baseline physics |
+| lowgrav | LOW LIQUIDITY | gravity ×0.68, jump ×0.92 — floaty |
+| heavy | WHALE HOUR | gravity ×1.28, jump ×1.1 — heavy |
+| rush | HIGH VOLUME | camera speed ×1.22 — fast scroll |
+| fragile | PAPER HANDS | crumble time 0.26s → 0.15s |
+
+Mutations show on the ready screen banner + HUD chip (non-clean only) and are
+stamped on the Death Card.
 
 ## 5. Daily Seed spec
 
@@ -53,6 +71,8 @@ fallback= synthetic candle generator driven by the same seed (weekends/gaps)
 
 - 1080×1350 PNG, generated offscreen at runtime: score, symbol, date, funny
   liquidation cause ("Your stop loss was decorative."), rank placeholder.
+- v2 additions: **mutation stamp** + **rival line** — "TOP: NAME — 340 PTS AHEAD"
+  or "YOU'RE #1 ON TODAY'S CHART" when leading.
 - Actions: Download / `navigator.share` (mobile) — no login, no friction.
 - Phase p2: **Rivalry Tag** — optionally stamp a rival's X handle; the mockery
   card pulls their audience in.
@@ -60,8 +80,10 @@ fallback= synthetic candle generator driven by the same seed (weekends/gaps)
 ## 7. Roadmap (14-day arc, from CC-PLAN §6)
 
 - **D1–3 ✅** core engine + real candles + daily seed (M1 slice)
-- **D4–7** leaderboard DB (Atlas M0) + deploy (Vercel) + death-card polish + showcase GIF
-- **D8–9** daily mutations (candle rain, low gravity), rivalry tags
+- **D4–7 (in progress)** leaderboard v2 (env-gated Atlas M0 + memory fallback, anti-cheat) +
+  top-3 on ready screen + rival gap line + float-score juice + slow-mo death + persisted mute
+- **D8–9 ✅ (mutations half)** daily mutations shipped (5-pool, seed-derived);
+  remaining: candle-rain visual variant + X-handle rivalry tag input
 - **D10** $WICK token via vibe/vibe bonding curve — in-game currency & daily prizes
 - **D11–12** Guild War weekend (guild vs guild aggregate scores)
 - **D14** mainnet sync (on-chain high scores when mainnet ships)

@@ -1,5 +1,5 @@
 // Canvas renderer — locked vibe/vibe design language
-import { Engine, VIEW_W, VIEW_H } from "./engine";
+import { Engine, VIEW_W, VIEW_H, type FloatText } from "./engine";
 import { CANDLE_W } from "./level";
 import type { Platform, Particle } from "./types";
 
@@ -123,6 +123,18 @@ function drawParticles(ctx: CanvasRenderingContext2D, ps: Particle[], camX: numb
   ctx.globalAlpha = 1;
 }
 
+function drawFloats(ctx: CanvasRenderingContext2D, fs: FloatText[], camX: number, camY: number) {
+  ctx.font = "700 17px 'JetBrains Mono', monospace";
+  ctx.textAlign = "center";
+  for (const f of fs) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, f.life / f.maxLife));
+    ctx.fillStyle = f.color;
+    ctx.fillText(f.text, f.x - camX, f.y - camY);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "left";
+}
+
 function drawBackdrop(ctx: CanvasRenderingContext2D, camX: number, camY: number) {
   ctx.fillStyle = COLORS.bg;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
@@ -157,6 +169,7 @@ export function render(ctx: CanvasRenderingContext2D, e: Engine) {
   for (let i = i0; i <= i1; i++) drawPlatform(ctx, e.plats[i], e.camX, e.camY);
 
   drawParticles(ctx, e.particles, e.camX, e.camY);
+  drawFloats(ctx, e.floats, e.camX, e.camY);
   if (!e.dead || e.deathT < 2.2) drawPlayer(ctx, e);
 
   // progress candle ticker (top center, in-canvas)

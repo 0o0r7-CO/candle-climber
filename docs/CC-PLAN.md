@@ -22,7 +22,8 @@ Every new token launched on vibe/vibe becomes a future level.
 3. Daily seed: UTC date → hash → symbol+window; all players get identical level
 4. Scoring: candles passed × combo (green streaks); best stored locally + global board
 5. Death card generator: 1080×1350 PNG (score, symbol, cause, rank) → download/WebShare
-6. Global leaderboard: name + score (API route, in-memory now → Supabase later)
+6. Global leaderboard: name + score (env-gated MongoDB Atlas M0 → automatic in-memory
+   fallback when DATABASE_URL unset; anti-cheat + rate limit built in)
 7. Vibe/vibe visual language per §2; sounds: WebAudio synth (no assets)
 
 Out of MVP (sequenced): wallet sign-in → token launch (bonding curve) → wagered PvP duels
@@ -35,12 +36,14 @@ src/game/cc/
   rng.ts        hashString, mulberry32 (seeded PRNG)
   candles.ts    client fetch + normalization + synthetic fallback
   level.ts      daily seed → seed info; candles → platforms
-  engine.ts     fixed-timestep loop, physics, crumble timers, scoring
+  mutations.ts  daily mutation pool → physics modifiers (per-date, deterministic)
+  engine.ts     fixed-timestep loop, physics, crumble timers, scoring, float texts
   render.ts     canvas renderer (vibe/vibe palette, particles, camera)
-  deathcard.ts  offscreen-canvas share card
+  deathcard.ts  offscreen-canvas share card (mutation stamp + rival line)
   sound.ts      WebAudio synth
 src/app/api/candles/route.ts      GET seed+klines (Binance proxy, in-memory cache)
-src/app/api/leaderboard/route.ts  GET top / POST entry (in-memory → Supabase)
+src/app/api/leaderboard/route.ts  GET top / POST entry (MongoStore | MemoryStore)
+src/lib/leaderboard-store.ts      storage adapter: env-gated Atlas M0, memory fallback
 src/components/cc/GameCanvas.tsx  client shell: canvas + HUD + modals
 src/app/page.tsx                  mounts the game
 ```
@@ -65,7 +68,12 @@ Reown projectId (later phases). No paid services anywhere.
 ## 6. Milestones
 - D1–3 (now): playable slice — engine + real BTC/ETH/SOL/DOGE candles + daily seed + death
 - D4–7: leaderboard + death cards + polish + showcase GIF capture
-- D8–9: daily mutations (candle-rain, low-grav), rival tag text on cards
+  ✅ leaderboard v2 (env-gated Atlas M0 + memory fallback, anti-cheat, rate limit)
+  ✅ game-feel pass: float score texts, slow-mo death, sfx wiring, persisted mute
+  ✅ ready-screen TOP-3 + rival gap line + Death Card v2
+  ⬜ Vercel deploy (owner browser login) + showcase GIF
+- D8–9: daily mutations — ✅ 5-pool mutation system shipped; ⬜ candle-rain variant,
+  ⬜ X-handle rivalry tag input
 - D10+: token launch via vibevibe bonding curve; payouts to top-5 daily (testnet)
 - D11–14: duels prototype, guild rally, mainnet watch
 

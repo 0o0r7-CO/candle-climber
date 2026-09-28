@@ -542,6 +542,71 @@
   font-size: 11px;
 }
 
+/* ---- M2 additions: mutation banner, HUD mutation chip, rival line, mini board ---- */
+.cc-hud-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.cc-chip-mut {
+  color: var(--cc-purple, #6A63C8);
+  border-color: rgba(106, 99, 200, 0.45);
+  background: rgba(106, 99, 200, 0.12);
+  white-space: nowrap;
+}
+.cc-mut-banner {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px auto 0;
+  padding: 10px 16px;
+  background: rgba(106, 99, 200, 0.08);
+  border: 1px solid rgba(106, 99, 200, 0.3);
+  border-radius: 12px;
+  width: fit-content;
+  max-width: 100%;
+}
+.cc-mut-label {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--cc-faint);
+}
+.cc-mut-name {
+  font-family: var(--cc-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: #C9C5F2;
+}
+.cc-mut-name.hot { color: #8A82E8; text-shadow: 0 0 12px rgba(106, 99, 200, 0.55); }
+.cc-mut-tag {
+  font-family: var(--cc-mono);
+  font-size: 11px;
+  color: var(--cc-faint);
+}
+.cc-rival {
+  font-family: var(--cc-mono);
+  font-size: 12px;
+  color: var(--cc-faint);
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+}
+.cc-rival b { color: #fff; }
+.cc-rival-lead { color: var(--cc-lime); letter-spacing: 0.1em; }
+.cc-board-mini {
+  margin-top: 12px;
+  max-height: none;
+  width: 100%;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cc-board-mini .cc-board-row { font-size: 12px; padding: 4px 6px; }
+
 /* scrollbars */
 .cc-panel::-webkit-scrollbar, .cc-board::-webkit-scrollbar { width: 6px; }
 .cc-panel::-webkit-scrollbar-thumb, .cc-board::-webkit-scrollbar-thumb {

@@ -1,6 +1,7 @@
 // Candle Climber engine — fixed-timestep physics, auto-scroll runner over candle platforms
 import type { Platform, Particle, RunResult, DeathCause } from "./types";
 import { PLATFORM_W } from "./level";
+import { BASE_MODS, type MutationMods } from "./mutations";
 
 export const VIEW_W = 800; // logical units (canvas is scaled to fit)
 export const VIEW_H = 480;
@@ -18,14 +19,24 @@ const CAM_BASE = 175; // px/s
 const CAM_ACCEL = 5.5; // px/s per second
 const CAM_MAX = 470;
 
+export type SfxName = "jump" | "land" | "crumble" | "milestone";
+
 export interface EngineCallbacks {
   onDeath: (r: RunResult) => void;
   onScore: (score: number, combo: number) => void;
+  onSfx?: (name: SfxName) => void;
+}
+
+export interface FloatText {
+  x: number; y: number; text: string; color: string;
+  life: number; maxLife: number;
 }
 
 export class Engine {
   plats: Platform[];
   particles: Particle[] = [];
+  floats: FloatText[] = [];
+  mods: MutationMods;
   // player (px is camera-locked: world x derived from camX)
   py = 0; vy = 0;
   grounded = false; groundPlat: Platform | null = null;
@@ -45,9 +56,10 @@ export class Engine {
     return this.camX + VIEW_W * PLAYER_X_FRAC - PLAYER_W / 2;
   }
 
-  constructor(plats: Platform[], cb: EngineCallbacks) {
+  constructor(plats: Platform[], cb: EngineCallbacks, mods: MutationMods = BASE_MODS) {
     this.plats = plats;
     this.cb = cb;
+    this.mods = mods;
     // start ON the first platform: camera aligned so the player anchor
     // sits right on the platform center (safe runway)
     const start = plats.find((p) => p.state === "solid") ?? plats[0];
@@ -62,6 +74,11 @@ export class Engine {
   release() {
     this.jumpHeld = false;
     if (this.vy < 0 && !this.jumpCut) { this.vy *= JUMP_CUT; this.jumpCut = true; }
+  }
+
+  private spawnFloat(x: number, y: number, text: string, color: string) {
+    this.floats.push({ x, y, text, color, life: 0.9, maxLife: 0.9 });
+    if (this.floats.length > 24) this.floats.shift();
   }
 
   private spawnParticles(n: number, x: number, y: number, color: string, spread = 180) {
@@ -104,13 +121,18 @@ export class Engine {
 
   step(dt: number) {
     if (this.dead) {
-      this.deathT += dt;
-      this.stepParticles(dt);
-      this.shake = Math.max(0, this.shake - dt * 40);
+      // brief slow-mo beat right after death, then normal decay
+      const d = this.deathT < 0.5 ? dt * 0.35 : dt;
+      this.deathT += d;
+      this.stepParticles(d);
+      this.stepFloats(d);
+      this.shake = Math.max(0, this.shake - d * 40);
       return;
     }
     this.time += dt;
-    this.speed = Math.min(CAM_MAX, CAM_BASE + this.time * CAM_ACCEL);
+    const speedCap = CAM_MAX * this.mods.camSpeed;
+    const speedBase = CAM_BASE * this.mods.camSpeed;
+    this.speed = Math.min(speedCap, speedBase + this.time * CAM_ACCEL);
     this.camX += this.speed * dt;
 
     // jump input
@@ -118,7 +140,7 @@ export class Engine {
     this.coyote = Math.max(0, this.coyote - dt);
 
     // gravity
-    this.vy += GRAVITY * dt;
+    this.vy += GRAVITY * this.mods.gravity * dt;
     this.py += this.vy * dt;
 
     // platform pass detection (world x under player anchor)
@@ -130,8 +152,16 @@ export class Engine {
           this.candlesPassed = p.i + 1;
           if (p.up) { this.streak++; this.bestStreak = Math.max(this.bestStreak, this.streak); }
           else this.streak = 0;
-          const gain = 10 * (1 + Math.min(this.streak, 12) * 0.5);
+          const mult = 1 + Math.min(this.streak, 12) * 0.5;
+          const gain = 10 * mult;
           this.score += gain;
+          this.spawnFloat(
+            p.x + p.w / 2,
+            p.y - 26,
+            this.streak > 1 ? `+${gain}  x${mult.toFixed(1)}` : `+${gain}`,
+            p.up ? "#CCFF00" : "#5E636B",
+          );
+          if (this.streak === 5 || this.streak === 10) this.cb.onSfx?.("milestone");
           this.cb.onScore(Math.floor(this.score), this.streak);
         }
       }
@@ -147,10 +177,11 @@ export class Engine {
           this.vy = 0;
           if (!this.grounded) this.spawnParticles(5, this.px + PLAYER_W / 2, p.y, p.up ? "#5BD08A" : "#E07856", 90);
           this.lastLandUp = p.up;
+          if (!this.grounded) this.cb.onSfx?.("land");
           this.grounded = true;
           this.coyote = COYOTE;
           this.groundPlat = p;
-          if (p.crumble && p.state === "solid") { p.state = "crumbling"; p.crumbleT = 0; }
+          if (p.crumble && p.state === "solid") { p.state = "crumbling"; p.crumbleT = 0; this.cb.onSfx?.("crumble"); }
           break;
         }
       }
@@ -165,7 +196,7 @@ export class Engine {
     for (const p of this.plats) {
       if (p.state === "crumbling") {
         p.crumbleT += dt;
-        if (p.crumbleT >= CRUMBLE_TIME) {
+        if (p.crumbleT >= this.mods.crumbleTime) {
           p.state = "gone";
           this.spawnParticles(10, p.x + p.w / 2, p.y, "#E07856", 140);
           if (this.groundPlat === p) { this.grounded = false; this.groundPlat = null; this.coyote = 0; }
@@ -175,8 +206,9 @@ export class Engine {
 
     // buffered jump execution
     if (this.buffer > 0 && (this.grounded || this.coyote > 0)) {
-      this.vy = -JUMP_V;
+      this.vy = -JUMP_V * this.mods.jump;
       this.grounded = false; this.groundPlat = null; this.coyote = 0; this.buffer = 0; this.jumpCut = false;
+      this.cb.onSfx?.("jump");
     }
 
     // death: fell below view
@@ -188,6 +220,16 @@ export class Engine {
     if (this.camY > 0) this.camY = 0;
     this.shake = Math.max(0, this.shake - dt * 30);
     this.stepParticles(dt);
+    this.stepFloats(dt);
+  }
+
+  private stepFloats(dt: number) {
+    for (let i = this.floats.length - 1; i >= 0; i--) {
+      const f = this.floats[i];
+      f.life -= dt;
+      f.y -= 46 * dt;
+      if (f.life <= 0) this.floats.splice(i, 1);
+    }
   }
 
   private stepParticles(dt: number) {

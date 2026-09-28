@@ -3,17 +3,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Engine, VIEW_W, VIEW_H } from "@/game/cc/engine";
 import { buildPlatforms } from "@/game/cc/level";
+import { dailyMutation, type Mutation } from "@/game/cc/mutations";
 import { render, COLORS } from "@/game/cc/render";
 import { makeDeathCard } from "@/game/cc/deathcard";
-import { sfx, unlockAudio } from "@/game/cc/sound";
-import { hashString } from "@/game/cc/rng";
+import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
 type Phase = "loading" | "ready" | "running" | "dead";
-interface BoardEntry { name: string; score: number; candlesPassed: number; date: string }
+interface BoardEntry {
+  name: string;
+  score: number;
+  candlesPassed: number;
+  bestStreak?: number;
+  mutation?: string;
+  date: string;
+  ts?: number;
+}
 
 const BEST_KEY = "cc_best_v1";
 const NAME_KEY = "cc_name_v1";
+const MUTE_KEY = "cc_mute_v1";
 
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -23,52 +32,78 @@ export default function GameCanvas() {
   const accRef = useRef<number>(0);
   const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<CandleData | null>(null);
+  const [mutation, setMutation] = useState<Mutation | null>(null);
   const [hud, setHud] = useState({ score: 0, combo: 0 });
   const [result, setResult] = useState<RunResult | null>(null);
   const [best, setBest] = useState(0);
   const [name, setName] = useState("");
   const [board, setBoard] = useState<BoardEntry[]>([]);
+  const [topBoard, setTopBoard] = useState<BoardEntry[]>([]);
   const [rank, setRank] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMutedState] = useState(false);
 
-  // load daily level
+  // load daily level + persisted prefs
   useEffect(() => {
     let alive = true;
     setBest(Number(localStorage.getItem(BEST_KEY) ?? 0));
     setName(localStorage.getItem(NAME_KEY) ?? "");
+    const savedMute = localStorage.getItem(MUTE_KEY) === "1";
+    setMutedState(savedMute);
+    if (savedMute) setMuted(true); // applies on next unlock
     fetch("/api/candles")
       .then((r) => r.json())
-      .then((d: CandleData) => { if (alive) { setData(d); setPhase("ready"); } })
+      .then((d: CandleData) => {
+        if (!alive) return;
+        setData(d);
+        setMutation(dailyMutation(d.seed.date + d.seed.symbol));
+        setPhase("ready");
+        fetch(`/api/leaderboard?date=${d.seed.date}`)
+          .then((r) => r.json())
+          .then((b) => { if (alive) setTopBoard(b.entries ?? []); })
+          .catch(() => {});
+      })
       .catch(() => {
         if (!alive) return;
-        setData({ seed: { date: "SYNTH", symbol: "SYNTHUSDT", interval: "1w", source: "synthetic" }, candles: [] });
+        const d: CandleData = { seed: { date: "SYNTH", symbol: "SYNTHUSDT", interval: "1w", source: "synthetic" }, candles: [] };
+        setData(d);
+        setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
       });
     return () => { alive = false; cancelAnimationFrame(rafRef.current); };
   }, []);
 
-  const buildEngine = useCallback((d: CandleData) => {
+  const buildEngine = useCallback((d: CandleData, mut: Mutation) => {
     const plats = buildPlatforms(d.candles, d.seed.date + d.seed.symbol);
-    return new Engine(plats, {
-      onScore: (score, combo) => setHud({ score, combo }),
-      onDeath: (r) => {
-        sfx.death();
-        setResult(r);
-        setPhase("dead");
-        setHud({ score: r.score, combo: 0 });
-        if (r.score > Number(localStorage.getItem(BEST_KEY) ?? 0)) {
-          localStorage.setItem(BEST_KEY, String(r.score));
-          setBest(r.score);
-        }
+    return new Engine(
+      plats,
+      {
+        onScore: (score, combo) => setHud({ score, combo }),
+        onSfx: (s) => sfx[s](),
+        onDeath: (r) => {
+          sfx.death();
+          setResult(r);
+          setPhase("dead");
+          setHud({ score: r.score, combo: 0 });
+          if (r.score > Number(localStorage.getItem(BEST_KEY) ?? 0)) {
+            localStorage.setItem(BEST_KEY, String(r.score));
+            setBest(r.score);
+          }
+          // refresh today's top so the rival line + board stay fresh
+          fetch(`/api/leaderboard?date=${d.seed.date}`)
+            .then((res) => res.json())
+            .then((b) => setTopBoard(b.entries ?? []))
+            .catch(() => {});
+        },
       },
-    });
+      mut.mods,
+    );
   }, []);
 
   const startRun = useCallback(() => {
-    if (!data) return;
+    if (!data || !mutation) return;
     unlockAudio();
-    const eng = buildEngine(data);
+    const eng = buildEngine(data, mutation);
     engineRef.current = eng;
     setHud({ score: 0, combo: 0 });
     setResult(null);
@@ -76,7 +111,7 @@ export default function GameCanvas() {
     setPhase("running");
     lastRef.current = performance.now();
     accRef.current = 0;
-  }, [data, buildEngine]);
+  }, [data, mutation, buildEngine]);
 
   // main loop
   useEffect(() => {
@@ -157,6 +192,7 @@ export default function GameCanvas() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: finalName, score: result.score, candlesPassed: result.candlesPassed,
+          bestStreak: result.bestStreak, mutation: mutation?.id,
           symbol: data.seed.symbol, date: data.seed.date,
         }),
       });
@@ -164,6 +200,7 @@ export default function GameCanvas() {
       if (typeof j.rank === "number") setRank(j.rank);
       const b = await fetch(`/api/leaderboard?date=${data.seed.date}`).then((r) => r.json());
       setBoard(b.entries ?? []);
+      setTopBoard(b.entries ?? []);
     } finally {
       setSubmitting(false);
     }
@@ -171,7 +208,15 @@ export default function GameCanvas() {
 
   const downloadCard = async () => {
     if (!result || !data) return;
-    const blob = await makeDeathCard({ result, symbol: data.seed.symbol, date: data.seed.date, best });
+    const top = topBoard[0];
+    const rivalGap = top && top.score > result.score ? top.score - result.score : 0;
+    const blob = await makeDeathCard({
+      result, symbol: data.seed.symbol, date: data.seed.date, best,
+      mutationName: mutation && mutation.id !== "clean" ? mutation.name : undefined,
+      rivalName: top && top.score > result.score ? top.name : undefined,
+      rivalGap: rivalGap || undefined,
+      isTop: !top || top.score <= result.score,
+    });
     if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -186,13 +231,28 @@ export default function GameCanvas() {
     }
   };
 
+  const toggleMute = () => {
+    const m = !muted;
+    setMutedState(m);
+    localStorage.setItem(MUTE_KEY, m ? "1" : "0");
+    unlockAudio(); // create context first so suspend/resume has a target
+    setMuted(m);
+  };
+
   const seedLabel = data ? `${data.seed.symbol} · ${data.seed.date}` : "";
+  const top = topBoard[0];
+  const rivalGap = result && top && top.score > result.score ? top.score - result.score : 0;
 
   return (
     <div className="cc-root" onContextMenu={(e) => e.preventDefault()}>
       {/* HUD */}
       <div className="cc-hud">
-        <div className="cc-chip cc-chip-lime">{seedLabel}</div>
+        <div className="cc-hud-left">
+          <div className="cc-chip cc-chip-lime">{seedLabel}</div>
+          {mutation && mutation.id !== "clean" && phase !== "loading" && (
+            <div className="cc-chip cc-chip-mut" title={mutation.tagline}>{mutation.name}</div>
+          )}
+        </div>
         <div className="cc-hud-right">
           <div className="cc-chip cc-chip-score">{hud.score.toLocaleString()}</div>
           {hud.combo > 1 && <div className="cc-chip cc-chip-combo">x{(1 + Math.min(hud.combo, 12) * 0.5).toFixed(1)}</div>}
@@ -215,7 +275,7 @@ export default function GameCanvas() {
           <div className="cc-overlay"><div className="cc-panel"><p className="cc-loading">LOADING DAILY CHART…</p></div></div>
         )}
 
-        {phase === "ready" && data && (
+        {phase === "ready" && data && mutation && (
           <div className="cc-overlay">
             <div className="cc-panel">
               <h1 className="cc-title">CANDLE<span>CLIMBER</span></h1>
@@ -225,12 +285,29 @@ export default function GameCanvas() {
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
                 <span className="cc-daily-src">{data.seed.source === "binance" ? "live data" : "synthetic"}</span>
               </div>
+              <div className="cc-mut-banner" title={mutation.tagline}>
+                <span className="cc-mut-label">MUTATION</span>
+                <span className={mutation.id === "clean" ? "cc-mut-name" : "cc-mut-name hot"}>{mutation.name}</span>
+                <span className="cc-mut-tag">{mutation.tagline}</span>
+              </div>
               <div className="cc-howto">
                 <p><b className="lime">GREEN</b> candles hold. <b className="coral">RED</b> candles crumble.</p>
                 <p>Tap / Space to jump. One chart. Every player. Daily.</p>
               </div>
               <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
               {best > 0 && <p className="cc-best">PERSONAL BEST <b>{best.toLocaleString()}</b></p>}
+              {topBoard.length > 0 && (
+                <div className="cc-board cc-board-mini">
+                  <div className="cc-board-title">TOP 3 TODAY</div>
+                  {topBoard.slice(0, 3).map((e, i) => (
+                    <div key={`${e.ts ?? i}-${e.name}`} className="cc-board-row">
+                      <span className={i < 3 ? "cc-board-rank top" : "cc-board-rank"}>#{i + 1}</span>
+                      <span className="cc-board-name">{e.name}</span>
+                      <span className="cc-board-score">{e.score.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -245,6 +322,12 @@ export default function GameCanvas() {
                   {result.candlesPassed} candles · best streak x{result.bestStreak} · PB {best.toLocaleString()}
                 </span>
               </div>
+              {rivalGap > 0 && top && (
+                <p className="cc-rival">
+                  TOP TODAY: <b>{top.name}</b> · {top.score.toLocaleString()} — you were <b>{rivalGap.toLocaleString()}</b> pts behind
+                </p>
+              )}
+              {rivalGap === 0 && topBoard.length > 0 && <p className="cc-rival cc-rival-lead">YOU LEAD THE DAILY CHART. FLEX IT.</p>}
               {rank !== null && <p className="cc-rank">GLOBAL RANK #{rank} TODAY</p>}
               <div className="cc-death-actions">
                 <input
@@ -279,7 +362,7 @@ export default function GameCanvas() {
 
       <button
         className="cc-chip cc-mute"
-        onClick={() => { const m = !muted; setMuted(m); unlockAudio(); }}
+        onClick={toggleMute}
         aria-label={muted ? "Unmute" : "Mute"}
       >
         {muted ? "MUTED" : "SOUND ON"}

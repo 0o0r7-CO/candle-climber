@@ -13,6 +13,10 @@ interface CardOpts {
   symbol: string;
   date: string;
   best: number;
+  mutationName?: string;
+  rivalName?: string;
+  rivalGap?: number;
+  isTop?: boolean;
 }
 
 export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
@@ -94,15 +98,35 @@ export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
   // cause line
   ctx.fillStyle = COLORS.down;
   ctx.font = "600 40px 'Clash Display', sans-serif";
-  ctx.fillText(CAUSE_LINES[o.result.cause] ?? CAUSE_LINES.fell, 72, 1040);
+  ctx.fillText(CAUSE_LINES[o.result.cause] ?? CAUSE_LINES.fell, 72, 1010);
+
+  // mutation line (when today's chart is mutated)
+  let y = 1062;
+  if (o.mutationName) {
+    ctx.fillStyle = "#8A82E8";
+    ctx.font = "500 30px 'JetBrains Mono', monospace";
+    ctx.fillText("MUTATION: " + o.mutationName, 72, y);
+    y += 52;
+  }
+
+  // rival line — the competitive hook
+  if (o.isTop) {
+    ctx.fillStyle = COLORS.lime;
+    ctx.font = "600 42px 'Clash Display', sans-serif";
+    ctx.fillText("YOU'RE #1 ON TODAY'S CHART", 72, y);
+  } else if (o.rivalName && o.rivalGap) {
+    ctx.fillStyle = COLORS.faint;
+    ctx.font = "600 36px 'Clash Display', sans-serif";
+    ctx.fillText(`TOP: ${o.rivalName.toUpperCase().slice(0, 14)} — ${o.rivalGap.toLocaleString()} PTS AHEAD`, 72, y);
+  }
 
   // mascot face (our blockbot, original)
-  drawBotFace(ctx, 72, 1090, 120);
+  drawBotFace(ctx, 72, 1160, 110);
 
   // footer
   ctx.fillStyle = COLORS.lime;
   ctx.font = "600 38px 'Clash Display', sans-serif";
-  ctx.fillText("BEAT MY RUN →", 230, 1150);
+  ctx.fillText("BEAT MY RUN →", 230, 1225);
   ctx.fillStyle = COLORS.faint;
   ctx.font = "400 30px 'JetBrains Mono', monospace";
   ctx.fillText("vibe/vibe builders · robinhood chain testnet", 72, 1290);
