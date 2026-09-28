@@ -10,26 +10,37 @@ interface CacheEntry { ts: number; candles: Candle[] }
 const cache = new Map<string, CacheEntry>();
 const TTL = 60 * 60 * 1000; // 1h
 
+// Hosts are tried in order. api.binance.com geo-blocks some datacenter IPs
+// (e.g. US-hosted serverless functions -> HTTP 451), so the official
+// market-data mirror data-api.binance.vision is the second host.
+const BINANCE_HOSTS = [
+  "https://api.binance.com",
+  "https://data-api.binance.vision",
+];
+
 async function fetchBinance(symbol: string): Promise<Candle[] | null> {
-  try {
-    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${INTERVAL}&limit=${LIMIT}`;
-    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
-    const rows = (await res.json()) as unknown[];
-    if (!Array.isArray(rows) || rows.length < 40) return null;
-    return rows.map((r) => {
-      const k = r as (string | number)[];
-      return {
-        t: Number(k[0]),
-        o: Number(k[1]),
-        h: Number(k[2]),
-        l: Number(k[3]),
-        c: Number(k[4]),
-      };
-    });
-  } catch {
-    return null;
+  for (const host of BINANCE_HOSTS) {
+    try {
+      const url = `${host}/api/v3/klines?symbol=${symbol}&interval=${INTERVAL}&limit=${LIMIT}`;
+      const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const rows = (await res.json()) as unknown[];
+      if (!Array.isArray(rows) || rows.length < 40) continue;
+      return rows.map((r) => {
+        const k = r as (string | number)[];
+        return {
+          t: Number(k[0]),
+          o: Number(k[1]),
+          h: Number(k[2]),
+          l: Number(k[3]),
+          c: Number(k[4]),
+        };
+      });
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 export async function GET(req: Request) {

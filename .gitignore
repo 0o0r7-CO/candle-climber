@@ -19,6 +19,7 @@ next-env.d.ts
 .gh_token
 .gh_user
 .dvtoken
+.vercel_token
 
 # internal workspace (private research, tooling, archives — not part of the public game repo)
 /research/
