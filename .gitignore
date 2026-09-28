@@ -46,3 +46,4 @@ local-*
 .DS_Store
 *.pem
 npm-debug.log*
+.nim_key
