@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Engine, VIEW_W, VIEW_H } from "@/game/cc/engine";
 import { buildPlatforms } from "@/game/cc/level";
 import { dailyMutation, type Mutation } from "@/game/cc/mutations";
+import { marketStats, fmtPct } from "@/game/cc/market";
+import MiniChart from "@/components/cc/MiniChart";
 import { render, COLORS } from "@/game/cc/render";
 import { makeDeathCard } from "@/game/cc/deathcard";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
@@ -23,6 +25,7 @@ interface BoardEntry {
 const BEST_KEY = "cc_best_v1";
 const NAME_KEY = "cc_name_v1";
 const MUTE_KEY = "cc_mute_v1";
+const RUNS_KEY = "cc_runs_v1";
 
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -104,6 +107,10 @@ export default function GameCanvas() {
     if (!data || !mutation) return;
     unlockAudio();
     const eng = buildEngine(data, mutation);
+    // first-run onboarding hints: show during the player's first 2 runs ever
+    const runs = Number(localStorage.getItem(RUNS_KEY) ?? 0);
+    eng.showHints = runs < 2;
+    localStorage.setItem(RUNS_KEY, String(runs + 1));
     engineRef.current = eng;
     setHud({ score: 0, combo: 0 });
     setResult(null);
@@ -216,6 +223,8 @@ export default function GameCanvas() {
       rivalName: top && top.score > result.score ? top.name : undefined,
       rivalGap: rivalGap || undefined,
       isTop: !top || top.score <= result.score,
+      realMovePct: stats?.changePct,
+      difficulty: stats?.difficulty,
     });
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -240,6 +249,7 @@ export default function GameCanvas() {
   };
 
   const seedLabel = data ? `${data.seed.symbol} · ${data.seed.date}` : "";
+  const stats = useMemo(() => marketStats(data?.candles ?? []), [data]);
   const top = topBoard[0];
   const rivalGap = result && top && top.score > result.score ? top.score - result.score : 0;
 
@@ -285,6 +295,20 @@ export default function GameCanvas() {
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
                 <span className="cc-daily-src">{data.seed.source === "binance" ? "live data" : "synthetic"}</span>
               </div>
+              {stats && (
+                <div className="cc-realmove">
+                  <MiniChart candles={data.candles} />
+                  <div className="cc-realmove-row">
+                    <span>
+                      REAL MOVE <b className={stats.changePct >= 0 ? "up" : "down"}>{fmtPct(stats.changePct)}</b>
+                    </span>
+                    <span className="cc-realmove-sep">·</span>
+                    <span>
+                      DIFFICULTY <b className={stats.difficulty === "BRUTAL" ? "down" : "up"}>{stats.difficulty}</b>
+                    </span>
+                  </div>
+                </div>
+              )}
               <div className="cc-mut-banner" title={mutation.tagline}>
                 <span className="cc-mut-label">MUTATION</span>
                 <span className={mutation.id === "clean" ? "cc-mut-name" : "cc-mut-name hot"}>{mutation.name}</span>

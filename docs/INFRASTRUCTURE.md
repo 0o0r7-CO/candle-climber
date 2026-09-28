@@ -1,65 +1,148 @@
-# INFRASTRUCTURE — zero direct cost, GitHub Student Developer Pack
+# INFRASTRUCTURE — GitHub Student Pack, verified live
 
-> Constraint: **no paid tiers, no direct monetary cost.** Primary sources are
-> GitHub Student Developer Pack offers and always-free tiers. Every credential
-> is stored as a GitHub Actions/Codespaces secret or local `.env.local` (never committed).
+> Data source: `education.github.com/pack` scraped server-rendered HTML on **2026-09-28**
+> (offers change monthly — re-verify before claiming anything).
+> Scope: what is actually useful for **Candle Climber** now/later + a reusable playbook
+> for any future project. Companion to CC-PLAN §5.
 
-## 1. Active today (M1)
+## 0. TL;DR decisions for Candle Climber
 
-| Need | Service | Tier | Student Pack? | Status |
-|---|---|---|---|---|
-| Source control | GitHub repo (`0o0r7/candle-climber`) | Free | ✅ Pack core | **LIVE** |
-| CI (lint + typecheck) | GitHub Actions | Free for public repos | ✅ Pack core | **LIVE** (`.github/workflows/ci.yml`) |
-| Cloud IDE | GitHub Codespaces | 120 core-hrs/mo free | ✅ Pack | available |
-| AI pair coding | GitHub Copilot Pro | Free for students | ✅ Pack | available |
-| Market data | Binance public klines (no key, server-proxied + cached) | Free | — | **LIVE** |
-| Local runtime | Bun + Next.js 16 dev server | Free | — | **LIVE** |
-
-## 2. Phase p1 (D4–7) — leaderboard persistence + deployment
-
-| Need | Service | Tier | Student Pack? | Notes |
-|---|---|---|---|---|
-| Web hosting | **Vercel Hobby** (primary) | Always free, zero-config for Next.js | ❌ (free tier) | Connect repo via GitHub OAuth in browser — no token required |
-| Web hosting (backup) | **DigitalOcean App Platform** | $200 / 12 mo credit | ✅ **Pack** | Fallback if Vercel limits are ever hit |
-| Leaderboard DB | **MongoDB Atlas M0** (primary) | Free M0 cluster + $50 credit | ✅ **Pack** | M0 never pauses on inactivity — good for a daily game |
-| Leaderboard DB (alt) | **Supabase Free** | 500 MB Postgres + realtime | ❌ (free tier) | Pauses after 1 week inactivity; pick if realtime needed later |
-| Secrets | GitHub Actions / Codespaces secrets | Free | ✅ Pack core | `DATABASE_URL` etc. |
-
-## 3. Phase p2 (D8–12) — identity, domain, observability
-
-| Need | Service | Tier | Student Pack? |
+| Phase | Tool | Action | Why |
 |---|---|---|---|
-| Wallet connect | **Reown (WalletConnect) Cloud** | Free project ID | ❌ (free tier) |
-| Domain | **Namecheap** `.me` + SSL | Free 1 year | ✅ **Pack** |
-| Error tracking | **Sentry** free tier | 5k errors/mo | ❌ (free tier) |
-| Stock data proxy | Yahoo Finance public endpoint | Free, no key | — |
+| p1 (now) | **MongoDB Atlas** | Claim $50 credits → `DATABASE_URL` | Leaderboard persistence; $50 on M0 free-tier usage lasts years |
+| p1 (now) | **Vercel Hobby** | Deploy via browser OAuth | Free (not part of Pack — unchanged plan) |
+| p1 (now) | **GitHub Copilot Student** | Enable on owner account | Unlimited completions — free dev velocity for the whole build |
+| p2 | **Namecheap** | Claim 1yr `.me` + 1yr SSL | Game domain (e.g. candleclimb.me) |
+| p2 | **Sentry** | Activate student Team plan | 50K errors/100K transactions/500 replays — production error tracking |
+| p2 | **BrowserStack** | Activate Automate Mobile | Real iOS/Android testing of the canvas game + touch controls |
+| p2 | **SimpleAnalytics** | Claim 1yr Starter | Privacy-friendly, 100k views/mo — growth loop measurement |
+| p3 | **Heroku** | Claim $13/mo × 24 mo | **Replaces DigitalOcean (removed from Pack)** — hosts the duel/match WebSocket server |
+| p3 (opt) | **Blockchair** | 100K free API requests | Multi-chain market data experiments (chain-data side quests) |
+| anytime | **1Password / Termius / GitLens** | Claim | Secrets hygiene + SSH + Git QoL for the owner |
 
-## 4. Phase p3 (D10+) — chain
+**Skip (rationale):** Clerk (wallet auth = Reown, no email auth needed), Datadog + New Relic
+(Sentry covers it — avoid observability sprawl), Stripe $25 (payouts are onchain, no card flow),
+Camber GPU (no ML workload), Azure $100 (nothing needs it; Vercel+Atlas cover us; revisit if we
+ever need containers/VMs for game servers), .TECH/Name.com (Namecheap covers domain), feature
+flags (ConfigCat/DevCycle — overkill until live-ops at scale; mutations are seed-driven already).
 
-| Need | Service | Tier | Student Pack? |
+## 1. Live inventory, categorized (2026-09-28)
+
+Legend: ✅ = use in this project · 🔧 = dev QoL, owner's choice · 🎓 = learning value · ⬜ = skip
+Ratings assume a small web3 game / web-app studio of 1–2 people.
+
+### Cloud & hosting
+| Offer | Live terms | Verdict |
+|---|---|---|
+| Heroku | $13/mo credit for 24 months (~$312 total) | ✅ p3 match server; replaces DO |
+| Microsoft Azure | 25+ free services + $100 credit, no credit card (18+) | ⬜ (revisit for VM/container needs) |
+| Heroku Data / others | — | ⬜ |
+| GitHub Pages | free static site per repo | 🔧 (docs/landing mirror) |
+| Appwrite | Education plan, 2 projects (BaaS + hosting) | ⬜ (we have Next.js+Atlas; keep as alt-BaaS) |
+| GitHub Codespaces | free monthly core-hours | 🔧 (cloud dev box) |
+
+### Databases & backend services
+| Offer | Live terms | Verdict |
+|---|---|---|
+| MongoDB Atlas | $50 credits + Compass + University cert ($150) | ✅ p1 — leaderboard DB |
+| Clerk | Pro plan free while student | ⬜ (Reown wallet auth instead) |
+| Supabase | **NOT in the Pack today** (free tier exists independently) | ⬜ unchanged |
+| Testmail | Essential plan free | 🔧 (API/email testing) |
+| Stripe | $25 fee-offset credits | ⬜ |
+
+### Dev tools & AI
+| Offer | Live terms | Verdict |
+|---|---|---|
+| GitHub Copilot Student | free, unlimited completions + AI credits allowance | ✅ enable now |
+| JetBrains | all desktop IDEs, annual renewal | ✅ (WebStorm if owner wants; VS Code fine too) |
+| GitLens | free Pro while student | 🔧 |
+| GitKraken / Tower / WorkingCopy | free Pro while student | 🔧 (pick one; mobile: WorkingCopy) |
+| Termius | Pro + Team features free | 🔧 (SSH to p3 server) |
+| LocalStack | free license | ⬜ (no AWS usage) |
+| Requestly | offer active | 🔧 (API mocking during dev) |
+| BrowserStack | Automate Mobile, 1 parallel/1 user, 1yr | ✅ p2 mobile QA |
+| Codecov / CodeScene / DeepScan | free/trial while student | ⬜ (CI already has lint+tsc; revisit at 3+ contributors) |
+
+### Observability
+| Offer | Live terms | Verdict |
+|---|---|---|
+| Sentry | 50K errors, 100K transactions, 1GB attachments, 500 replays, Team, 1yr (renewable) | ✅ p2 |
+| Datadog | Pro, 10 servers, 2 years | ⬜ (Sentry suffices) |
+| New Relic | free while student ($300/mo value) | ⬜ (same) |
+| Honeybadger | free Small plan | ⬜ (same) |
+
+### Domains, web & growth
+| Offer | Live terms | Verdict |
+|---|---|---|
+| Namecheap | 1yr `.me` + 1yr SSL | ✅ p2 — game domain |
+| Name.com | select free domain (25+ TLDs) | ⬜ (Namecheap covers) |
+| .TECH | 1 standard domain, 1yr | ⬜ |
+| SimpleAnalytics | Starter 1yr, 100k pageviews/mo | ✅ p2 growth loop |
+| Polypane | free while student | 🔧 (responsive/debug browser) |
+| Bootstrap Studio / Visme / Octicons | free / 3mo / open | ⬜ (custom design system already) |
+| Icons8 | 3mo full subscription | 🔧 (fallback icon source; brand assets are ours) |
+| IconScout | 60 premium icons | 🔧 |
+
+### Security & productivity
+| Offer | Live terms | Verdict |
+|---|---|---|
+| 1Password | free while student | ✅ — store rotated GitHub PAT, Reown keys, Atlas creds |
+| Dashlane | Premium 6mo | ⬜ (1Password wins) |
+| Microsoft 365 | free/discounted incl. Copilot in Office | 🔧 owner's choice |
+| Notion | Education plan | 🔧 |
+| PomoDone / GitHub Desktop | free | 🔧 |
+
+### Crypto-specific
+| Offer | Live terms | Verdict |
+|---|---|---|
+| Blockchair | 100,000 free API requests (major chains) | ✅ p3 experiments (chain data for Robinhood Chain side quests) |
+
+### Learning (owner development budget — all free via Pack)
+FrontendMasters (6mo all-access) ✅ recommended · Scrimba · Boot.dev (backend games/Go/TS) ·
+Educative · DataCamp · Codédex · InterviewCake · AlgoExpert (20 free) · Deepnote (data notebooks) ·
+Arduino/Adafruit (hardware fun) · GitHub Foundations Certification prep ✅ (resume value).
+
+### Notable REMOVALS / absences (vs common outdated knowledge)
+- **DigitalOcean $200 credits — GONE.** Old plans citing DO must switch to Heroku credits.
+- **Supabase — not currently in the Pack.**
+- SendGrid/Travis CI/Atom-era tools long gone; CI = GitHub Actions (free 2,000 min/mo on Free, more as Pro).
+
+## 2. Reusable playbook (future projects — the real deliverable)
+
+Rule of thumb: **claim in this order, always.**
+1. **Identity & safety first:** 1Password → rotate any token ever pasted in chat → enable 2FA everywhere.
+2. **Dev velocity:** GitHub Pro + Copilot Student + JetBrains (if IDE person) + Codespaces hours.
+3. **Pick ONE deploy host** by workload: static/Next.js → Vercel Hobby (free, not Pack) ·
+   long-running server (WebSocket/game/cron) → Heroku credits · need VM/container → Azure $100.
+4. **Pick ONE database** by shape: document/leaderboards → MongoDB Atlas $50 · relational+auth
+   → Supabase free tier (independent of Pack) · nothing → don't add one.
+5. **Observability = Sentry, full stop.** Add Datadog/NR only when a specific need Sentry can't meet appears.
+6. **Domain at p2, not p1** (renames are free before you print it anywhere): Namecheap `.me` or Name.com.
+7. **Mobile/web QA before launch:** BrowserStack Automate Mobile (canvas games especially).
+8. **Growth measurement from day one of beta:** SimpleAnalytics (privacy-friendly = no cookie banner).
+9. **Learning budget is a Pack feature:** FrontendMasters/Boot.dev = compounding returns; schedule it.
+10. **Skip anything with a monthly-maintenance cost after credits run out** — a student project
+    should die of natural causes, not of a credit card charge.
+
+### Project archetypes → stack cheatsheet
+| Archetype | Host | DB | Extra |
 |---|---|---|---|
-| RPC / faucet | Robinhood Chain testnet public endpoints | Free | — (platform) |
-| Contract deploys | Testnet gas from faucet | Free | — (platform) |
-| Duel escrow server | DigitalOcean credit (Pack) or Fly.io free allowance | Free | ✅ **Pack** |
+| Landing/docs | GitHub Pages / Vercel | — | — |
+| Web app (Next.js) | Vercel Hobby | Atlas M0 | Sentry, SimpleAnalytics |
+| Game with realtime | Vercel + Heroku (WS server) | Atlas / Redis-on-Heroku | BrowserStack, ConfigCat |
+| Data/ML | Deepnote / Camber GPU | Atlas | Azure credit |
+| SaaS w/ billing | Vercel | Atlas + Clerk Pro | Stripe credits |
 
-## 5. Credential checklist — what the owner sends, and when
+## 3. Credential checklist (owner actions, in order)
 
-| When | Credential | How the owner gets it | Needed by agent? |
-|---|---|---|---|
-| ✅ Now | **GitHub PAT** (sent) | — | ✅ received, stored locally only |
-| p1 deploy | none — owner logs into **vercel.com** with GitHub and imports the repo | browser | ❌ no token needed |
-| p1 DB | MongoDB Atlas connection string (M0) | atlas.mongodb.com → sign in with GitHub → M0 cluster → connect | ✅ send `DATABASE_URL` (or set it as a repo secret themselves) |
-| p2 wallet | Reown Cloud **project ID** | cloud.reown.com → sign in with GitHub → new project | ✅ send project ID |
-| p2 domain | Namecheap .me claim | Pack offer page → redeem | owner-only (registrar UI) |
+- [x] GitHub PAT (already in use — **rotate after build phase**, store in 1Password)
+- [ ] Enable **Copilot Student** (education.github.com → Copilot)
+- [ ] p1: Vercel deploy via browser login (no token needed)
+- [ ] p1: MongoDB Atlas M0 → create cluster → `DATABASE_URL` → paste to Vercel env + `.env.local`
+- [ ] p2: Namecheap `.me` claim → DNS → Vercel
+- [ ] p2: Sentry student plan → `SENTRY_DSN` (only when deploying for real users)
+- [ ] p2: BrowserStack + SimpleAnalytics claims
+- [ ] p3: Heroku credit claim → duel server app
+- [ ] anytime: 1Password student plan
 
-**Rule of thumb: nothing else is needed now.** At each phase the agent will name
-the exact credential and the free tier to create it with.
-
-## 6. Security hygiene
-
-- The GitHub PAT lives only in `.gh_token` (chmod 600, gitignored). **Rotate it
-  after the build phase** — it was pasted in plain chat.
-- `.gitignore` hardens the public repo: research archives, worklogs, tokens,
-  `.env*` and internal tooling are excluded; history was squashed to a single
-  clean commit before the first push.
-- All runtime secrets go to GitHub repo secrets / Vercel env vars — never in code.
+Nothing beyond this list is needed for the current build.

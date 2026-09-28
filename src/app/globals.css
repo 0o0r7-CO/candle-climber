@@ -607,6 +607,31 @@
 }
 .cc-board-mini .cc-board-row { font-size: 12px; padding: 4px 6px; }
 
+/* ---- M2b: real-market legibility ---- */
+.cc-realmove {
+  margin: 10px auto 0;
+  padding: 10px 12px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--cc-hairline);
+  border-radius: 12px;
+  width: fit-content;
+  max-width: 100%;
+}
+.cc-mini-chart { display: block; }
+.cc-realmove-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-family: var(--cc-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--cc-faint);
+}
+.cc-realmove-row b.up { color: var(--cc-up); }
+.cc-realmove-row b.down { color: var(--cc-down); }
+.cc-realmove-sep { color: var(--cc-faint); }
+
 /* scrollbars */
 .cc-panel::-webkit-scrollbar, .cc-board::-webkit-scrollbar { width: 6px; }
 .cc-panel::-webkit-scrollbar-thumb, .cc-board::-webkit-scrollbar-thumb {

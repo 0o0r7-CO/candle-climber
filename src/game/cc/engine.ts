@@ -49,6 +49,7 @@ export class Engine {
   lastLandUp: boolean | null = null;
   dead = false; deathCause: DeathCause = 'fell'; deathT = 0;
   shake = 0;
+  showHints = false; // first-run onboarding bubbles (set by GameCanvas)
   private cb: EngineCallbacks;
 
   // player world x is always locked to the screen anchor (30% of view)

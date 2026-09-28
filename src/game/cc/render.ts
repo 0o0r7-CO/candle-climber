@@ -135,6 +135,44 @@ function drawFloats(ctx: CanvasRenderingContext2D, fs: FloatText[], camX: number
   ctx.textAlign = "left";
 }
 
+function drawHints(ctx: CanvasRenderingContext2D, e: Engine) {
+  if (!e.showHints || e.candlesPassed > 6) return;
+  const bubbles: Record<number, string> = {
+    0: "TAP / SPACE = JUMP",
+    1: "HOLD = JUMP HIGHER",
+  };
+  for (let i = 0; i <= Math.min(7, e.plats.length - 1); i++) {
+    if (e.plats[i]?.crumble) bubbles[i] = "RED = DON'T LINGER";
+  }
+  if (e.plats[4] && !bubbles[4]) bubbles[4] = "GREEN STREAK = COMBO";
+  const bob = Math.sin(e.time * 3) * 3;
+  ctx.font = "600 13px 'JetBrains Mono', monospace";
+  ctx.textAlign = "center";
+  for (const [k, text] of Object.entries(bubbles)) {
+    const p = e.plats[Number(k)];
+    if (!p || p.passed || p.state === "gone") continue;
+    const x = p.x - e.camX + p.w / 2;
+    const yTop = p.y - e.camY - 58 - (Number(k) % 2) * 38 + bob;
+    const tw = ctx.measureText(text).width + 22;
+    ctx.fillStyle = "rgba(22,25,28,0.92)";
+    ctx.strokeStyle = COLORS.hairline;
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, x - tw / 2, yTop, tw, 26, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - 5, yTop + 25);
+    ctx.lineTo(x + 5, yTop + 25);
+    ctx.lineTo(x, yTop + 32);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(22,25,28,0.92)";
+    ctx.fill();
+    ctx.fillStyle = COLORS.lime;
+    ctx.fillText(text, x, yTop + 17);
+  }
+  ctx.textAlign = "left";
+}
+
 function drawBackdrop(ctx: CanvasRenderingContext2D, camX: number, camY: number) {
   ctx.fillStyle = COLORS.bg;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
@@ -168,6 +206,7 @@ export function render(ctx: CanvasRenderingContext2D, e: Engine) {
   const i1 = Math.min(e.plats.length - 1, Math.ceil((e.camX + VIEW_W) / CANDLE_W) + 2);
   for (let i = i0; i <= i1; i++) drawPlatform(ctx, e.plats[i], e.camX, e.camY);
 
+  drawHints(ctx, e);
   drawParticles(ctx, e.particles, e.camX, e.camY);
   drawFloats(ctx, e.floats, e.camX, e.camY);
   if (!e.dead || e.deathT < 2.2) drawPlayer(ctx, e);

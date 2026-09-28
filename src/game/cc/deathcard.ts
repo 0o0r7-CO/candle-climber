@@ -17,6 +17,8 @@ interface CardOpts {
   rivalName?: string;
   rivalGap?: number;
   isTop?: boolean;
+  realMovePct?: number;
+  difficulty?: string;
 }
 
 export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
@@ -59,6 +61,15 @@ export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
   ctx.fillStyle = COLORS.faint;
   ctx.font = "400 30px 'JetBrains Mono', monospace";
   ctx.fillText(o.date + " · DAILY CHART", 104, 400);
+
+  // real-market legibility line — "you died on the REAL chart"
+  if (typeof o.realMovePct === "number") {
+    const pct = `${o.realMovePct >= 0 ? "+" : ""}${o.realMovePct.toFixed(1)}%`;
+    ctx.fillStyle = o.realMovePct >= 0 ? COLORS.up : COLORS.down;
+    ctx.font = "500 28px 'JetBrains Mono', monospace";
+    const diff = o.difficulty ? ` · ${o.difficulty}` : "";
+    ctx.fillText(`REAL MOVE ${pct}${diff}`, 72, 455);
+  }
 
   // mini candles deco (right side)
   drawMiniCandles(ctx, 620, 300, 390, 90);
