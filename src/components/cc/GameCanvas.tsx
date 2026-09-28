@@ -300,7 +300,7 @@ export default function GameCanvas() {
               <h1 className="cc-title">CANDLE<span>CLIMBER</span></h1>
               <p className="cc-tag">the chart is the level</p>
               <div className="cc-daily">
-                <span className="cc-daily-label">TODAY&apos;S CHART</span>
+                <span className="cc-daily-label" title="Levels reset at 00:00 UTC">TODAY&apos;S CHART · UTC</span>
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
                 <span className="cc-daily-src">{data.seed.source === "binance" ? "live data" : "synthetic"}</span>
               </div>
@@ -325,7 +325,7 @@ export default function GameCanvas() {
               </div>
               <div className="cc-howto">
                 <p><b className="lime">GREEN</b> candles hold. <b className="coral">RED</b> candles crumble.</p>
-                <p>Tap / Space to jump. One chart. Every player. Daily.</p>
+                <p>{"Tap / Space to jump. One chart. Every player.\u00A0Daily."}</p>
                 <p className="cc-next-level">Every vibe/vibe launch becomes a future level.</p>
               </div>
               <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>

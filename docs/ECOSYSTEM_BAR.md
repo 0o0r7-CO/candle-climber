@@ -16,18 +16,27 @@ vibe/vibe specifically care are the parts still missing or parked. Owner's insti
 
 | # | Factor | Verdict |
 |---|---|---|
-| E1 | Working MVP, instantly playable in browser | 🟡 PARTIAL (localhost only) |
-| E2 | Ecosystem content flywheel — "every launch becomes a level" | 🔴 MISSING |
-| E3 | Token layer on platform rails (bonding curve, prizes) | 🔴 MISSING (scheduled D10+) |
+| E1 | Working MVP, instantly playable in browser | 🟢 DONE — live at https://candle-climber.vercel.app (real Binance candles) |
+| E2 | Ecosystem content flywheel — "every launch becomes a level" | 🟡 PARTIAL — level-source abstraction shipped & wired; real launch-feed pending D10 |
+| E3 | Token layer on platform rails (bonding curve, prizes) | 🔴 MISSING (scheduled D10+, correctly sequenced) |
 | E4 | On-chain credibility (Robinhood Chain scores, wallet identity) | 🔴 MISSING (scheduled) |
-| E5 | X/Twitter viral loop | 🟡 PARTIAL (card ✓, link dead) |
-| E6 | Platform-native identity (look, tone, mascot) | 🟡 PARTIAL (palette ✓, mascot parked) |
+| E5 | X/Twitter viral loop | 🟡 PARTIAL — loop complete (OG cards + live URL + death card); rivalry-tag input unshipped |
+| E6 | Platform-native identity (look, tone, mascot) | 🟡 PARTIAL (palette ✓, mascot parked awaiting owner re-brief) |
 | E7 | Fair-play / anti-sybil | 🟢 MEETS (MVP level) |
 | E8 | Zero-friction onboarding | 🟢 MEETS |
-| E9 | Always-on daily service | 🔴 MISSING (not deployed) |
-| E10 | Mobile-first quality | 🟡 PARTIAL (built, untested) |
+| E9 | Always-on daily service | 🟡 HALF — live daily service up; board on memory fallback until Atlas `DATABASE_URL` |
+| E10 | Mobile-first quality | 🟡 PARTIAL — headless QA passed (desktop + iPhone-14 emulation); real-device pass pending |
+
+Scoreboard v2 (2026-09-29, post-deploy): 4 green · 5 yellow · 2 red — up from
+3 green · 4 yellow · 3-4 red at first audit. Deploy (E1) converted the biggest
+blocker; E9 persistence is one owner-supplied `DATABASE_URL` away; E3/E4 remain
+deliberately sequenced behind product reality.
+
+<details><summary>Scoreboard v1 (pre-deploy, kept for the record)</summary>
 
 3 green · 4 yellow · 3-4 red. That is the honest scoreboard.
+
+</details>
 
 ## 1. The factors, reconstructed
 

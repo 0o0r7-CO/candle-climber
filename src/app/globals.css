@@ -645,3 +645,9 @@
   background: var(--cc-hairline);
   border-radius: 3px;
 }
+
+/* QA fix (Task 20 finding #1): on narrow screens the SOUND ON chip floats over the
+   panel's bottom-right corner — reserve space so the last board row scrolls clear. */
+@media (max-width: 640px) {
+  .cc-panel { padding-bottom: 64px; }
+}

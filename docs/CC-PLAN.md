@@ -34,7 +34,7 @@ Out of MVP (sequenced): wallet sign-in → token launch (bonding curve) → wage
 src/game/cc/
   types.ts      Candle, SeedInfo, GameState
   rng.ts        hashString, mulberry32 (seeded PRNG)
-  candles.ts    client fetch + normalization + synthetic fallback
+  level-source.ts  pluggable level feed: Binance klines today → platform launch-feed (D10)
   level.ts      daily seed → seed info; candles → platforms
   mutations.ts  daily mutation pool → physics modifiers (per-date, deterministic)
   engine.ts     fixed-timestep loop, physics, crumble timers, scoring, float texts
@@ -55,15 +55,16 @@ Candle = `{ t, o, h, l, c }` (floats, o/h/l/c in normalized % units per level bu
 |---|---|---|---|
 | Repo/CI | GitHub (user token) | free | now |
 | Hosting | Vercel Hobby (or Pack DigitalOcean credits) | free | p1 |
-| Leaderboard DB/auth | Supabase free tier | free | p1 |
+| Leaderboard DB/auth | MongoDB Atlas M0 (free tier; $50 Pack credits confirmed) | free | p1 — code ready, awaiting `DATABASE_URL` |
 | Market data | Binance public API (no key) + Yahoo proxy (stocks) | free | now/p2 |
 | Mobile wallet link | Reown/WalletConnect Cloud free projectId | free | p2 |
 | Domain | Namecheap .me (Pack) | free (Pack) | p2 |
 | Duel/match server | DO credits / Fly.io | free (Pack) | p3 |
 | Error tracking | Sentry free tier | free | p2 |
 
-Credentials requested from owner: GitHub token (now) → Vercel token, Supabase URL+anon key,
-Reown projectId (later phases). No paid services anywhere.
+Credentials requested from owner: GitHub token (delivered) → Vercel token (delivered,
+deployed) → Atlas `DATABASE_URL` (pending, E9) → Reown projectId (later phases).
+No paid services anywhere.
 
 ## 6. Milestones
 - D1–3 (now): playable slice — engine + real BTC/ETH/SOL/DOGE candles + daily seed + death
