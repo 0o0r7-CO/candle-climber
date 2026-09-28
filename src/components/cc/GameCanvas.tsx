@@ -5,6 +5,8 @@ import { Engine, VIEW_W, VIEW_H } from "@/game/cc/engine";
 import { buildPlatforms } from "@/game/cc/level";
 import { dailyMutation, type Mutation } from "@/game/cc/mutations";
 import { marketStats, fmtPct } from "@/game/cc/market";
+import { pickSeed, syntheticCandles, LIMIT } from "@/game/cc/level-source";
+import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
 import { render, COLORS } from "@/game/cc/render";
 import { makeDeathCard } from "@/game/cc/deathcard";
@@ -68,7 +70,14 @@ export default function GameCanvas() {
       })
       .catch(() => {
         if (!alive) return;
-        const d: CandleData = { seed: { date: "SYNTH", symbol: "SYNTHUSDT", interval: "1w", source: "synthetic" }, candles: [] };
+        // API unreachable — derive the SAME daily level client-side from the
+        // shared seed (identical to what the server would serve; play never crashes).
+        const date = utcDateStr();
+        const { symbol } = pickSeed(date);
+        const d: CandleData = {
+          seed: { date, symbol, interval: "1w", source: "synthetic" },
+          candles: syntheticCandles(date, LIMIT),
+        };
         setData(d);
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
@@ -104,7 +113,7 @@ export default function GameCanvas() {
   }, []);
 
   const startRun = useCallback(() => {
-    if (!data || !mutation) return;
+    if (!data || !mutation || data.candles.length === 0) return;
     unlockAudio();
     const eng = buildEngine(data, mutation);
     // first-run onboarding hints: show during the player's first 2 runs ever
@@ -317,6 +326,7 @@ export default function GameCanvas() {
               <div className="cc-howto">
                 <p><b className="lime">GREEN</b> candles hold. <b className="coral">RED</b> candles crumble.</p>
                 <p>Tap / Space to jump. One chart. Every player. Daily.</p>
+                <p className="cc-next-level">Every vibe/vibe launch becomes a future level.</p>
               </div>
               <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
               {best > 0 && <p className="cc-best">PERSONAL BEST <b>{best.toLocaleString()}</b></p>}

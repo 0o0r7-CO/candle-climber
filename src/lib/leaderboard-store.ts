@@ -95,12 +95,17 @@ class MongoStore implements BoardStore {
 
 /* --------------------------------- singleton -------------------------------- */
 
+// Memoize BOTH stores: a fresh MongoStore per request would mean a fresh MongoClient
+// per request (Atlas M0 caps connections, and the per-instance 'disabled' circuit-
+// breaker would reset every call — AUDIT finding F3).
 let memoryFallback: MemoryStore | null = null;
+let mongoStore: MongoStore | null = null;
 
 export function getBoard(): BoardStore {
   const url = process.env.DATABASE_URL ?? "";
   if (url.startsWith("mongodb://") || url.startsWith("mongodb+srv://")) {
-    return new MongoStore();
+    if (!mongoStore) mongoStore = new MongoStore();
+    return mongoStore;
   }
   if (!memoryFallback) memoryFallback = new MemoryStore();
   return memoryFallback;

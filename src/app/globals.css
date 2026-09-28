@@ -418,6 +418,13 @@
 }
 .cc-howto .lime { color: var(--cc-up); }
 .cc-howto .coral { color: var(--cc-down); }
+.cc-howto .cc-next-level {
+  margin-top: 6px;
+  color: var(--cc-purple);
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+}
 
 .cc-btn {
   font-family: var(--cc-display);

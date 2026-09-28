@@ -1,42 +1,14 @@
-// /api/candles — daily level data: seeded symbol rotation + Binance klines proxy
+// /api/candles — daily level data: seeded symbol rotation + Binance klines proxy.
+// Level source logic (seed, watchlist, synthetic fallback) lives in
+// src/game/cc/level-source.ts so the client can derive identical data offline.
 import { NextResponse } from "next/server";
-import { hashString, mulberry32, utcDateStr } from "@/game/cc/rng";
+import { utcDateStr } from "@/game/cc/rng";
+import { pickSeed, syntheticCandles, INTERVAL, LIMIT } from "@/game/cc/level-source";
 import type { Candle, CandleData } from "@/game/cc/types";
-
-const WATCHLIST = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT", "BNBUSDT"];
-const INTERVAL = "1w";
-const LIMIT = 220;
 
 interface CacheEntry { ts: number; candles: Candle[] }
 const cache = new Map<string, CacheEntry>();
 const TTL = 60 * 60 * 1000; // 1h
-
-function pickSeed(date: string) {
-  const h = hashString("cc-daily-v1:" + date);
-  const rnd = mulberry32(h);
-  const symbol = WATCHLIST[Math.floor(rnd() * WATCHLIST.length)];
-  return { symbol, rnd };
-}
-
-function syntheticCandles(date: string, count: number): Candle[] {
-  const { rnd } = pickSeed(date);
-  const out: Candle[] = [];
-  let price = 100 + rnd() * 400;
-  let drift = (rnd() - 0.5) * 0.02;
-  let t = Date.parse(date + "T00:00:00Z") - count * 7 * 86400000;
-  for (let i = 0; i < count; i++) {
-    if (rnd() < 0.08) drift = (rnd() - 0.5) * 0.04; // trend shifts
-    const o = price;
-    const move = drift + (rnd() - 0.5) * 0.06;
-    const c = Math.max(1, o * (1 + move));
-    const wick = Math.abs(move) * (0.4 + rnd()) + rnd() * 0.01;
-    const h = Math.max(o, c) * (1 + wick);
-    const l = Math.min(o, c) * (1 - wick);
-    out.push({ t: t + i * 7 * 86400000, o, h, l, c });
-    price = c;
-  }
-  return out;
-}
 
 async function fetchBinance(symbol: string): Promise<Candle[] | null> {
   try {
