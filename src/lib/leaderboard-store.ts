@@ -18,6 +18,8 @@ export interface BoardStore {
   readonly kind: "memory" | "mongo";
   add(entry: BoardEntry): Promise<number>; // returns global-daily rank (1-based)
   top(date: string | null, n: number): Promise<BoardEntry[]>;
+  /** last connection error when a backing store is down (diagnostics) */
+  readonly lastError?: string;
 }
 
 /* ---------------------------------- memory --------------------------------- */
@@ -49,6 +51,7 @@ const MONGO_COLL = "scores";
 
 class MongoStore implements BoardStore {
   readonly kind = "mongo" as const;
+  lastError: string | undefined;
   private coll: import("mongodb").Collection<BoardEntry> | null = null;
   private connecting: Promise<import("mongodb").Collection<BoardEntry> | null> | null = null;
   private disabled = false;
@@ -69,7 +72,9 @@ class MongoStore implements BoardStore {
         this.coll = coll;
         return coll;
       } catch (err) {
-        console.error("[leaderboard] mongo unavailable, falling back to memory:", (err as Error).message);
+        const msg = (err as Error).message;
+        console.error("[leaderboard] mongo unavailable, falling back to memory:", msg);
+        this.lastError = msg;
         this.disabled = true;
         return null;
       }

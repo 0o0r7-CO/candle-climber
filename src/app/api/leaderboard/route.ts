@@ -34,7 +34,11 @@ export async function GET(req: Request) {
   const date = searchParams.get("date");
   const store = getBoard();
   const entries = await store.top(date, 50);
-  return NextResponse.json({ entries, store: store.kind });
+  return NextResponse.json({
+    entries,
+    store: store.kind,
+    ...(store.lastError ? { dbError: store.lastError } : {}),
+  });
 }
 
 export async function POST(req: Request) {

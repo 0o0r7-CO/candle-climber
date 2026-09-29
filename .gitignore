@@ -48,3 +48,5 @@ local-*
 *.pem
 npm-debug.log*
 .nim_key
+.atlas_*
+.env*.local
