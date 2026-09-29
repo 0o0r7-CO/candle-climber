@@ -651,3 +651,33 @@
 @media (max-width: 640px) {
   .cc-panel { padding-bottom: 64px; }
 }
+
+/* ---- W2 compliance & official links (PLAN.md W2 / KB §3.1) ---- */
+.cc-compliance {
+  margin-top: 12px;
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--cc-faint);
+}
+.cc-footer {
+  position: absolute;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--cc-faint);
+  z-index: 25;
+  pointer-events: none;
+}
+.cc-footer a { color: var(--cc-faint); text-decoration: none; pointer-events: auto; }
+.cc-footer a:hover { color: var(--cc-lime); }
+@media (max-width: 640px) {
+  .cc-footer { justify-content: flex-start; padding-left: 14px; padding-right: 104px; }
+}

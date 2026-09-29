@@ -330,6 +330,7 @@ export default function GameCanvas() {
               </div>
               <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
               {best > 0 && <p className="cc-best">PERSONAL BEST <b>{best.toLocaleString()}</b></p>}
+              <p className="cc-compliance">robinhood chain testnet · no real funds · nothing is guaranteed</p>
               {topBoard.length > 0 && (
                 <div className="cc-board cc-board-mini">
                   <div className="cc-board-title">TOP 3 TODAY</div>
@@ -393,6 +394,16 @@ export default function GameCanvas() {
           </div>
         )}
       </div>
+
+      <footer className="cc-footer">
+        <a href="https://testnet.vibevibe.fun/" target="_blank" rel="noopener noreferrer">vibe/vibe testnet</a>
+        <span aria-hidden>·</span>
+        <a href="https://faucet.testnet.chain.robinhood.com/" target="_blank" rel="noopener noreferrer">faucet</a>
+        <span aria-hidden>·</span>
+        <a href="https://discord.gg/vibevibebuilders" target="_blank" rel="noopener noreferrer">discord</a>
+        <span aria-hidden>·</span>
+        <span>no real funds</span>
+      </footer>
 
       <button
         className="cc-chip cc-mute"
