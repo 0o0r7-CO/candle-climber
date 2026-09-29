@@ -17,6 +17,9 @@ export interface SeedInfo {
 export interface CandleData {
   seed: SeedInfo;
   candles: Candle[];
+  /** HMAC attestation from /api/candles binding symbol+date+terrain.
+   *  Absent for synthetic fallback terrain — those runs are unscored. */
+  runToken?: string;
 }
 
 export interface Platform {

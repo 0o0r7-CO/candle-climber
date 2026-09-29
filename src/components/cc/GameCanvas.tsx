@@ -5,7 +5,7 @@ import { Engine, VIEW_W, VIEW_H } from "@/game/cc/engine";
 import { buildPlatforms } from "@/game/cc/level";
 import { dailyMutation, type Mutation } from "@/game/cc/mutations";
 import { marketStats, fmtPct } from "@/game/cc/market";
-import { pickSeed, syntheticCandles, LIMIT } from "@/game/cc/level-source";
+import { pickSeed, syntheticCandles, LIMIT, WATCHLIST } from "@/game/cc/level-source";
 import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
 import { render, COLORS } from "@/game/cc/render";
@@ -28,6 +28,7 @@ const BEST_KEY = "cc_best_v1";
 const NAME_KEY = "cc_name_v1";
 const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
+const UNSCORED_MSG = "offline terrain — scoring disabled";
 
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -56,7 +57,11 @@ export default function GameCanvas() {
     const savedMute = localStorage.getItem(MUTE_KEY) === "1";
     setMutedState(savedMute);
     if (savedMute) setMuted(true); // applies on next unlock
-    fetch("/api/candles")
+    // optional deep link: /?symbol=ETHUSDT opens that chart (whitelist-checked,
+    // server still pins the terrain and issues the run token)
+    const requested = (new URLSearchParams(window.location.search).get("symbol") ?? "").toUpperCase();
+    const symbolQuery = WATCHLIST.includes(requested) ? `?symbol=${requested}` : "";
+    fetch(`/api/candles${symbolQuery}`)
       .then((r) => r.json())
       .then((d: CandleData) => {
         if (!alive) return;
@@ -198,7 +203,8 @@ export default function GameCanvas() {
   const onPointerUp = () => engineRef.current?.release();
 
   const submitScore = async () => {
-    if (!result || !data || submitting) return;
+    // tokenless terrain (synthetic fallback) is unscored — never POST it
+    if (!result || !data || submitting || !data.runToken) return;
     setSubmitting(true);
     try {
       const finalName = (name.trim() || "ANON").slice(0, 14);
@@ -210,6 +216,7 @@ export default function GameCanvas() {
           name: finalName, score: result.score, candlesPassed: result.candlesPassed,
           bestStreak: result.bestStreak, mutation: mutation?.id,
           symbol: data.seed.symbol, date: data.seed.date,
+          runToken: data.runToken,
         }),
       });
       const j = await res.json();
@@ -259,6 +266,7 @@ export default function GameCanvas() {
 
   const seedLabel = data ? `${data.seed.symbol} · ${data.seed.date}` : "";
   const stats = useMemo(() => marketStats(data?.candles ?? []), [data]);
+  const canSubmit = Boolean(data?.runToken);
   const top = topBoard[0];
   const rivalGap = result && top && top.score > result.score ? top.score - result.score : 0;
 
@@ -372,8 +380,14 @@ export default function GameCanvas() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-                <button className="cc-btn" onClick={submitScore} disabled={submitting}>
+                <button
+                  className="cc-btn"
+                  onClick={submitScore}
+                  disabled={submitting || !canSubmit}
+                  title={canSubmit ? undefined : UNSCORED_MSG}
+                >
                   {submitting ? "…" : "SUBMIT SCORE"}
+                  {!canSubmit && <span className="sr-only">{UNSCORED_MSG}</span>}
                 </button>
                 <button className="cc-btn cc-btn-ghost" onClick={downloadCard}>DEATH CARD ↓</button>
                 <button className="cc-btn cc-btn-start" onClick={startRun}>RETRY</button>

@@ -2,8 +2,13 @@
 // Storage: MongoStore when DATABASE_URL is set (Atlas M0, phase p1), else in-memory.
 // Includes basic anti-cheat: score/candles consistency cap, name + date sanitizing,
 // and a lightweight per-IP rate limit (in-memory, per instance).
+// W1 integrity: every submission MUST carry the HMAC runToken issued by
+// GET /api/candles; symbol + date are pinned from the verified token payload
+// (client-claimed symbol/date are ignored), and terrain-imposed physical caps
+// reject impossible candle counts/scores.
 import { NextResponse } from "next/server";
 import { getBoard, type BoardEntry } from "@/lib/leaderboard-store";
+import { verifyRunToken, isTokenStale } from "@/lib/run-token";
 
 const MAX_SCORE_PER_CANDLE = 70; // engine max gain: 10 * (1 + 12 * 0.5) = 70
 const MAX_CANDLES = 1000;
@@ -50,15 +55,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "slow down" }, { status: 429 });
   }
   try {
-    const body = (await req.json()) as Partial<BoardEntry>;
+    const body = (await req.json()) as Partial<BoardEntry> & { runToken?: unknown };
+
+    // run token: mandatory, signature-verified (timingSafeEqual), shape-checked
+    const tok = verifyRunToken(body.runToken);
+    if (!tok) {
+      return NextResponse.json({ error: "invalid run token" }, { status: 403 });
+    }
+    if (isTokenStale(tok.date)) {
+      return NextResponse.json({ error: "run token expired" }, { status: 403 });
+    }
+
     const entry: BoardEntry = {
       name: sanitizeName(body.name),
       score: Math.floor(Number(body.score ?? 0)),
       candlesPassed: Math.floor(Number(body.candlesPassed ?? 0)),
       bestStreak: Math.max(0, Math.min(999, Math.floor(Number(body.bestStreak ?? 0)))),
       mutation: String(body.mutation ?? "").slice(0, 24) || undefined,
-      symbol: String(body.symbol ?? "").slice(0, 12) || "N/A",
-      date: String(body.date ?? "").slice(0, 10),
+      // pinned exclusively from the verified token payload — client-claimed
+      // symbol/date are ignored
+      symbol: tok.symbol,
+      date: tok.date,
       ts: Date.now(),
     };
 
@@ -71,6 +88,13 @@ export async function POST(req: Request) {
     }
     if (!Number.isFinite(entry.candlesPassed) || entry.candlesPassed < 0 || entry.candlesPassed > MAX_CANDLES) {
       return NextResponse.json({ error: "invalid candles" }, { status: 400 });
+    }
+    // anti-cheat: terrain-imposed physical caps (count comes from the token)
+    if (
+      entry.candlesPassed > tok.count * MAX_SCORE_PER_CANDLE ||
+      entry.score > tok.count * MAX_SCORE_PER_CANDLE + 20
+    ) {
+      return NextResponse.json({ error: "score exceeds physical maximum" }, { status: 403 });
     }
     // anti-cheat: score must be physically reachable from candles passed
     if (entry.score > entry.candlesPassed * MAX_SCORE_PER_CANDLE + 20) {
