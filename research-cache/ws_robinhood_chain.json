@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://www.coindesk.com",
+    "name": "The Protocol: Robinhood unveils its layer-2 testnet",
+    "snippet": "Feb 11, 2026 — Robinhood debuted the public testnet for its Ethereum layer-2 blockchain with plans for broader introduction later this year as the brokerage ...",
+    "host_name": "www.coindesk.com",
+    "rank": 0,
+    "date": "Feb 11, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.binance.com",
+    "name": "Robinhood Chain Public Testnet Launch: a Strategic Pivot",
+    "snippet": "Feb 10, 2026 — By building an Ethereum Layer 2 on Arbitrum, Robinhood is strategically entering the infrastructure layer of the digital asset economy. This ... Read more",
+    "host_name": "www.binance.com",
+    "rank": 1,
+    "date": "Feb 10, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://tr.tradingview.com",
+    "name": "Robinhood launches Arbitrum-based L2 testnet for",
+    "snippet": "Feb 11, 2026 — Robinhood has launched a public testnet for Robinhood Chain , an Ethereum layer-2 built with Arbitrum, opening the network to developers ...",
+    "host_name": "tr.tradingview.com",
+    "rank": 2,
+    "date": "Feb 11, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.ccn.com",
+    "name": "Robinhood Arbitrum L2 Chain Launches With a Bang",
+    "snippet": "Feb 19, 2026 — Robinhood Chain's testnet launched on Feb. 10, 2026 , and processed 4 million transactions in its first week. The Arbitrum-based Layer-2 focuses ...",
+    "host_name": "www.ccn.com",
+    "rank": 3,
+    "date": "Feb 19, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://phemex.com",
+    "name": "Robinhood Launches Ethereum Layer-2 Testnet",
+    "snippet": "Feb 11, 2026 — The testnet allows developers to test applications before the full launch , fostering an ecosystem for both real-world and digital assets. Read more",
+    "host_name": "phemex.com",
+    "rank": 4,
+    "date": "Feb 11, 2026",
+    "favicon": ""
+  }
+]
