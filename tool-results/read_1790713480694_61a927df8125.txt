@@ -1,0 +1,316 @@
+     1→     1→# vibe/vibe ECOSYSTEM — OFFICIAL KNOWLEDGE BASE
+     2→     2→**Compiled:** 2026-09-30 (UTC) · **Rev 2** (adds "vibe/vibe weekly #1" space + 2026-09-27→29 fresh sweep) · **Purpose:** hand-off dossier for product-design and coding agents
+     3→     3→**Evidence discipline:** every claim carries a source tag `[S#]` resolved in §12. Facts are labeled by confidence: **[A]** official/verified · **[B]** third-party media · **[C]** official-server team voice · **[D]** community voice · **[E]** analyst inference. Anything not tagged is `[E]`.
+     4→     4→
+     5→     5→> ⚠️ HANDLING NOTES FOR AGENTS
+     6→     6→> 1. This document contains private Discord harvests from a public permissionless server. Do not republish raw excerpts externally.
+     7→     7→> 2. Section §28 (client context) is INTERNAL and must be stripped before any external sharing.
+     8→     8→> 3. "vibe/vibe" and anything vibe-related is always written in **lowercase** — enforced brand voice [S19].
+     9→     9→> 4. Reward/allocation figures are program rules, never guarantees — replicate that exact framing in any product copy [S7][S16].
+    10→    10→
+    11→    11→---
+    12→    12→
+    13→    13→## 1. EXECUTIVE SUMMARY
+    14→    14→
+    15→    15→vibe/vibe is a **permissionless token launchpad built by the Seedify ecosystem on Robinhood Chain** (an Arbitrum-based Ethereum L2 by Robinhood the brokerage) [S5][S22][S24]. Its incentivized testnet is live at `testnet.vibevibe.fun` — users discover, test-trade and launch tokens with **no real funds at risk** [S1]. The protocol runs a bonding-curve engine ("seedify-curve-v3") with **automatic buyback & burn** wired into every token by default, 125 bps fees split 75/25 between creators and protocol, and graduation to a Uniswap-v4 pool at 5 ETH net [S2][S15].
+    16→    16→
+    17→    17→The strategic moment: the founder **@meta_alchemist** announced (2026-09-23) that the leaderboard structure is shifting to **three boards — meme & artcoins / infra & product / stock & rwa** — and that **most of the 5% token supply reserved for testnet rewards will go to quality builder projects** [S12]. His explicitly recommended "sweet spot" is the **merge of all three categories**: *"a product or a game or something useful that integrates stock pairs, and has some of storytelling/creative aspect to it too"* [S12]. A parallel official tweet defines an upcoming **"agent quant office"** — agentic wallets, copytrading, gamified leaderboards [S15].
+    18→    18→
+    19→    19→Robinhood Chain itself carries **190+ tokenized real-world instruments on mainnet, including stock tokens (TSLA, AAPL, AMZN, NFLX, S&P 500)**, with mock stock tokens available on testnet via the faucet [S25][S9][S19]. This makes "game × stock pairs × storytelling" a uniquely buildable niche **right now, on testnet, with near-zero cost**.
+    20→    20→
+    21→    21→**Agent directive distilled:** design and ship a quality product in the founder's stated merge-zone, launch it as a token on the vibe/vibe testnet bonding curve, register it through the official showcase + builder-role flow, and accumulate legitimate, reviewable activity — while structurally avoiding every anti-abuse trigger the program documents [S6][S7][S17].
+    22→    22→
+    23→    23→---
+    24→    24→
+    25→    25→## 2. PLATFORM & CHAIN FACTS
+    26→    26→
+    27→    27→### 2.1 Robinhood Chain [B]
+    28→    28→- Ethereum Layer-2 **built with Arbitrum (Orbit stack)**; public testnet launched **2026-02-10**; ~**4M transactions in the first week** [S22][S23][S24].
+    29→    29→- Focus: bringing real-world assets — especially **tokenized stocks** — on-chain; **190+ tokenized instruments on mainnet** (Nvidia, Apple, Google, Tesla, S&P 500). Instruments are structured as tokenized debt securities, not literal shares [S25].
+    30→    30→- Chain parameters (from the live vibe/vibe config API): **chain id `46630`**, native currency ETH (18 decimals), explorer `https://explorer.testnet.chain.robinhood.com` **[A]** [S2].
+    31→    31→- Testnet faucet + one-click add-chain: `https://faucet.testnet.chain.robinhood.com/` and `.../add-chain` **[A]** [S9].
+    32→    32→- Ecosystem competition: Uniswap launched its own "Pools" launchpad on Robinhood Chain — vibe/vibe is not the only pad on this chain [S26].
+    33→    33→
+    34→    34→### 2.2 The vibe/vibe product surface [A]
+    35→    35→- SPA (Vite build, Cloudflare Pages, self-hosted fonts, chef-hat logo, pinned dark theme) titled **"vibe/vibe · Robinhood Chain Testnet"**, described as *"Discover, test-trade and launch tokens on Robinhood Chain Testnet. Testnet only. No real funds."* [S1]
+    36→    36→- Known routes: `/` (Discover), `/create` (launch flow), `/spark-burns`, `/vibers` (aka `/vibe-vibers`), `/vibe-vibers/for-raiders`, `/token/<address>` pages [S1][S8][S21].
+    37→    37→- Internal read APIs (public, no auth): `/api/v1/chains/46630/config`, `/api/v1/chains/46630/v6/launches?limit=50`; client internally named **SeedifyReadClient**; launch index is called "V6" [S1][S2][S3].
+    38→    38→- Launch volume: **260+ token launches already recorded** (highest observed `launchId: 262`, 2026-09-30) [S3].
+    39→    39→
+    40→    40→### 2.3 On-chain protocol mechanics [A — live config, 2026-09-30]
+    41→    41→Policy string: `seedify-curve-v3-testnet-5eth-2pct-3pct-creator-125bps-75-25` [S2]
+    42→    42→
+    43→    43→| Parameter | Value |
+    44→    44→|---|---|
+    45→    45→| Total supply | 1,000,000,000 (1e26 base units) |
+    46→    46→| Curve allocation | 79.31% |
+    47→    47→| LP allocation | 20.69% |
+    48→    48→| Graduation target | 5 ETH net → DEX (Uniswap **v4 poolManager**) |
+    49→    49→| Trading fee | 125 bps (1.25%) → **75% creator / 25% protocol** |
+    50→    50→| Creator fee use | 50% direct payout wallet / 50% auto-buyback of launch token |
+    51→    51→| Protocol fee use | 50% treasury / 50% $sfund buyback |
+    52→    52→| Buyback execution | keeper-authorized contracts, external limits, buybacks routed to **irrecoverable burn address** |
+    53→    53→| Creation fee | 0.0005 ETH |
+    54→    54→| Wallet cap | 2% of curve supply |
+    55→    55→| Creator initial-buy cap | 3% |
+    56→    56→| Transfers | **locked until graduation** |
+    57→    57→
+    58→    58→Deployed contracts (testnet): factory `0x40f1be6faf8DAB9C143cce1a0A04c2075Fb2DF59`, graduationAdapter `0xA6a5D4C098dA8f79eae1203A8E42ff9AC7a17F06`, feeHook `0x2779651feE12F6fB5A187578De6b63709f85d0Cc`, liquidityLocker `0xc0a2DEEbdc40b7083dC9a067F6992F884Fb6074D`, protocolTreasury `0x91719A47f855079678b3D5E3af69CDe2b830c5C9`, poolManager `0x8366a39cc670b4001a1121b8f6a443a643e40951`, multicall3 `0xcA11bde05977b3631167028862bE2a17397…` [S2]
+    59→    59→
+    60→    60→Official differentiation statement (auto-buyback framing): *"all tokens are community aligned, and as attention and success comes, they get more scarce"*; fees 1.25% split 75/25; keeper contracts auto-buyback & burn 50% of each side, remainder to each treasury [S15].
+    61→    61→
+    62→    62→### 2.4 Launch flow (official, 7 steps) [A]
+    63→    63→1. Set up a supported EVM wallet → 2. faucet funds → 3. go to `testnet.vibevibe.fun` → 4. create project/token + bonding curve → 5. **choose the right category** → 6. meet category minimums (see §4) → 7. share the launched project in `#project-showcase` [S17][S18].
+    64→    64→- Create URL: `https://testnet.vibevibe.fun/create` — *"Supply, target, allocation, and shape cannot change after creation"* [S8].
+    65→    65→- Multiple launches allowed, but *"more launches do not automatically mean better reward-related eligibility"* [S8].
+    66→    66→---
+    67→    67→
+    68→    68→## 3. PEOPLE, ACCOUNTS & OFFICIAL CHANNELS
+    69→    69→
+    70→    70→### 3.1 Official links (the ONLY trusted set) [A]
+    71→    71→| Surface | URL | Source |
+    72→    72→|---|---|---|
+    73→    73→| Launchpad (main) | https://vibevibe.fun/ | [S4] |
+    74→    74→| Testnet app | https://testnet.vibevibe.fun/ | [S1][S8] |
+    75→    75→| X (official) | https://x.com/vibevibefun | [S4] |
+    76→    76→| Telegram | https://t.me/vibevibefun | [S4] |
+    77→    77→| Discord (builders) | https://discord.gg/vibevibebuilders | [S13] |
+    78→    78→| Faucet | https://faucet.testnet.chain.robinhood.com/ | [S9] |
+    79→    79→
+    80→    80→Anti-phishing rule from the team: *"Only trust links from this channel or other official vibe/vibe / Seedify channels"* — reports via `#support-tickets` [S4].
+    81→    81→
+    82→    82→### 3.2 People map
+    83→    83→| Person | Role | Evidence & confidence |
+    84→    84→|---|---|---|
+    85→    85→| **Meta Alchemist** (@meta_alchemist) | Founder / founder voice of vibe/vibe | site OG-image comment literally labels its banner "the founder's banner" [S1]; authors the builder-program posts [S12][S13]; narrates Seedify heritage [S15]. **[A]** |
+    86→    86→| **adramelekh.** | Official comms (Discord) | sole author of #about, #start-here, #testnet-incentives, #faq, #official-links [S4–S11]. **[A]** |
+    87→    87→| **covenant11** | Community team / mod (Discord) | de-facto support lead; answers NFT/reward/mainnet questions; enforces brand voice [S19]. **[C]** |
+    88→    88→| **zacxbt** (@zacxbt) | Featured builder | founder publicly tells him to ship his AI-built "cozy metal detector game" as a testnet token [S13][S14]. **[A]** |
+    89→    89→| Discord role structure | Admin, Team, Moderator, Collab Manager, **Guild Leader**, **Builder**, Verified, Vibe/viber | guild roles API [S27]. **[A]** |
+    90→    90→
+    91→    91→> Verification limits: X profile bios/counts were not retrievable at compile time (login-walled; all nitter mirrors geo-blocked) [S29]. Founder identity rests on the site's own comment + authorship pattern, which is strong.
+    92→    92→
+    93→    93→### 3.3 Brand voice rules [C]
+    94→    94→- **Everything vibe-related is lowercase** — team corrects members on this repeatedly ("please always write anything vibe-related in lowercase letters") [S19].
+    95→    95→- Tone: casual, short lines, degen-native; program facts always framed as "nothing is guaranteed" [S7][S16].
+    96→    96→
+    97→    97→---
+    98→    98→
+    99→    99→## 4. BUILDER PROGRAM & REWARD ECONOMICS
+   100→   100→
+   101→   101→### 4.1 The 5% testnet reward pool [A]
+   102→   102→From official `#testnet-incentives` (2026-09-04): **"vibe/vibe Testnet rewards are 5.00% of the total token supply, subject to eligibility checks, anti-abuse review, final review, and team discretion."** [S7]
+   103→   103→
+   104→   104→| Track | Share of supply |
+   105→   105→|---|---|
+   106→   106→| Traders / users | **1.75%** |
+   107→   107→| Meme / artcoin projects | **1.50%** |
+   108→   108→| Utility projects (RWA + vibecoded/product; exact split TBD) | **1.50%** |
+   109→   109→| Old testnet project creators | **0.25%** |
+   110→   110→
+   111→   111→### 4.2 Category minimums (hard gate) [A]
+   112→   112→- **Meme/artcoin** → visible culture effort + public social presence [S6][S17].
+   113→   113→- **RWA** → working testnet functionality or simulation [S6][S17].
+   114→   114→- **Vibecoded/product** → MVP, demo, prototype, or usable flow [S6][S17].
+   115→   115→- *"Ideas alone are not enough for project ranking/rewards."* [S6][S7]
+   116→   116→
+   117→   117→### 4.3 The leaderboard shift (2026-09-23) [A — full founder post]
+   118→   118→> *"soon the leaderboard structure will shift where you can choose to be in one of these leaderboards: **- meme & artcoins - infra & product - stock & rwa**. we want to reward quality projects with testnet rewards… if you are already vibe coding / building something, definitely join our discord, and our team will guide you there… you'll be rewarded very well from vibe/vibe's upcoming token this way, where we are **dedicating most of the 5% supply to such projects**. i'd especially recommend **the merge between the 3 categories, having a product or a game or something useful that integrates stock pairs, and have some of storytelling/creative aspect to it too**."* [S12]
+   119→   119→
+   120→   120→**[E] Read-through:** the founder is telegraphing the exact evaluation lens. Three boards exist for routing, but the highest-conviction allocation targets projects that are *simultaneously*: useful product (infra & product board) + stock-pair integration (stock & rwa board) + creative/memetic wrapper (meme & artcoins board). Rewarding "quality" + the anti-abuse rules imply human review of: working demo, real social presence, honest activity.
+   121→   121→
+   122→   122→### 4.4 Anti-abuse rules (what disqualifies) [A]
+   123→   123→Sybil activity, fake volume, **self-trading**, circular trading, spam launches, fake guild activity, scam links, impersonation → eligibility reduced/removed; *"exact anti-abuse methods, thresholds, caps, formulas, and final criteria will not be public"* [S6][S7]. One builder publicly doubted leaderboard scores of top accounts [S19] — expect scrutiny.
+   124→   124→
+   125→   125→### 4.5 Builder role & intake [A/C]
+   126→   126→- Apply via `#get-roles` application bot; team reviews what you're building; then you may post in `#project-showcase` [S21].
+   127→   127→- Showcase template observed: **Project name / Category / Token link (`testnet.vibevibe.fun/token/0x…`) / Creator X / Project X / description** [S20][S21].
+   128→   128→
+   129→   129→### 4.6 Token & NFT rails around the program [C]
+   130→   130→- **$SPARK** (existing Seedify-ecosystem token): NFT gating currency. **200k SPARK = 1 vibe/viber NFT**, multiplicative (600k = 3, 1M = 5); top-250 SPARK holders on **fomo.family** get +1; top-250 Telegram raiders get 1 WL/NFT each; exceptional creators/collabs earn NFTs in the marketing phase [S19].
+   131→   131→- **vibe vibers NFT**: 10,000 supply, **mint after mainnet** [S19].
+   132→   132→- **vibe/vibe token**: upcoming; community actively speculates on airdrop ratio vs SPARK and mainnet timing; team: "Mint comes after mainnet" [S19].
+   133→   133→- Guilds: communities join together; guild-leader approval may matter for guild NFT rewards; leaders cannot guarantee anything [S11].
+   134→   134→
+   135→   135→---
+   136→   136→
+   137→   137→## 5. OFFICIAL PRODUCT ROADMAP SIGNALS [A]
+   138→   138→
+   139→   139→From the official X account (2026-09-10) [S15]:
+   140→   140→1. Auto buyback & burns on **all** tokens (default).
+   141→   141→2. Seedify heritage: "most OG launchpad… active for 5+ years… 44X average ROI per launch at some point… experience that will shape **a merge between infra, stock pairs, vibe coding, and memetic vibes**."
+   142→   142→3. **"agent quant office"** — *"you can use your agent companions for copytrading, automations, strategies: with a **gamified experience and agentic wallets, leaderboards and more**."*
+   143→   143→4. "more surprises coming. await us!"
+   144→   144→
+   145→   145→**[E]** The platform's own roadmap is gamified + agentic. Products that expose agent-friendly surfaces (APIs, bot-readable state, wallet-based identity) align with where the pad itself is going.
+   146→   146→
+   147→   147→### 5.1 "vibe/vibe weekly #1" — official X space (2026-09-28) [A announcement / C pending content]
+   148→   148→- The official account started a **recurring weekly space series**: *"vibe/vibe weekly #1 is live! today we are speaking about: - Robinhood Chain - Product updates - Wen launch - and more"* — posted **2026-09-28 16:03 UTC** with space link `x.com/i/spaces/1RJZzBgkDmzJB` [S30].
+   149→   149→- Server-side format: the Discord has a dedicated **Spaces → Main voice channel** used to co-listen to spaces; no text transcript is posted in-server [S27][S31].
+   150→   150→- Verbatim space content is **not yet in evidence**: replay audio is X-login-walled, no public recap was indexed as of compile time, and the voice-channel text chat was empty [S29][S31]. The three agenda topics are **[A]** (official announcement text); any specific statements made *inside* the space are **not covered by this KB yet** — see §11.
+   151→   151→- **[E] Read-through:** putting "wen launch" on the official agenda of episode #1 means launch timing was addressed by the team in public audio — every floating launch-date rumor should be treated as stale until checked against this space's recording or the next episode. "weekly #1" implies a **fixed weekly comms cadence**: episode #2 is a scheduled intelligence event — re-verify §2/§4/§5 after it before locking product decisions.
+   152→   152→
+   153→   153→---
+   154→   154→
+   155→   155→## 6. COMMUNITY VOICE — WHAT USERS & BUILDERS SAY THEY WANT
+   156→   156→
+   157→   157→Harvested 2026-09-30 from official Discord (1,200 msgs #global-chat 09-14→29, 93 msgs #project-showcase, keyword sweeps) [S19][S20][S21]:
+   158→   158→
+   159→   159→**Wants / praise:**
+   160→   160→- Working **stock integrations** are the most noticed builds (index baskets, perps UIs, stock-picking games) [S21].
+   161→   161→- **Games with visible playability** get traction in showcase (Cyber Dragons, Sherwood Canvas, RABBLE, metal detector) [S21].
+   162→   162→- Tools that make trading decisions easier (launch trackers with scores, heat status) draw attention — two independent ones shipped within days of each other [S21].
+   163→   163→- Community rewards questions dominate; people want clear, verifiable reward paths [S19].
+   164→   164→
+   165→   165→**Friction / complaints (avoid these failure modes):**
+   166→   166→- Leaderboard-score legitimacy doubted at least once → build provable, honest metrics [S19].
+   167→   167→- Team declines standalone utility tools: *"position the tracker as part of the utility for the project you launch"* — **wrap your tool inside a launched token** rather than shipping a bare tool [S19].
+   168→   168→- Builder-role bot outages slow onboarding — register early, confirm role [S21].
+   169→   169→- Wallet-connection confusion in games → only integrate wallets where on-chain action exists; a standalone game + separately paired token is acceptable [S19].
+   170→   170→
+   171→   171→**Mainnet sentiment:** high anticipation, frequent "when mainnet / when token" questions, no official date — ship now on testnet, be positioned at mainnet [S19].
+   172→   172→
+   173→   173→**Fresh sweep (2026-09-28→30, newest-60 per active channel) [S31]:**
+   174→   174→- A builder asks *"how do whitelist (WL) spots for NFTs work, and what should I do after publishing?"* — WL mechanics are still opaque to newcomers; any product that clarifies/automates the post-launch path fills a real gap [S31].
+   175→   175→- Builder asked *"do our vibe coded games need to be on chain?"* — team answer (covenant11): integrate chain only where real on-chain action exists; testnet funds exist so launched tokens carry "actual utility behind them" [S31].
+   176→   176→- Builder-role application bot was still being repaired on 2026-09-28 ("we're fixing the bot") — onboarding friction persists; register early [S21][S31].
+   177→   177→- Showcase velocity: **5+ new submissions in 72h** (Sep 27–29), two of them playable games — the founder's merge slot is being actively chased; time-to-ship is now a competitive factor [S31].
+   178→   178→
+   179→   179→---
+   180→   180→
+   181→   181→## 7. COMPETITIVE LANDSCAPE (what's already on the board)
+   182→   182→
+   183→   183→| Project | Type | Note |
+   184→   184→|---|---|---|
+   185→   185→| Pulse Intelligence ($PULSE) | launch intel / token tracker | explainable "Pulse Score" [S21] |
+   186→   186→| TRENCH | live intelligence & community terminal | [S21] |
+   187→   187→| RABBLE — Season Zero | mobile-first social market game, pick-5-stocks squads | closest game competitor [S21] |
+   188→   188→| VIBE HUNT ($JVC) | 3D cyber-cat runner web game (lane-dodge, auto-shoot, coins/time) | newest game showcase 2026-09-29 [S31] |
+   189→   189→| Gap Call ($GAP) | weekly Fri→Sun stock-gap prediction game (NVDA/TSLA/SPY) | stock-pair game loop 2026-09-20 [S31] |
+   190→   190→| dStock ($DSTOCK) | RWA stock-index dApp (The-Index-inspired) | 2026-09-24 [S31] |
+   191→   191→| Gnomevibes (GNOVE) | 5,000-piece NFT collection + tiered free-claim unlocks | NFT-track competitor 2026-09-23 [S31] |
+   192→   192→| Cetix · MASK ($MASK) | meme/community · campus-education web3 network | 2026-09-28 [S31] |
+   193→   193→| Wishlist ($WISH) | stock spot & perps, 0% fees | finance product [S21] |
+   194→   194→| Exit Liquidity ($EXIT) | meme/artcoin + working product + stock integration | explicitly chasing the merge [S21] |
+   195→   195→| Builder Trio Index ($BTRIO) | index basket of chain stock tokens (TSLA/AMZN/NFLX) | **INTERNAL: client's own submission, 2026-09-27** [S21][S28] |
+   196→   196→| Cyber Dragons, Sherwood Canvas, ATLAS, QORVADA, Token Taphouse | games / RWA / utility | volume of submissions shows the bar [S21] |
+   197→   197→| Uniswap Pools | competing launchpad on same chain | external competition [S26] |
+   198→   198→
+   199→   199→**[E] Gap analysis:** nobody has yet shipped the founder's exact "merge" archetype — **an interactive, story-driven game whose core mechanic IS the stock-pair data**, with a launched testnet token, an X presence, and a shareable demo loop. RABBLE is stock-pick+social but thin on narrative; EXIT is meme-first with bolt-on product; trackers are tools, not products with story. The merge slot is open.
+   200→   200→
+   201→   201→---
+   202→   202→
+   203→   203→## 8. BRIEF FOR THE DESIGN AGENT (ideation directives)
+   204→   204→
+   205→   205→**Mission:** conceive one flagship product that maximizes probability of a top-5 placement on the builder leaderboard(s) [S12].
+   206→   206→
+   207→   207→> **READ FIRST:** companion gap-analysis  (same folder) — evidence-driven gap register with leverage/trap verdicts; primary leverage = live stock-price game loop + graduation-lifecycle layer [S32].
+   208→   208→
+   209→   209→**Hard alignment requirements (evidence-locked):**
+   210→   210→1. **Live in the founder's merge-zone** [S12]: a *product or game* that is *useful*, *integrates stock pairs*, and carries a *storytelling/creative layer* — all three simultaneously. This is a verbatim founder recommendation, not an inference.
+   211→   211→2. **Category registration:** pick one primary board to enter (meme & artcoins / infra & product / stock & rwa) — the product must genuinely qualify for its chosen minimum (MVP/demo/usable flow for vibecoded; culture + social presence for meme; working functionality for RWA) [S6][S17].
+   212→   212→3. **Token-native, not tool-bare:** the product must launch its own testnet token on the vibe/vibe bonding curve and *be* that token's utility — the team explicitly redirects standalone tools into token-wrapped utility [S19][S8].
+   213→   213→4. **Zero-real-money framing:** everything testnet, "no real funds" — copy must reflect that the pad itself markets this safety [S1].
+   214→   214→5. **Brand voice:** lowercase vibe/vibe everywhere; degen-native tone; never promise rewards in product copy (program rule: nothing is guaranteed) [S19][S7][S16].
+   215→   215→6. **Shareable proof loop:** the showcase culture rewards visible artifacts — X account, website, demo link, screenshots/clips. Design must generate *clippable moments* (share cards, streak screenshots, leaderboards) because "visible culture effort + public social presence" is a graded criterion [S6][S17][S20].
+   216→   216→7. **Honesty surfaces:** provable metrics (on-chain verifiable stats) — a builder publicly doubted leaderboard scores; provable fairness is differentiator [S19].
+   217→   217→
+   218→   218→**Idea-space mapped to evidence (each idea hits the merge thesis):**
+   219→   219→- **Market-physics game** where real testnet stock-token price feeds (TSLA/AMZN/NFLX mock tokens from the faucet ecosystem) drive level generation, events, or NPC behavior — game mechanic = the stock data itself (merge: game × stock pairs × story) [S9][S21][S25].
+   220→   220→- **Narrative trading-lore arcade** — storytelling wrapper around actual on-chain launch data of vibe/vibe tokens (use the public `/api/v1/chains/46630/v6/launches` feed as content engine) [S3].
+   221→   221→- **Agentic companion mini-product** echoing the "agent quant office" roadmap — but wrapped as the game's oracle/NPC with its own token utility [S15][S19].
+   222→   222→
+   223→   223→**Selection rubric for the design agent (derived [E]):** ship-ability in days (AI-agent stack is the norm here [S10]) × stock-pair depth × story strength × shareability × demo-first impression × zero-claim reward copy.
+   224→   224→
+   225→   225→---
+   226→   226→
+   227→   227→## 9. BRIEF FOR THE CODER AGENT (top-5 engineering requirements)
+   228→   228→
+   229→   229→**Quality bar (>95% technical/quality target):** this ecosystem's builders already ship with v0/Vercel/Supabase and Claude Code/Cursor/Codex/Grok — the official builder-tools list defines the de-facto stack [S10]. The founder rewards *"quality projects"* and *"even a few days"* of work with *"a decent product"* [S12] — so a polished, reliable MVP beats scope.
+   230→   230→
+   231→   231→**Engineering requirements:**
+   232→   232→1. **Ship the full intake path exactly as documented** [S17][S8]: wallet → faucet → `testnet.vibevibe.fun/create` → bonding-curve token launch (respect creationFee 0.0005 ETH, caps, immutability after creation) → `#project-showcase` post in the observed template [S20].
+   233→   233→2. **Testnet-only integrity:** no mainnet funds, no self-trading loops, no fake volume; all activity must survive hidden anti-abuse review [S6][S7].
+   234→   234→3. **Stock-pair integration:** consume Robinhood Chain testnet stock tokens (mock TSLA/AMZN/NFLX from faucet rails [S9][S19]) or vibe/vibe public APIs [S2][S3]; document every feed used.
+   235→   235→4. **Provable quality signals:** public repo (GitHub), deployed URL, uptime plan, error monitoring (Sentry pattern from official stack list [S10]), seed data + demo mode so reviewers see a working flow instantly.
+   236→   236→5. **Wallet UX:** connect only where on-chain action exists; support standalone-game + paired-token architecture as team-endorsed pattern [S19].
+   237→   237→6. **Performance & mobile-first:** the pad's own site is a mobile-obsessed Vite SPA [S1]; the closest game competitor (RABBLE) is mobile-first [S21] — treat mobile as the default viewport.
+   238→   238→7. **Shareable artifacts engine:** auto-generate X-ready share cards/links (og-image discipline like vibe/vibe's own head [S1]).
+   239→   239→8. **Compliance copy:** "testnet only, no real funds", "nothing is guaranteed", lowercase vibe/vibe — in-product [S1][S7][S19].
+   240→   240→9. **Recoverable ops:** secrets hygiene (the pad's own builder-tools list preaches env-var discipline [S10]); infra-as-code so the project can be redeployed quickly before mainnet.
+   241→   241→10. **Ship cadence:** multiple reviewable quality artifacts > repeated low-effort launches ("more launches ≠ better eligibility") [S8].
+   242→   242→
+   243→   243→**Deliverable definition of done [E]:** launched token on testnet + working product URL + public repo + X account with ≥5 substantive posts + showcase post + demo video/clips — every item maps to a graded or observed criterion [S6][S12][S17][S20].
+   244→   244→
+   245→   245→---
+   246→   246→
+   247→   247→## 10. CLIENT CONTEXT — **INTERNAL, STRIP BEFORE EXTERNAL USE** [S28]
+   248→   248→
+   249→   249→- Client's Discord: `lonelystranger78` (display `0o0r7`) — already applied into the ecosystem; submitted **"Builder Trio Index · $BTRIO"** (infra: index basket of TSLA/AMZN/NFLX stock tokens) to `#project-showcase` on **2026-09-27** [S21][S28].
+   250→   250→- Client's flagship candidate: **candle climber** — vertical skill platformer where terrain is generated from real daily candlesticks (stocks/charts) — a direct implementation of the founder's merge thesis (game × stock pairs × storytelling) [S12][S28].
+   251→   251→- Implication: $BTRIO exists as the token-wrapped infra utility; the game should launch its **own** token and interlink (game token as primary showcase entry; BTRIO as companion infra proof). Builder role + showcase flow already familiar to client.
+   252→   252→
+   253→   253→---
+   254→   254→
+   255→   255→## 11. VERIFICATION NOTES & ACCESS LIMITATIONS [S29]
+   256→   256→
+   257→   257→**What was verified live (strongest tier):** protocol config API (fees, caps, contracts), launch index API, site HTML head, official tweets via two independent fetch paths (fxTwitter full text + X syndication metadata: dates, like counts), Discord official channel posts with timestamps and authorship.
+   258→   258→
+   259→   259→**What could not be verified at compile time:** X follower counts / full timelines of @vibevibefun, @meta_alchemist, @zacxbt (login walls; nitter mirrors blocked HTTP 403/451); **"vibe/vibe weekly #1" space recording/verbatim content (X replay is login-walled; no public recap indexed; twstalker mirrors JS-challenged)** [S29][S30][S31]; Telegram channel contents (preview empty); Discord member list (endpoint 403) — team roster above is evidence-based but not exhaustive; two role-gated Robinhood channels (`robinhood-chain-newsfeed`, `robinhood-alpha`) unreadable.
+   260→   260→
+   261→   261→**Deliberate exclusions:** single-source community rumors (airdrop ratios, price predictions) are reported only as *community sentiment*, never as program fact [S19].
+   262→   262→
+   263→   263→**Re-verification pointers (cheapest first):** reload config API [S2] → reload launches API [S3] → re-fetch tweets via `api.fxtwitter.com/<handle>/status/<id>` [S12][S13][S15] → re-run read-only Discord harvest scripts (`scripts/discord_harvest.py`, `scripts/discord_harvest2.py`) [S19–S21].
+   264→   264→
+   265→   265→---
+   266→   266→
+   267→   267→## 12. SOURCE INDEX
+   268→   268→
+   269→   269→| # | Type | Reference | Date / accessed |
+   270→   270→|---|---|---|---|
+   271→   271→| S1 | Site HTML | https://testnet.vibevibe.fun/ (title, meta, routes, chain-id, prestart calls, "founder's banner" comment) | accessed 2026-09-30 |
+   272→   272→| S2 | Live API | https://testnet.vibevibe.fun/api/v1/chains/46630/config (full protocol policy + deployments) | accessed 2026-09-30 |
+   273→   273→| S3 | Live API | https://testnet.vibevibe.fun/api/v1/chains/46630/v6/launches?limit=50 (launchId 262) | accessed 2026-09-30 |
+   274→   274→| S4 | Discord #official-links | adramelekh., 2026-09-02 | accessed 2026-09-30 |
+   275→   275→| S5 | Discord #about | adramelekh., 2026-09-02 ("permissionless launchpad from the Seedify ecosystem on Robinhood Chain") | accessed 2026-09-30 |
+   276→   276→| S6 | Discord #start-here | adramelekh., 2026-09-02 (categories, guilds, anti-abuse) | accessed 2026-09-30 |
+   277→   277→| S7 | Discord #testnet-incentives | adramelekh., 2026-09-04 (5% split) | accessed 2026-09-30 |
+   278→   278→| S8 | Discord #faq | adramelekh., 2026-09-02 (launch steps, /create, graduation) | accessed 2026-09-30 |
+   279→   279→| S9 | Discord #robinhood-faucet | adramelekh., 2026-09-02 (faucet + add-chain URLs) | accessed 2026-09-30 |
+   280→   280→| S10 | Discord #builder-tools | adramelekh., 2026-09-02/04 (official stack list) | accessed 2026-09-30 |
+   281→   281→| S11 | Discord #guilds-info | adramelekh., 2026-09-02 | accessed 2026-09-30 |
+   282→   282→| S12 | X post (full text) | https://x.com/meta_alchemist/status/2102735742191665498 (leaderboard shift; 193 likes) | 2026-09-23 |
+   283→   283→| S13 | X post (full text) | https://x.com/meta_alchemist/status/2103814595500753339 (Opus 5.5; zacxbt; discord.gg/vibevibebuilders; 94 likes) | 2026-09-26 |
+   284→   284→| S14 | X quoted post | @zacxbt — "vibe coding a cozy metal detector game… opus 5.5" (embedded in S13) | 2026-09-26 |
+   285→   285→| S15 | X post (full text) | https://x.com/vibevibefun/status/2097909519481499941 (auto-buyback; merge thesis; agent quant office) | 2026-09-10 |
+   286→   286→| S16 | Discord #announcements | adramelekh., 2026-09-02 (scope; nothing-guaranteed clause) | accessed 2026-09-30 |
+   287→   287→| S17 | Discord #how-to-launch | adramelekh., 2026-09-02 (7-step flow + minimums) | accessed 2026-09-30 |
+   288→   288→| S18 | Discord #builder-start-here | adramelekh., 2026-09-02 | accessed 2026-09-30 |
+   289→   289→| S19 | Discord #global-chat harvest | 1,200 msgs, 2026-09-14→29 (NFT rules by covenant11; brand voice; mainnet sentiment) | accessed 2026-09-30 |
+   290→   290→| S20 | Discord #project-showcase harvest | 93 msgs (submission template, competitor set) | accessed 2026-09-30 |
+   291→   291→| S21 | Discord guild keyword search | 12 queries (leaderboard/founder/seedify/mainnet/game/stock/nft/reward/builder-role…) | accessed 2026-09-30 |
+   292→   292→| S22 | News | CoinDesk — "Robinhood unveils its layer-2 testnet" | 2026-02-11 |
+   293→   293→| S23 | News | CCN — "Robinhood Arbitrum L2 Chain Launches With a Bang" (4M tx week 1) | 2026-02-19 |
+   294→   294→| S24 | Analysis | Binance — "Robinhood Chain Public Testnet Launch: a Strategic Pivot" | 2026-02-10 |
+   295→   295→| S25 | Article | Tangem — "Everything You Need To Know About Robinhood Chain" (190+ tokenized instruments) | 2026-09-15 |
+   296→   296→| S26 | News snippet | Uniswap "Pools" launchpad on Robinhood Chain | 2026-09 |
+   297→   297→| S27 | Discord API metadata | guild/channels/roles JSON (44 channels, role ladder, vanity, tier-3 boost) | accessed 2026-09-30 |
+   298→   298→| S28 | INTERNAL | client's BTRIO submission + mission brief | 2026-09-27/30 |
+   299→   299→| S29 | Limitations log | blocked mirrors/endpoint list (see §11) | accessed 2026-09-30 |
+   300→   300→| S30 | X post (full text) | https://x.com/vibevibefun/status/2104602963033620791 ("vibe/vibe weekly #1 is live!" — agenda: Robinhood Chain / Product updates / Wen launch; space link) | 2026-09-28 |
+   301→   301→| S31 | Discord fresh sweep | newest-60 msgs of global-chat / project-showcase / share-your-content / builder-help + Spaces→Main voice-chat check (`research-cache/dc_newest_20260929.json`, `dc_voice_main.json`) | accessed 2026-09-30 |
+   302→   302→
+   303→   303→**Raw evidence cache:** all Discord JSON harvests, tweet JSONs, site HTML and API responses are archived under `research-cache/` in the workspace and are re-fetchable via the two persisted harvest scripts.
+   304→   304→
+   305→   305→---
+   306→   306→
+   307→   307→## 13. GLOSSARY
+   308→   308→
+   309→   309→- **graduation** — bonding curve reaching 5 ETH net; token migrates to a Uniswap-v4 pool; transfers unlock [S2][S8]
+   310→   310→- **vibecoded / vibe coding** — AI-agent-assisted building ("product or a game or something useful"); official builder category [S6][S12]
+   311→   311→- **stock pairs** — Robinhood Chain tokenized-stock markets (mock versions on testnet: TSLA, AMZN, NFLX…) [S9][S19][S25]
+   312→   312→- **$SPARK** — Seedify-ecosystem token; current NFT-gating currency of the vibe/vibe program [S19]
+   313→   313→- **vibe/viber NFT** — 10k collection, mint after mainnet; program-status symbol with allocation-adjacent benefits [S19]
+   314→   314→- **the merge** — founder's thesis: combine infra/product + stock pairs + memetic/story layer in ONE project [S12][S15]
+   315→   315→- **vibe/vibe weekly** — recurring official X space series (episode #1: 2026-09-28); team answers product/launch questions in audio; Discord Spaces voice channel = official co-listening room [S30][S31]
+   316→   316→
