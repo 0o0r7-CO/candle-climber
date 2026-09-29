@@ -51,3 +51,13 @@ npm-debug.log*
 .atlas_*
 .env*.local
 .discord_token
+
+# research & audit workspace (lives in vibe-ecosystem-kb repo, not the game repo)
+/research-cache/
+/kb-repo/
+/tool-results/
+/after8s.png
+/deathcard.png
+/desktop.png
+/mobile_home.png
+/playing1.png
