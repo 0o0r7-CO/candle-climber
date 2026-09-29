@@ -1,0 +1,584 @@
+{
+ "search_space": {
+  "total": 5,
+  "msgs": [
+   {
+    "ch": "1544666579898339328",
+    "ch_name": null,
+    "author": "Wick",
+    "bot": true,
+    "ts": "2026-09-29T06:13:25.270000+00:00",
+    "content": "",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "Wick",
+    "bot": true,
+    "ts": "2026-09-23T15:58:53.949000+00:00",
+    "content": "",
+    "attach": []
+   },
+   {
+    "ch": "1541736997297725491",
+    "ch_name": null,
+    "author": "Wick",
+    "bot": true,
+    "ts": "2026-09-18T05:23:10.880000+00:00",
+    "content": "",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "bacty123",
+    "bot": false,
+    "ts": "2026-09-10T17:18:06.944000+00:00",
+    "content": "For community members for everyone you can join regarding anything you do on space",
+    "attach": []
+   },
+   {
+    "ch": "1545060543847465052",
+    "ch_name": null,
+    "author": "Wick",
+    "bot": true,
+    "ts": "2026-09-03T13:18:59.686000+00:00",
+    "content": "",
+    "attach": []
+   }
+  ]
+ },
+ "search_weekly": {
+  "total": 13,
+  "msgs": [
+   {
+    "ch": "1544666579898339328",
+    "ch_name": null,
+    "author": "tarasyuk8247",
+    "bot": false,
+    "ts": "2026-09-29T10:25:17.188000+00:00",
+    "content": "Project name: Sherwood Canvas ($SHRWD)\nCategory: Vibecoded / product: a working on-chain game\nProject/token link: https://testnet.vibevibe.fun/token/0xB76f7ab3baf2c4220444C73F66793869A811e001\nCreator X: https://x.com/berleco\n\nShort description:\nA shared 64×64 pixel canvas that lives entirely in a smart contract on Robinhood Chain testnet. Paint a free pixel for 0.00001 test ETH, or take someone else's pixel for double its last price. When your pixel is taken, you get half of what was paid, withdraw any time.\nEvery week is a season: +1 per new pixel, +3 per takeover, +1 per pixel you still hold at the Monday reset, and ×2 if you hold $SHRWD. Scores are rebuilt from on-chain events, so anyone can re-check them.\n\nMVP/demo/product link: https://mrtarasyuks.github.io/sherwood-canvas/\nSource + verified contract: https://github.com/mrtarasyuks/sherwood-canvas\n\nWhat should users test:\n• Connect ",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "gambit4818",
+    "bot": false,
+    "ts": "2026-09-28T16:26:02.292000+00:00",
+    "content": "Yes boss. I'm on X now for vibe/vibe weekly. Hope you there too",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "covenant11",
+    "bot": false,
+    "ts": "2026-09-26T08:35:00.357000+00:00",
+    "content": "In about two weeks",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "brainstormity",
+    "bot": false,
+    "ts": "2026-09-24T07:04:56.319000+00:00",
+    "content": "guys after trying for weeks, i was successful in deploying my first project on testnet\nit's backed by my open source project, so there is a real product linked to it.\ngo check it out and use your testnet tokens haha\nhttps://discord.com/channels/1541735368670314556/1544666579898339328/1552574031474200616",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "zestovibe",
+    "bot": false,
+    "ts": "2026-09-22T09:01:04.660000+00:00",
+    "content": "We have one week left on month and didn't get any dates",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "kyzia772",
+    "bot": false,
+    "ts": "2026-09-21T09:41:16.964000+00:00",
+    "content": "happy new week vibers",
+    "attach": []
+   },
+   {
+    "ch": "1544666579898339328",
+    "ch_name": null,
+    "author": "ifeolayeni",
+    "bot": false,
+    "ts": "2026-09-20T15:47:00.293000+00:00",
+    "content": "Gap Call is live on Robinhood Chain testnet.\n\nStocks close. Stock Tokens don’t.\n\nThat gap is what I built around.\n\nOn Gap Call, you make a percentage call on where NVDA, TSLA or SPY lands across the Friday → Sunday gap, then back your prediction with $GAP.\n\nYour call stays editable through the week — Friday only sets the starting price. Calls lock Sunday at 7 PM ET, before the reference market returns, then the actual move settles the round and we see who got closest.\n\n$GAP isn’t just the token beside the app either. It’s the conviction behind each call, verified against your wallet balance when you submit.\n\nTry it: https://gapcall.vercel.app\n\n$GAP / NVDA: https://testnet.vibevibe.fun/token/0x303b519D4769347dBc90266c723EBAe74C34dC02\n\nWould love some actual calls on the board — especially if you think NVDA is opening up or down.  https://x.com/lordhegambit/status/2101698601046937684?s=20",
+    "attach": []
+   },
+   {
+    "ch": "1544666579898339328",
+    "ch_name": null,
+    "author": "dakid.poor",
+    "bot": false,
+    "ts": "2026-09-13T17:51:11.736000+00:00",
+    "content": "https://x.com/Siomaomachine/status/2098392786974470198",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "meta_alchemist",
+    "bot": false,
+    "ts": "2026-09-10T18:34:06.987000+00:00",
+    "content": "will check this very soon kamrul, we were merging the stock pairs since beginning of the week, so we couldnt fix new bugs that appeared, thanks for sharing with us!",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "roxate",
+    "bot": false,
+    "ts": "2026-09-10T18:17:07.837000+00:00",
+    "content": "Alright, I have launched a lot on the testnet since the first week. Just that I prefer one particular one I wanted to use",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "kezuflow",
+    "bot": false,
+    "ts": "2026-09-10T16:50:10.388000+00:00",
+    "content": "Oh yeah ok will check it out later.. last time i checked it was down like a week ago.. will check it out later again. Thanks meta!",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "favourrr0244",
+    "bot": false,
+    "ts": "2026-09-10T16:47:22.374000+00:00",
+    "content": "The vibe vine testnet is live \nIt's going to be a launchpad on RH \nMainnet ETA is last week of the month \n\nBuilders and vibecoders are welcome to build and launch on the testnet 🔥",
+    "attach": []
+   },
+   {
+    "ch": "1541736915861241946",
+    "ch_name": null,
+    "author": "ace_won",
+    "bot": false,
+    "ts": "2026-09-10T09:39:44.669000+00:00",
+    "content": "been on that for weeks bro",
+    "attach": []
+   }
+  ]
+ },
+ "search_اسپیس": {
+  "total": 0,
+  "msgs": []
+ },
+ "channel_announcements": [],
+ "channel_global-chat": [
+  {
+   "ch": "global-chat",
+   "author": "loftpig",
+   "bot": false,
+   "ts": "2026-09-28T09:58:46.156000+00:00",
+   "content": "On a side note, we got any game makers in here? The bgm / sfx is my sticking point... It's never perfectly what I want when using udio",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "loftpig",
+   "bot": false,
+   "ts": "2026-09-28T09:58:13.247000+00:00",
+   "content": "Applied!",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T09:52:16.273000+00:00",
+   "content": "Happy to help, make sure to apply for the builders role in <#1545395777151434815> to Loft",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "loftpig",
+   "bot": false,
+   "ts": "2026-09-28T09:51:18.103000+00:00",
+   "content": "All makes sense... And answers my initial question of whether my game needs to be on chain.. I haven't integrated blockchain tech yet, just enjoying the process of building the game out for now. Thankyou for your reply!",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T09:49:56.170000+00:00",
+   "content": "The purpose of the testnet funds is to give builders a way to experiment with launching tokens that have actual utility behind them.\n\nFor example, if you’re building a game, you can use the testnet funds to launch a token connected to that game. The token could then be used for in-game items, access, rewards, upgrades, or other mechanics you come up with.\n\nIt doesn’t have to be a game either. You could build any product, application, or innovation around your token and experiment with different ways to give it utility and reward the people using or holding it.\n\nThe whole point is to let builders test these ideas on-chain before taking them further.",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "loftpig",
+   "bot": false,
+   "ts": "2026-09-28T09:46:06.088000+00:00",
+   "content": "I'm making a vibe coded game... Wondered how you all share the stuff you're building? \nThe builder channels all say to get testnet funds before adding anything to the website... Sorry, just working out the basics here and finally thought I'd join some other builders 😁",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T09:43:03.246000+00:00",
+   "content": "What do you mean ?",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "shino_web1",
+   "bot": false,
+   "ts": "2026-09-28T09:41:36.609000+00:00",
+   "content": "Is that necessary 👀",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "loftpig",
+   "bot": false,
+   "ts": "2026-09-28T09:39:51.498000+00:00",
+   "content": "Oh and GM 😁",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "loftpig",
+   "bot": false,
+   "ts": "2026-09-28T09:39:23.857000+00:00",
+   "content": "Do our vibe coded games need to be on chain? I'm not rushing on that bit",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T08:20:40.162000+00:00",
+   "content": "",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "hoangstephen311",
+   "bot": false,
+   "ts": "2026-09-28T08:20:29.929000+00:00",
+   "content": "yo",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T08:13:13.839000+00:00",
+   "content": "have you applied, if yes kindly wait a while as we’re fixing the bot",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "lelinh_4384",
+   "bot": false,
+   "ts": "2026-09-28T08:12:42.698000+00:00",
+   "content": "please role",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "lelinh_4384",
+   "bot": false,
+   "ts": "2026-09-28T08:12:32.870000+00:00",
+   "content": "help",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T07:29:09.969000+00:00",
+   "content": "read rewards breakdown in <#1545385768753569823>",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "0xshubham_",
+   "bot": false,
+   "ts": "2026-09-28T07:27:00.636000+00:00",
+   "content": "and whats the benefit meaning team will review my build and take in on mainnet ?",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:24:32.959000+00:00",
+   "content": "Alright",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T07:24:19.996000+00:00",
+   "content": "yes, there is",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T07:23:44.603000+00:00",
+   "content": "you've always been able to build on the testnet",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "0xshubham_",
+   "bot": false,
+   "ts": "2026-09-28T07:23:30.574000+00:00",
+   "content": "can i build on testnet now ??",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:20:21.246000+00:00",
+   "content": "Cos I just noticed, there’s now a referral link",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:20:01.933000+00:00",
+   "content": "What about inviting users to the testnet using my link",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:19:06.881000+00:00",
+   "content": "Ohh ok",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T07:18:54.842000+00:00",
+   "content": "It’s for builders to showcase their content, project etc",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:18:45.542000+00:00",
+   "content": "Alright",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T07:18:33.287000+00:00",
+   "content": "no there isn’t",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:16:12.456000+00:00",
+   "content": "<@1145250700843036683> is there any form of reward for share their post link in the “share your content” group",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:13:58.264000+00:00",
+   "content": "Thanks",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:13:53.438000+00:00",
+   "content": "It’s been resolved",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "mebeser",
+   "bot": false,
+   "ts": "2026-09-28T07:13:53.005000+00:00",
+   "content": "Gm everyone",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T07:13:36.937000+00:00",
+   "content": "what ticket",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:12:31.083000+00:00",
+   "content": "Pls someone should check my ticket",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "jayjay_md231",
+   "bot": false,
+   "ts": "2026-09-28T07:12:23.188000+00:00",
+   "content": "GM guys",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "nabapu",
+   "bot": false,
+   "ts": "2026-09-28T07:09:47.908000+00:00",
+   "content": "gm",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "ntllinh2511",
+   "bot": false,
+   "ts": "2026-09-28T06:50:29.548000+00:00",
+   "content": "Wsup fam",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "erlaangshen",
+   "bot": false,
+   "ts": "2026-09-28T06:36:52.479000+00:00",
+   "content": "Hello hello",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "skybornfx",
+   "bot": false,
+   "ts": "2026-09-28T06:06:12.128000+00:00",
+   "content": "GM <:vibelogo:1547651986722136084>",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "zestovibe",
+   "bot": false,
+   "ts": "2026-09-28T05:52:30.979000+00:00",
+   "content": "GM Vibers",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "westsidegun",
+   "bot": false,
+   "ts": "2026-09-28T05:49:07.730000+00:00",
+   "content": "<:happyviber:1547659065013043402>",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T03:29:49.888000+00:00",
+   "content": "I can’t really say a particular time frame but it won’t be long, you can keep improving and tweaking your work till then",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "johncross_",
+   "bot": false,
+   "ts": "2026-09-28T03:28:14.668000+00:00",
+   "content": "For how long do I still need to wait please?",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T03:27:27.375000+00:00",
+   "content": "you have to wait, we’re fixing the bot currently John",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "johncross_",
+   "bot": false,
+   "ts": "2026-09-28T03:26:56.932000+00:00",
+   "content": "<@1145250700843036683>",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "johncross_",
+   "bot": false,
+   "ts": "2026-09-28T03:26:56.194000+00:00",
+   "content": "Up till now, I have not gotten my builder's role even after a successful application and approval, what is going on here please?",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T03:26:01.617000+00:00",
+   "content": "",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "johncross_",
+   "bot": false,
+   "ts": "2026-09-28T03:25:29.919000+00:00",
+   "content": "Gm guys",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T03:25:00.904000+00:00",
+   "content": "what’s up alpha",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "the_alpha_dgn",
+   "bot": false,
+   "ts": "2026-09-28T02:09:21.276000+00:00",
+   "content": "What up all",
+   "attach": []
+  },
+  {
+   "ch": "global-chat",
+   "author": "covenant11",
+   "bot": false,
+   "ts": "2026-09-28T02:02:57.820000+00:00",
+   "content": "",
+   "attach": []
+  }
+ ],
+ "channel_official-links": [],
+ "channel_faq": [],
+ "channel_start-here": []
+}
