@@ -43,9 +43,9 @@
 ## 2. Open phases (canonical order)
 
 ### P2 — Daily hooks & visual quality (contains growth G0) — no owner dependency
-- [ ] **P2.1** Visual **V1** — candle→world translation grammar + 5-layer parallax +
-  juice pass, behind `?renderer=v2` feature flag for owner A/B ⛓ none (render-only
-  by construction) · ART-DIRECTION §2–3,6
+- [x] **P2.1** 2026-09-30 @ `6b1a699` — Visual **V1** shipped: terrain-v2.ts (pure
+  translation) + render-v2.ts (sky/ghosts/ridge/playfield/foreground + squash-stretch,
+  trail, pre-rendered glow sprites) behind `?renderer=v2` + HUD chip; engine untouched
 - [ ] **P2.2** Hook **H1 ARCHIVE** — era browser + difficulty auto-tags (minimal version
   on current renderer; era palettes land with V1/V3) · recommended after P2.1
 - [ ] **P2.3** Visual **V2** — Weather systems (ATR wind, volume fog, session sky) ⛓ P2.1
@@ -53,8 +53,9 @@
   work on memory store; cross-day history ⛓ O1
 - [ ] **P2.5** Hook **H3 WRECKAGE** — frozen death ghosts; per-device partial possible;
   full cross-user ⛓ O1
-- [ ] **P2.6** W5 suite extension — unit tests for every new pure translation/weather
-  function 🧪 (must ship with P2.1–P2.5, not after)
+- [x] **P2.6** 2026-09-30 @ `6b1a699` — W5 extension shipped: test/terrain-v2.test.ts
+  (purity, byte-determinism, no-mutation, world2-append stability, semantics/grammar
+  pins) — suite 36/36 green; lint + build green 🧪
 
 **Gate G2:** owner A/B-accepts V1 · H1/H2/H4 live on prod · bun test/lint/build green ·
 determinism invariants intact (W5). Owner confirmation in chat required → then P3.
