@@ -24,7 +24,8 @@ next-env.d.ts
 # internal workspace (private research, tooling, archives — not part of the public game repo)
 /research/
 /ideation/
-/scripts/
+/scripts/*
+!/scripts/e2e-gamer-bot.ts
 /archive/
 /.zscripts/
 /examples/
