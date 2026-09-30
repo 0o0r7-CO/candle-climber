@@ -7,7 +7,12 @@ export const PLATFORM_W = 72; // was 62 — G2: wider caps, less dead space betw
 export const AMP_MIN = 150; // px between rolling low/high closes
 export const AMP_MAX = 330;
 
-const LAUNCH_PAD = 4; // first N candles: flat, contiguous, safe runway
+// G2-F1 second pass (gamer-bot metric 2026-10-01): naive input still died ~2-3s in —
+// exactly at the pad->terrain transition. Two deterministic ease layers:
+const LAUNCH_PAD = 6;     // was 4 — flat contiguous safe runway (≈3.9s at CAM_BASE)
+export { LAUNCH_PAD };
+export const EASE_CANDLES = 2; // candles right after the pad
+export const EASE_STEP = 48;   // max |Δy| per step inside the ease window (vs MAX steps)
 export const MAX_UP = 112;   // jump reach ≈ 158px (JUMP_V 815) — keep every step reachable
 export const MAX_DOWN = 170;
 
@@ -31,6 +36,7 @@ export function buildPlatforms(candles: Candle[], seedStr: string): Platform[] {
     const up = candles[i].c >= candles[i].o;
     const tiny = span < Math.abs(max) * 0.0012; // near-flat window -> keep solid
     const launch = i < LAUNCH_PAD;
+    const ease = i >= LAUNCH_PAD && i < LAUNCH_PAD + EASE_CANDLES;
 
     // vertical placement with fairness clamp
     const prevClose = i > 0 ? closeYs[i - 1] : norm(candles[i].c);
@@ -38,6 +44,12 @@ export function buildPlatforms(candles: Candle[], seedStr: string): Platform[] {
     if (launch) {
       cY = prevClose;         // flat pad
       oY = cY;
+    } else if (ease) {
+      // gentle first steps: same clamps as full terrain, then squeezed to EASE_STEP
+      const raw = Math.max(prevClose - MAX_DOWN, Math.min(prevClose + MAX_UP, norm(candles[i].c)));
+      cY = Math.max(prevClose - EASE_STEP, Math.min(prevClose + EASE_STEP, raw));
+      const rawO = Math.max(cY - MAX_DOWN, Math.min(cY + MAX_UP, norm(candles[i].o)));
+      oY = Math.max(cY - EASE_STEP, Math.min(cY + EASE_STEP, rawO));
     } else {
       cY = Math.max(prevClose - MAX_DOWN, Math.min(prevClose + MAX_UP, norm(candles[i].c)));
       oY = Math.max(cY - MAX_DOWN, Math.min(cY + MAX_UP, norm(candles[i].o)));
@@ -46,7 +58,7 @@ export function buildPlatforms(candles: Candle[], seedStr: string): Platform[] {
 
     const hiY = Math.min(cY, norm(candles[i].h));
     const loY = Math.max(cY, norm(candles[i].l));
-    const gap = launch ? false : !tiny && gapRnd() < 0.13; // was 0.18 — G2: full gaps rarer
+    const gap = launch || ease ? false : !tiny && gapRnd() < 0.13; // was 0.18 — G2: full gaps rarer
     const crumble = launch ? false : !up;
     const w = launch ? CANDLE_W : gap ? 0 : PLATFORM_W;
 

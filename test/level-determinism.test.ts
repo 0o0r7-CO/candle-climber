@@ -9,7 +9,7 @@
 //   - launch-shaped (vibe/vibe launch-of-the-day, via pure vibeLaunchCandles)
 // No network: every fixture is generated locally.
 import { describe, test, expect } from "bun:test";
-import { buildPlatforms } from "@/game/cc/level";
+import { buildPlatforms, LAUNCH_PAD, EASE_CANDLES, EASE_STEP, CANDLE_W, PLATFORM_W } from "@/game/cc/level";
 import { syntheticCandles, LIMIT } from "@/game/cc/level-source";
 import { vibeLaunchCandles, type VibeLaunch } from "@/lib/vibe-launch";
 import type { Candle } from "@/game/cc/types";
@@ -98,5 +98,25 @@ describe("W5 buildPlatforms determinism", () => {
     const plats = buildPlatforms(candles, `${DATE}OFFL`);
     expect(plats.length).toBe(candles.length);
     expect(plats[plats.length - 1].summit).toBe(true);
+  });
+
+  test("G2-F1 ease: pad flat+solid, first post-pad steps gentle (|Δy| <= EASE_STEP, gapless)", () => {
+    for (const f of FIXTURES) {
+      for (const seedStr of SEEDS) {
+        const plats = buildPlatforms(f.candles, seedStr);
+        // pad: first LAUNCH_PAD candles flat, contiguous (CANDLE_W wide), no gaps
+        for (let i = 0; i < LAUNCH_PAD; i++) {
+          expect(plats[i].w).toBe(CANDLE_W);
+          expect(plats[i].state).toBe("solid");
+          expect(plats[i].y).toBe(plats[0].y); // flat
+        }
+        // ease window: gapless + every close-platform step within EASE_STEP
+        for (let i = LAUNCH_PAD; i < LAUNCH_PAD + EASE_CANDLES; i++) {
+          expect(plats[i].w).toBe(PLATFORM_W); // not a full gap
+          const dy = Math.abs(plats[i].y - plats[i - 1].y);
+          expect(dy).toBeLessThanOrEqual(EASE_STEP + 1e-6);
+        }
+      }
+    }
   });
 });

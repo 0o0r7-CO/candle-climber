@@ -16,6 +16,9 @@ import { join } from "node:path";
 
 const GAME_URL = process.env.GAME_URL || "https://candle-climber.vercel.app/?renderer=v2";
 const RUN_SECONDS = Number(process.env.RUN_SECONDS || 24);
+// NO_RUSH=1 → clean baseline (owner-feedback F1/F2 metric): no risk bursts,
+// measures honest time-to-first-death on today's terrain.
+const NO_RUSH = process.env.NO_RUSH === "1";
 const ART = join(process.cwd(), "e2e-artifacts");
 
 // Benign console errors we must not fail on (network noise etc.)
@@ -78,6 +81,7 @@ async function main() {
   // 3) Play like a player: jump bursts + occasional RUSH, for RUN_SECONDS
   const start = Date.now();
   let deathPanels = 0;
+  let firstDeathAt: number | null = null;
   let i = 0;
   while ((Date.now() - start) / 1000 < RUN_SECONDS) {
     i++;
@@ -87,7 +91,7 @@ async function main() {
     await page.waitForTimeout(hold);
     await page.keyboard.up("Space");
 
-    if (i % 6 === 0) {
+    if (!NO_RUSH && i % 6 === 0) {
       await page.keyboard.down("Shift"); // RUSH
       await page.waitForTimeout(1500);
       await page.keyboard.up("Shift");
@@ -98,6 +102,7 @@ async function main() {
     const retry = page.getByRole("button", { name: /retr(y|ies)/i });
     if (await retry.isVisible().catch(() => false)) {
       deathPanels++;
+      if (firstDeathAt === null) firstDeathAt = Math.round((Date.now() - start) / 1000);
       const shot = join(ART, `death-${deathPanels}.png`);
       await page.screenshot({ path: shot });
       log(`death panel #${deathPanels} captured → retry`);
@@ -128,6 +133,8 @@ async function main() {
   summary.pageErrors = pageErrors;
   summary.consoleErrors = consoleErrors;
   summary.deathPanels = deathPanels;
+  summary.firstDeathAtSec = firstDeathAt;
+  summary.noRushBaseline = NO_RUSH;
   summary.consoleLogLines = logs.length;
   writeFileSync(join(ART, "summary.json"), JSON.stringify(summary, null, 2));
   writeFileSync(
