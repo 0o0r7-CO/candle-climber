@@ -54,7 +54,7 @@
   dailies, lazily computed tags, renderer=v2 carried) · archive runs are PRACTICE
   (submission suppressed; W1 staleness untouched) · live-verified: COVID/SNL/May-crash/
   FTX tag LEGENDARY on real binance data 🧪
-- [x] **P2.3** 2026-09-30 @ `<commit>` — Visual **V2 / H2 WEATHER** shipped:
+- [x] **P2.3** 2026-09-30 @ `a0f6484` — Visual **V2 / H2 WEATHER** shipped:
   weather.ts (pure deriveWeather: ATR→wind 0..1 + seed-pinned direction,
   volume→fog lookahead veil w/ honest MIST baseline when feed lacks volume,
   red-tail→tremor; fixed label ladders DEAD CALM/BREEZE/GALE/STORM +
