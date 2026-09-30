@@ -46,7 +46,7 @@
 - [x] **P2.1** 2026-09-30 @ `6b1a699` — Visual **V1** shipped: terrain-v2.ts (pure
   translation) + render-v2.ts (sky/ghosts/ridge/playfield/foreground + squash-stretch,
   trail, pre-rendered glow sprites) behind `?renderer=v2` + HUD chip; engine untouched
-- [x] **P2.2** 2026-09-30 @ `<commit>` — Hook **H1 ARCHIVE** shipped: archive.ts (pure:
+- [x] **P2.2** 2026-09-30 @ `2295e97` — Hook **H1 ARCHIVE** shipped: archive.ts (pure:
   date validation no-future-absolute, closed-candle clamping, difficulty auto-tag
   CALM/ROCKY/BRUTAL/LEGENDARY, recent-dailies replay, whitelisted deep links) ·
   /api/candles honors `?date=` for PAST UTC dates only (today path byte-identical;
