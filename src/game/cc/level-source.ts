@@ -9,6 +9,10 @@ import { hashString, mulberry32 } from "./rng";
 import type { Candle } from "./types";
 
 export const WATCHLIST = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT", "BNBUSDT"];
+// Stock rails (W3): real weekly candles from stooq — same engine, same rules.
+export const STOCKS = ["TSLA", "AMZN", "NFLX"];
+// Everything a deep link (?symbol=) may pin: crypto rotation + stock rails.
+export const ALL_SYMBOLS = [...WATCHLIST, ...STOCKS];
 export const INTERVAL = "1w";
 export const LIMIT = 220;
 

@@ -9,9 +9,9 @@ export interface Candle {
 
 export interface SeedInfo {
   date: string; // UTC YYYY-MM-DD
-  symbol: string; // e.g. BTCUSDT
-  interval: string; // e.g. 1w
-  source: 'binance' | 'synthetic';
+  symbol: string; // e.g. BTCUSDT / TSLA / launch ticker
+  interval: string; // e.g. 1w; "derived" for vibe-launch terrain
+  source: 'binance' | 'stooq' | 'vibe-launch' | 'synthetic';
 }
 
 export interface CandleData {

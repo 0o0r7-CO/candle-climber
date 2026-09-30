@@ -5,7 +5,7 @@ import { Engine, VIEW_W, VIEW_H } from "@/game/cc/engine";
 import { buildPlatforms } from "@/game/cc/level";
 import { dailyMutation, type Mutation } from "@/game/cc/mutations";
 import { marketStats, fmtPct } from "@/game/cc/market";
-import { pickSeed, syntheticCandles, LIMIT, WATCHLIST } from "@/game/cc/level-source";
+import { pickSeed, syntheticCandles, LIMIT, ALL_SYMBOLS } from "@/game/cc/level-source";
 import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
 import { render, COLORS } from "@/game/cc/render";
@@ -57,11 +57,16 @@ export default function GameCanvas() {
     const savedMute = localStorage.getItem(MUTE_KEY) === "1";
     setMutedState(savedMute);
     if (savedMute) setMuted(true); // applies on next unlock
-    // optional deep link: /?symbol=ETHUSDT opens that chart (whitelist-checked,
-    // server still pins the terrain and issues the run token)
-    const requested = (new URLSearchParams(window.location.search).get("symbol") ?? "").toUpperCase();
-    const symbolQuery = WATCHLIST.includes(requested) ? `?symbol=${requested}` : "";
-    fetch(`/api/candles${symbolQuery}`)
+    // optional deep links (whitelist-checked; the server still pins the terrain
+    // and issues the run token): /?symbol=ETHUSDT opens that chart, and
+    // /?source=launch plays the vibe/vibe launch-of-the-day level.
+    const params = new URLSearchParams(window.location.search);
+    const requested = (params.get("symbol") ?? "").toUpperCase();
+    const query = new URLSearchParams();
+    if (ALL_SYMBOLS.includes(requested)) query.set("symbol", requested);
+    if (params.get("source") === "launch") query.set("source", "launch"); // single whitelisted value
+    const qs = query.toString();
+    fetch(`/api/candles${qs ? `?${qs}` : ""}`)
       .then((r) => r.json())
       .then((d: CandleData) => {
         if (!alive) return;
@@ -310,7 +315,7 @@ export default function GameCanvas() {
               <div className="cc-daily">
                 <span className="cc-daily-label" title="Levels reset at 00:00 UTC">TODAY&apos;S CHART · UTC</span>
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
-                <span className="cc-daily-src">{data.seed.source === "binance" ? "live data" : "synthetic"}</span>
+                <span className="cc-daily-src">{data.seed.source === "binance" || data.seed.source === "stooq" ? "live data" : data.seed.source === "vibe-launch" ? "vibe launch" : "synthetic"}</span>
               </div>
               {stats && (
                 <div className="cc-realmove">
