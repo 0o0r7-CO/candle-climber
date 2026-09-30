@@ -9,6 +9,7 @@ import { pickSeed, syntheticCandles, LIMIT, ALL_SYMBOLS } from "@/game/cc/level-
 import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
 import { render, COLORS } from "@/game/cc/render";
+import { renderV2 } from "@/game/cc/render-v2";
 import { makeDeathCard } from "@/game/cc/deathcard";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
@@ -50,6 +51,11 @@ export default function GameCanvas() {
   const [rank, setRank] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [muted, setMutedState] = useState(false);
+  // P2.1: v1/v2 renderer A/B — /?renderer=v2 opts into the grammar+parallax+juice
+  // renderer (render-only: physics/scoring/determinism identical). Set client-side
+  // in the load effect to avoid SSR hydration mismatch.
+  const [v2, setV2] = useState(false);
+  const seedRef = useRef<string>("");
 
   // load daily level + persisted prefs
   useEffect(() => {
@@ -63,6 +69,7 @@ export default function GameCanvas() {
     // and issues the run token): /?symbol=ETHUSDT opens that chart, and
     // /?source=launch plays the vibe/vibe launch-of-the-day level.
     const params = new URLSearchParams(window.location.search);
+    setV2(params.get("renderer") === "v2"); // whitelisted single value
     const requested = (params.get("symbol") ?? "").toUpperCase();
     const query = new URLSearchParams();
     if (ALL_SYMBOLS.includes(requested)) query.set("symbol", requested);
@@ -72,6 +79,7 @@ export default function GameCanvas() {
       .then((r) => r.json())
       .then((d: CandleData) => {
         if (!alive) return;
+        seedRef.current = d.seed.date + d.seed.symbol;
         setData(d);
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
@@ -90,6 +98,7 @@ export default function GameCanvas() {
           seed: { date, symbol, interval: "1w", source: "synthetic" },
           candles: syntheticCandles(date, LIMIT),
         };
+        seedRef.current = d.seed.date + d.seed.symbol;
         setData(d);
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
@@ -207,7 +216,8 @@ export default function GameCanvas() {
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      render(ctx, e);
+      if (v2) renderV2(ctx, e, seedRef.current);
+      else render(ctx, e);
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
@@ -215,7 +225,7 @@ export default function GameCanvas() {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", resize);
     };
-  }, [phase]);
+  }, [phase, v2]);
 
   // input
   useEffect(() => {
@@ -328,6 +338,7 @@ export default function GameCanvas() {
           )}
           {graduated && <div className="cc-chip cc-chip-grad">GRADUATED</div>}
           {world2 && <div className="cc-chip cc-chip-grad2">POST-GRAD ×2</div>}
+          {v2 && <div className="cc-chip cc-chip-mut" title="renderer v2 — grammar + parallax + juice">RENDER V2</div>}
         </div>
         <div className="cc-hud-right">
           <div className="cc-chip cc-chip-score">{hud.score.toLocaleString()}</div>

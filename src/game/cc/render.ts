@@ -21,7 +21,7 @@ export const COLORS = {
 // Summit marker — pole + flag + "SUMMIT" label (W4 graduation arc).
 // Subtle by design: same color system, no redesign — gold flag on the final
 // platform of the daily level.
-function drawSummit(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
+export function drawSummit(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
   const px = x + (w > 0 ? w / 2 : CANDLE_W / 2);
   ctx.strokeStyle = COLORS.gold;
   ctx.lineWidth = 3;
@@ -92,7 +92,7 @@ export function drawPlatform(ctx: CanvasRenderingContext2D, p: Platform, camX: n
   if (p.summit) drawSummit(ctx, x, y, p.w);
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   ctx.moveTo(x + rr, y);
@@ -145,7 +145,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, e: Engine) {
   ctx.restore();
 }
 
-function drawParticles(ctx: CanvasRenderingContext2D, ps: Particle[], camX: number, camY: number) {
+export function drawParticles(ctx: CanvasRenderingContext2D, ps: Particle[], camX: number, camY: number) {
   for (const q of ps) {
     ctx.globalAlpha = Math.max(0, q.life / q.maxLife);
     ctx.fillStyle = q.color;
@@ -154,7 +154,7 @@ function drawParticles(ctx: CanvasRenderingContext2D, ps: Particle[], camX: numb
   ctx.globalAlpha = 1;
 }
 
-function drawFloats(ctx: CanvasRenderingContext2D, fs: FloatText[], camX: number, camY: number) {
+export function drawFloats(ctx: CanvasRenderingContext2D, fs: FloatText[], camX: number, camY: number) {
   ctx.font = "700 17px 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
   for (const f of fs) {
@@ -166,7 +166,7 @@ function drawFloats(ctx: CanvasRenderingContext2D, fs: FloatText[], camX: number
   ctx.textAlign = "left";
 }
 
-function drawHints(ctx: CanvasRenderingContext2D, e: Engine) {
+export function drawHints(ctx: CanvasRenderingContext2D, e: Engine) {
   if (!e.showHints || e.candlesPassed > 6) return;
   const bubbles: Record<number, string> = {
     0: "TAP / SPACE = JUMP",
