@@ -64,7 +64,7 @@
   for volume-less feeds; feeds.test contract updated) · WEATHER HUD chip when v2
   finds real weather · live-verified: COVID terrain = STORM .99/FOG .49/LEGENDARY,
   today = GALE .41/CLEAR 🧪
-- [x] **P2.4** 2026-09-30 @ `<commit>` — Hook **H4 DAILY REPORT** (minimal) shipped:
+- [x] **P2.4** 2026-09-30 @ `73a940f` — Hook **H4 DAILY REPORT** (minimal) shipped:
   report.ts (PURE aggregateDay: climbers/top/median/best-streak/total-height/
   top-mutation mode w/ deterministic tiebreak + reportNarrative/emptyNarrative —
   every figure read off the store, §8 honesty red line: no invented counts, no
