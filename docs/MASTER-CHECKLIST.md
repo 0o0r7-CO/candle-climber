@@ -104,6 +104,7 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
 - [x] **P3.2** Candle-rain mutation variant (CC-PLAN D9 leftover) — DONE `rain.ts` pure glyph math (34 falling candles, ~70/30 red/green, α≤0.32, engine-time driven, drawn BEHIND playfield in BOTH renderers) + pool 6th entry `rain` (DECOR-ONLY: mods ≡ BASE_MODS, daily difficulty untouched) + W5 tests pin fairness + determinism. 100/100
 - [x] **P3.5** **Timeframe selector** (owner proposal 2026-10-01, tech-reviewed ACCEPT) — DONE 4 chips on ready panel (1W classic default · 1D · 4H · 1H), hidden for stooq/launch/archive. Interval whitelist in level-source (INTERVALS + isInterval + INTERVAL_MS); synthetic terrains seeded per date|interval (legacy 1w byte-identical); cache key + binance klines carry interval; run-token HMAC binds interval (legacy tokens verify as 1w, forged tf → null); boards PER-TF in memory+Mongo (legacy rows read as 1w, never mixed); submission interval pinned from token; report stays classic-board; deep link ?interval= + TF_KEY persistence; card shows honest tf label. Archive stays daily-only V1. W5 108/108
 - [x] **P3.6** **Skill-jump controls** (PLATFORMER-UX-RESEARCH contract §6) — DONE RUSH: `Engine.rush` + `pressRush()/releaseRush()`, SHIFT held = camera ×1.28 (after mods, may exceed un-rushed cap) + gains ×1.25 (RUSH_GAIN in scoring.ts, composed after mode/combo, rounded last); gravity-hang: GRAVITY×0.5 while rising with jump held (Celeste #3); MAX_SCORE_PER_CANDLE 140→175 covers rushed world2 full-combo; Shift wired in GameCanvas (repeat/typing-safe, release unconditional); howto line + hint bubble teach RUSH; free-brake stays REJECTED per research. W5 116/116
+- [x] **P3.7** **Sentry production monitoring** (owner directive 2026-10-01) — DONE org `james-thomas-st` · project `candle-climber` · `@sentry/nextjs@11.1.0` wired for client/server/edge (`instrumentation.ts` + `instrumentation-client.ts` + runtime configs), `onRequestError` hook, `global-error.tsx` boundary, `GET /api/debug-sentry?go=1` probe; replay on-error 100% / session 0%; privacy `dataCollection{userInfo,cookies:false}`; release pinned to git SHA + source maps uploaded at build (SENTRY_AUTH_TOKEN); verified end-to-end — probe event `70d24b51…` landed as `CANDLE-CLIMBER-1` with correct release/file attribution. W5 116/116, build+lint green
 - [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — REQUIRED before any launch
   announcement
 - [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner brief → identity doc → assets; E6)
@@ -160,6 +161,7 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 | **O4** | W7 X account | P5.1 | account creation |
 | **O5** | Mascot V2 brief | P3.4, E6 | character re-brief |
 | **O6** | Real devices for QA | P3.3 | 1 session, 1–2 phones |
+| **O7** | `SENTRY_AUTH_TOKEN` in the **Vercel dashboard** (present in local `.env` since 2026-10-01) | source maps + release pinning on Vercel builds (errors report fine without it) | add env var in Vercel → redeploy |
 
 ## 4. Gate ledger
 

@@ -140,9 +140,35 @@ Rule of thumb: **claim in this order, always.**
 - [ ] p1: Vercel deploy via browser login (no token needed)
 - [ ] p1: MongoDB Atlas M0 → create cluster → `DATABASE_URL` → paste to Vercel env + `.env.local`
 - [ ] p2: Namecheap `.me` claim → DNS → Vercel
-- [ ] p2: Sentry student plan → `SENTRY_DSN` (only when deploying for real users)
+- [x] p2: Sentry — DONE 2026-10-01 (org `james-thomas-st`, project `candle-climber`, SDK wired, event verified; see §4 below)
 - [ ] p2: BrowserStack + SimpleAnalytics claims
 - [ ] p3: Heroku credit claim → duel server app
 - [ ] anytime: 1Password student plan
 
 Nothing beyond this list is needed for the current build.
+
+## 4. Sentry production monitoring (wired 2026-10-01)
+
+Owner created the Sentry account + admin token (`sntryu_…`); I did the rest end-to-end.
+
+- **Org** `james-thomas-st` (region us) · **Project** `candle-climber` (`javascript-nextjs`,
+  created via API) · DSN public: `https://059663a5fc68fe45cbcf425ebaaea26e@o4512112704028672.ingest.us.sentry.io/4512177773608960`
+- **SDK** `@sentry/nextjs@11.1.0` — init split by runtime:
+  `src/instrumentation.ts` (node/edge register + `onRequestError`),
+  `src/instrumentation-client.ts` (client init + `onRouterTransitionStart`),
+  `src/sentry.{server,edge}.config.ts`. `next.config.ts` wrapped with
+  `withSentryConfig` from `@sentry/nextjs/config` (v11 moved it out of the root export).
+- **Sampling**: traces 10% · Session Replay **on-error 100% / session 0%** (canvas is not
+  recorded; DOM UI is) · privacy: `dataCollection: { userInfo: false, cookies: false }`.
+- **Boundaries**: `src/app/global-error.tsx` reports render-fatal errors (SUMMIT LOST UI).
+- **Probe**: `GET /api/debug-sentry` (hint) / `?go=1` (sends one info event, returns
+  `event_id`) — works on every deploy for instant pipeline checks.
+- **Build wiring**: `SENTRY_AUTH_TOKEN` in local `.env` → build creates a release pinned
+  to the git SHA and uploads source maps (verified: "Successfully uploaded source maps").
+  On Vercel the token must be added as env var **O7** or source-map upload is skipped
+  (build still passes; error reporting itself does NOT need the token).
+- **Verified end-to-end**: probe event `70d24b5108954e8bb9dc0599c58493ee` → issue
+  `CANDLE-CLIMBER-1`, correct release (`603edca…`) + file attribution.
+- **Secrets**: auth token lives only in gitignored `.env` (never commit; rotate if leaked).
+- **TODO (UI-only, API refused)**: DSN key hardening — allowedDomains + rate limit under
+  Project → Settings → Client Keys (2 minutes, non-blocking).

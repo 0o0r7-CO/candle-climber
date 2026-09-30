@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -13,4 +14,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Sentry CI wiring — org/project created 2026-10-01 (docs/INFRASTRUCTURE.md §Sentry).
+  // authToken comes from SENTRY_AUTH_TOKEN (local .env / Vercel env); without it the
+  // build still passes and only skips source-map upload with a warning.
+  org: "james-thomas-st",
+  project: "candle-climber",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  telemetry: false,
+  silent: true,
+  widenClientFileUpload: true,
+});
