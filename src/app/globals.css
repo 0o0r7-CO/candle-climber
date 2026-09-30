@@ -508,6 +508,9 @@
   text-align: center;
 }
 .cc-input:focus { border-color: rgba(204, 255, 0, 0.5); }
+/* P3.1 rivalry tag — gold-focus twin of cc-input; challenge = gold on the card */
+.cc-input-rival { width: 200px; }
+.cc-input-rival:focus { border-color: rgba(240, 177, 18, 0.55); }
 
 .cc-board {
   margin-top: 14px;

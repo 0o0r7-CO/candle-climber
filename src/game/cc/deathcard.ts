@@ -2,6 +2,15 @@
 import { COLORS } from "./render";
 import type { RunResult } from "./types";
 
+// ---- P3.1 rivalry tag: pure normalizer so W5 can pin the contract canvas-free ----
+// X handles: 1–15 of [A-Za-z0-9_], one optional leading @ tolerated. Anything
+// else (spaces, emoji, >15) → null: the card simply omits the stamp, never
+// renders a broken/mangled handle. Honest input, honest output.
+export function normalizeRivalTag(raw: string): string | null {
+  const h = raw.trim().replace(/^@+/, "");
+  return /^[A-Za-z0-9_]{1,15}$/.test(h) ? "@" + h : null;
+}
+
 const CAUSE_LINES: Record<string, string> = {
   fell: "LIQUIDATED. Fell out of the chart.",
   crumbled: "PAPERHANDED. The candle crumbled under you.",
@@ -37,6 +46,7 @@ interface CardOpts {
   isTop?: boolean;
   realMovePct?: number;
   difficulty?: string;
+  rivalTag?: string; // P3.1: normalized "@handle" challenge stamp (null/undefined = omit)
 }
 
 export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
@@ -181,6 +191,14 @@ export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
 
   // mascot face (our blockbot, original)
   drawBotFace(ctx, 72, 1160, 110);
+
+  // P3.1 rivalry stamp — the mockery hook that pulls the rival's audience in.
+  // Sits above the CTA, same x as the footer text, never overlaps the bot face.
+  if (o.rivalTag) {
+    ctx.fillStyle = COLORS.gold;
+    ctx.font = "600 32px 'Clash Display', sans-serif";
+    ctx.fillText(`CHALLENGE ISSUED → ${o.rivalTag} — YOU'RE UP`, 230, 1178);
+  }
 
   // footer
   ctx.fillStyle = COLORS.lime;

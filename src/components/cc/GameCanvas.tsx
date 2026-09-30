@@ -14,7 +14,7 @@ import { render, COLORS } from "@/game/cc/render";
 import { renderV2 } from "@/game/cc/render-v2";
 import { deriveWeather } from "@/game/cc/weather";
 import { recordWreck, wrecksFor, loadWreckDB, saveWreckDB, type WreckDB, type Wreck } from "@/game/cc/wreckage";
-import { makeDeathCard } from "@/game/cc/deathcard";
+import { makeDeathCard, normalizeRivalTag } from "@/game/cc/deathcard";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
@@ -40,6 +40,7 @@ interface ReportResp {
 
 const BEST_KEY = "cc_best_v1";
 const NAME_KEY = "cc_name_v1";
+const RIVAL_KEY = "cc_rival_v1"; // P3.1: remembered rivalry tag
 const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
 const UNSCORED_MSG = "offline terrain — scoring disabled";
@@ -60,6 +61,7 @@ export default function GameCanvas() {
   const [world2, setWorld2] = useState(false); // W4: post-grad buyback world
   const [best, setBest] = useState(0);
   const [name, setName] = useState("");
+  const [rival, setRival] = useState(""); // P3.1: optional rival X handle for the death-card challenge stamp
   const [board, setBoard] = useState<BoardEntry[]>([]);
   const [topBoard, setTopBoard] = useState<BoardEntry[]>([]);
   const [rank, setRank] = useState<number | null>(null);
@@ -87,6 +89,7 @@ export default function GameCanvas() {
     let alive = true;
     setBest(Number(localStorage.getItem(BEST_KEY) ?? 0));
     setName(localStorage.getItem(NAME_KEY) ?? "");
+    setRival(localStorage.getItem(RIVAL_KEY) ?? ""); // P3.1
     const savedMute = localStorage.getItem(MUTE_KEY) === "1";
     setMutedState(savedMute);
     if (savedMute) setMuted(true); // applies on next unlock
@@ -360,6 +363,9 @@ export default function GameCanvas() {
     if (!result || !data) return;
     const top = topBoard[0];
     const rivalGap = top && top.score > result.score ? top.score - result.score : 0;
+    // P3.1: honor the typed rival handle — invalid input simply omits the stamp
+    const challenge = normalizeRivalTag(rival);
+    if (rival.trim()) localStorage.setItem(RIVAL_KEY, rival.trim());
     const blob = await makeDeathCard({
       result, symbol: data.seed.symbol, date: data.seed.date, best,
       mutationName: mutation && mutation.id !== "clean" ? mutation.name : undefined,
@@ -368,6 +374,7 @@ export default function GameCanvas() {
       isTop: !top || top.score <= result.score,
       realMovePct: stats?.changePct,
       difficulty: stats?.difficulty,
+      rivalTag: challenge ?? undefined,
     });
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -376,9 +383,13 @@ export default function GameCanvas() {
     a.download = `candle-climber-${result.score}.png`;
     a.click();
     URL.revokeObjectURL(url);
+    // P3.1: the mockery loop — share text tags the rival so their audience sees it
+    const shareText = challenge
+      ? `${challenge} you're up — beat ${result.score} on today's ${data.seed.symbol} chart`
+      : "Candle Climber";
     if (navigator.share && navigator.canShare?.({ files: [new File([blob], "card.png", { type: "image/png" })] })) {
       try {
-        await navigator.share({ files: [new File([blob], "card.png", { type: "image/png" })], title: "Candle Climber" });
+        await navigator.share({ files: [new File([blob], "card.png", { type: "image/png" })], title: shareText });
       } catch { /* user cancelled */ }
     }
   };
@@ -587,6 +598,14 @@ export default function GameCanvas() {
                   maxLength={14}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                  className="cc-input cc-input-rival"
+                  placeholder="RIVAL @HANDLE (OPTIONAL)"
+                  maxLength={16}
+                  value={rival}
+                  onChange={(e) => setRival(e.target.value)}
+                  aria-label="Rival X handle — stamped on the death card as a challenge"
                 />
                 <button
                   className="cc-btn"

@@ -100,7 +100,7 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
 > بهتر هست… طبق پلن تایید میدم ادامه بدی" (A/B accepted; feedback landed as P2.7).
 
 ### P3 — Share loop & identity completion
-- [ ] **P3.1** Rivalry-tag input on Death Card (CC-PLAN D9 leftover) ⛓ none
+- [x] **P3.1** Rivalry-tag input on Death Card (CC-PLAN D9 leftover) ⛓ none — DONE `normalizeRivalTag` pure normalizer (X alphabet, 1–15, leading @ tolerated, invalid ⇒ stamp omitted) + `RIVAL_KEY` persistence + optional input on death panel (gold-focus) + card stamp `CHALLENGE ISSUED → @handle — YOU'RE UP` + share text tags the rival. W5 94/94
 - [ ] **P3.2** Candle-rain mutation variant (CC-PLAN D9 leftover) ⛓ none
 - [ ] **P3.5** **Timeframe selector** (owner proposal 2026-10-01, tech-reviewed ACCEPT):
   1h/4h/1d chart choice on the ready panel — same pure pipeline (seed keys on
@@ -179,8 +179,8 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P3.1 — Rivalry-tag input on Death Card.** G2 passed
-> (owner-confirmed 2026-10-01) and the owner playtest notes shipped as P2.7
-> @ `31f19fd`. P3 order: P3.1 → P3.2 → P3.5 (timeframe) → P3.6 (skill-jump,
-> after PLATFORMER-UX-RESEARCH) → P3.3 🔒O6 → P3.4 🔒O5. Landing-page visual
-> identity work continues inside P3 (report-fold de-clutter already live in P2.7).
+> ▶ **NEXT ACTION: P3.2 — Candle-rain mutation variant** (CC-PLAN D9 leftover).
+> P3.1 rivalry tag shipped (see checklist line). P3 order: P3.2 → P3.5
+> (timeframe) → P3.6 (skill-jump, after PLATFORMER-UX-RESEARCH) → P3.3 🔒O6 →
+> P3.4 🔒O5. Landing-page visual identity work continues inside P3
+> (report-fold de-clutter already live in P2.7).
