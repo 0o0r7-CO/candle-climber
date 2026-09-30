@@ -73,8 +73,14 @@
   EPISODE share text (X posting lands with P5.1/O4) · live smoke: seeded W1-valid
   submission accepted (rank 1), empty-day episode honest, tomorrow-cliffhanger
   from public deterministic rotation 🧪
-- [ ] **P2.5** Hook **H3 WRECKAGE** — frozen death ghosts; per-device partial possible;
-  full cross-user ⛓ O1
+- [x] **P2.5** 2026-09-30 @ `<commit>` — Hook **H3 WRECKAGE** (minimal per-device)
+  shipped: wreckage.ts (PURE recordWreck: immutable db, 30 wrecks/level cap,
+  24-level eviction by latest-fatal ts, non-finite rejected; localStorage thin
+  wrapper try/catch) · deaths freeze at the exact fall point (engine px/py via
+  onDeath — decor only) · render-v2 ghost mini-candles tinted by cause
+  (fell=faint/crumbled=coral/wicked=purple) + ×N cluster badges = honest danger
+  map · archive levels keep their own wreck map per (symbol,date) · cross-user
+  wreckage ⛓ O1 (core is storage-agnostic, survives the move) 🧪
 - [x] **P2.6** 2026-09-30 @ `6b1a699` — W5 extension shipped: test/terrain-v2.test.ts
   (purity, byte-determinism, no-mutation, world2-append stability, semantics/grammar
   pins) — suite 36/36 green; lint + build green 🧪
@@ -155,7 +161,8 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P2.5** — Hook **H3 WRECKAGE** (minimal: per-device frozen death
-> ghosts via localStorage; full cross-user stays ⛓ O1). No owner input needed for
-> the minimal version. (Gate G2 then needs owner A/B on V1 — the only remaining
-> owner touch for P2.)
+> ▶ **NEXT ACTION: GATE G2** — every P2 item is shipped. Gate criteria:
+> V1+A/B-acceptance by owner · H1/H2/H4 live on prod · bun test/lint/build green
+> (89/89) · determinism invariants intact (W5). **Owner confirmation in chat
+> required → then P3.** Evidence: eras+weather+report on prod after this deploy;
+> owner A/B = visit /?renderer=v2 vs /.

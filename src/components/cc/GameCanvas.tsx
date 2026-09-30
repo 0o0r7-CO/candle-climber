@@ -13,6 +13,7 @@ import { isArchiveDate } from "@/game/cc/archive";
 import { render, COLORS } from "@/game/cc/render";
 import { renderV2 } from "@/game/cc/render-v2";
 import { deriveWeather } from "@/game/cc/weather";
+import { recordWreck, wrecksFor, loadWreckDB, saveWreckDB, type WreckDB, type Wreck } from "@/game/cc/wreckage";
 import { makeDeathCard } from "@/game/cc/deathcard";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
@@ -75,6 +76,9 @@ export default function GameCanvas() {
   // PRACTICE terrain (submission suppressed; W1 staleness stays authoritative).
   const [archive, setArchive] = useState(false);
   const [archOpen, setArchOpen] = useState(false);
+  // P2.5: H3 WRECKAGE — per-device frozen death ghosts (decor only)
+  const wreckDBRef = useRef<WreckDB>({});
+  const wrecksRef = useRef<Wreck[]>([]);
   const seedRef = useRef<string>("");
 
   // load daily level + persisted prefs
@@ -91,6 +95,7 @@ export default function GameCanvas() {
     // /?date=<past UTC date> plays the archive (H1) — famous history as terrain.
     const params = new URLSearchParams(window.location.search);
     setV2(params.get("renderer") === "v2"); // whitelisted single value
+    wreckDBRef.current = loadWreckDB(); // H3: this device's death map
     const requested = (params.get("symbol") ?? "").toUpperCase();
     const requestedDate = params.get("date");
     const isArch = isArchiveDate(requestedDate, utcDateStr());
@@ -105,6 +110,7 @@ export default function GameCanvas() {
       .then((d: CandleData) => {
         if (!alive) return;
         seedRef.current = d.seed.date + d.seed.symbol;
+        wrecksRef.current = wrecksFor(wreckDBRef.current, seedRef.current);
         setData(d);
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
@@ -133,6 +139,7 @@ export default function GameCanvas() {
           candles: syntheticCandles(date, LIMIT),
         };
         seedRef.current = d.seed.date + d.seed.symbol;
+        wrecksRef.current = wrecksFor(wreckDBRef.current, seedRef.current);
         setData(d);
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
@@ -166,6 +173,20 @@ export default function GameCanvas() {
         },
         onDeath: (r) => {
           sfx.death();
+          // H3 WRECKAGE: freeze this death into the device's local map —
+          // the exact fall point, visible to future climbers of this level
+          const eng = engineRef.current;
+          if (eng) {
+            const wreck: Wreck = {
+              x: eng.px + 17,
+              y: eng.py + 20,
+              cause: r.cause ?? "fell",
+              ts: Date.now(),
+            };
+            wreckDBRef.current = recordWreck(wreckDBRef.current, seedRef.current, wreck);
+            saveWreckDB(wreckDBRef.current);
+            wrecksRef.current = wrecksFor(wreckDBRef.current, seedRef.current);
+          }
           setResult(r);
           setPhase("dead");
           setHud({ score: r.score, combo: 0 });
@@ -258,7 +279,7 @@ export default function GameCanvas() {
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined);
+      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current);
       else render(ctx, e);
       rafRef.current = requestAnimationFrame(step);
     };

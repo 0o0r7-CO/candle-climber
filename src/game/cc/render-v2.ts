@@ -15,6 +15,7 @@ import { CANDLE_W, PLATFORM_W } from "./level";
 import { COLORS, roundRect, drawSummit, drawHints, drawFloats, drawParticles } from "./render";
 import { buildTerrainV2, type TerrainV2, type SlabDecor } from "./terrain-v2";
 import { NEUTRAL_WEATHER, type Weather } from "./weather";
+import { type Wreck } from "./wreckage";
 import { hashString, mulberry32 } from "./rng";
 import type { Platform } from "./types";
 
@@ -522,9 +523,56 @@ function drawForegroundV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State,
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 }
 
+/* ------------------------------ H3 · wreckage ------------------------------ */
+
+// Per-device frozen death ghosts (P2.5 minimal): translucent mini-candles at
+// the exact fall point. Clusters of corpses on one wick = an honest danger
+// map. Decor only — never affects terrain, physics, or scoring.
+function drawWrecks(ctx: CanvasRenderingContext2D, e: Engine, wrecks: Wreck[]) {
+  if (!wrecks.length) return;
+  const camX = e.camX, camY = e.camY;
+  // cluster counting: same 26px cell = one shared "×N" badge
+  const cellCount = new Map<string, number>();
+  for (const w of wrecks) {
+    const k = `${Math.floor(w.x / 26)}:${Math.floor(w.y / 26)}`;
+    cellCount.set(k, (cellCount.get(k) ?? 0) + 1);
+  }
+  for (const w of wrecks) {
+    const x = w.x - camX;
+    const y = w.y - camY;
+    if (x < -30 || x > VIEW_W + 30 || y < -30 || y > VIEW_H + 30) continue;
+    const tint =
+      w.cause === "crumbled" ? "224,120,86" :
+      w.cause === "wicked" ? "106,99,200" : "174,182,188";
+    // ghost body + wick
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = `rgb(${tint})`;
+    roundRect(ctx, x - 5, y - 8, 10, 16, 3);
+    ctx.fill();
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = `rgb(${tint})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 13);
+    ctx.lineTo(x, y - 8);
+    ctx.stroke();
+    // cluster badge — the honest pile marker
+    const n = cellCount.get(`${Math.floor(w.x / 26)}:${Math.floor(w.y / 26)}`) ?? 1;
+    if (n >= 3) {
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = `rgb(${tint})`;
+      ctx.font = "700 9px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`×${n}`, x, y - 16);
+      ctx.textAlign = "left";
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
 /* --------------------------------- entry ----------------------------------- */
 
-export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER) {
+export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = []) {
   const st = getState(e, seedStr);
   const t = st.terrain;
 
@@ -577,6 +625,7 @@ export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: stri
   drawParticles(ctx, e.particles, e.camX, e.camY);
   drawFloats(ctx, e.floats, e.camX, e.camY);
   if (!e.dead || e.deathT < 2.2) drawPlayerV2(ctx, e, st);
+  drawWrecks(ctx, e, wrecks);
   drawForegroundV2(ctx, e, st, weather);
 
   // progress candle ticker (top center, in-canvas — same as v1)
