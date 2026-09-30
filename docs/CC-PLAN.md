@@ -76,6 +76,10 @@ No paid services anywhere.
 - D8–9: daily mutations — ✅ 5-pool mutation system shipped; ⬜ candle-rain variant,
   ⬜ X-handle rivalry tag input
 - D10+: token launch via vibevibe bonding curve; payouts to top-5 daily (testnet)
+  → now fully specified: docs/TOKEN-LAUNCHPAD-RESEARCH.md (verified mechanics, 5-ETH
+  graduation, W6 checklist) · docs/GROWTH-AND-HOOKS-STRATEGY.md (Balance Gate + identity-
+  native hooks H1–H7, phases P0–P2) · docs/ART-DIRECTION.md (candle-to-world grammar,
+  visual roadmap V1–V4)
 - D11–14: duels prototype, guild rally, mainnet watch
 
 ## 7. Risks
