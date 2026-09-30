@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { utcDateStr } from "@/game/cc/rng";
 import { pickSeed, syntheticCandles, INTERVAL, LIMIT, WATCHLIST, STOCKS } from "@/game/cc/level-source";
 import { signRunToken } from "@/lib/run-token";
+import { parseStooqCsv } from "@/lib/stooq";
 import { getLaunchOfDay, launchSymbol, vibeLaunchCandles } from "@/lib/vibe-launch";
 import type { Candle, CandleData, SeedInfo } from "@/game/cc/types";
 
@@ -75,26 +76,14 @@ async function fetchStooq(symbol: string): Promise<Candle[] | null> {
       const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (!res.ok) { console.error("[candles/stooq]", host, "HTTP", res.status); continue; }
       const text = await res.text();
-      const lines = text.trim().split("\n");
-      if (lines[0]?.trim() !== "Date,Open,High,Low,Close,Volume") {
-        // anti-bot challenge page or other unexpected payload — not CSV
-        console.error("[candles/stooq]", host, "unexpected payload (challenge/blocked?)");
+      // Pure parser (W5 extraction — src/lib/stooq.ts, contract pinned by
+      // test/feeds.test.ts): null = challenge/HTML payload OR <40 closed rows.
+      const parsed = parseStooqCsv(text, Date.now());
+      if (!parsed) {
+        console.error("[candles/stooq]", host, "unusable payload (challenge/blocked?) or <40 closed rows");
         continue;
       }
-      const out: Candle[] = [];
-      for (const line of lines.slice(1)) {
-        const r = line.split(",");
-        if (r.length < 5) continue;
-        const t = Date.parse(`${r[0]}T00:00:00Z`);
-        const o = Number(r[1]), h = Number(r[2]), l = Number(r[3]), c = Number(r[4]);
-        if (!Number.isFinite(t) || ![o, h, l, c].every(Number.isFinite)) continue;
-        // A weekly row closes 7 days after its date — drop the in-progress week
-        // (same determinism rule as the crypto path: only CLOSED candles count).
-        if (t + 7 * 86_400_000 > Date.now()) continue;
-        out.push({ t, o, h, l, c });
-      }
-      if (out.length < 40) { console.error("[candles/stooq]", host, `only ${out.length} closed rows`); continue; }
-      return out;
+      return parsed;
     } catch (err) {
       console.error("[candles/stooq]", host, "fetch failed:", (err as Error).message);
       continue;
