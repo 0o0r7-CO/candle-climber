@@ -84,13 +84,31 @@
 - [x] **P2.6** 2026-09-30 @ `6b1a699` — W5 extension shipped: test/terrain-v2.test.ts
   (purity, byte-determinism, no-mutation, world2-append stability, semantics/grammar
   pins) — suite 36/36 green; lint + build green 🧪
+- [x] **P2.7** 2026-10-01 @ `31f19fd` — **G2 owner-feedback hotfix** (owner playtest
+  notes, accepted by tech review): control curve readable again (CAM_BASE 175→148,
+  CAM_ACCEL 5.5→3.2, CAM_MAX 470→400, JUMP_V 760→815 ≈158px reach, COYOTE .09→.12,
+  BUFFER .12→.16) · wider caps PLATFORM_W 62→72 + rarer full gaps .18→.13 ·
+  **name-input bug fixed** (stage pointer-down + window keydown no longer hijack
+  focus/Space while typing) · ready-panel de-clutter (DAILY REPORT folds to one
+  line, howto teaches HOLD=higher jump, compliance line merged into footer) —
+  suite 89/89, lint + build green 🧪
 
 **Gate G2:** owner A/B-accepts V1 · H1/H2/H4 live on prod · bun test/lint/build green ·
 determinism invariants intact (W5). Owner confirmation in chat required → then P3.
 
+> ✅ **G2 PASS 2026-10-01 — owner-confirmed in chat**: "قطعا ورژن جدید خیلی خیلی
+> بهتر هست… طبق پلن تایید میدم ادامه بدی" (A/B accepted; feedback landed as P2.7).
+
 ### P3 — Share loop & identity completion
 - [ ] **P3.1** Rivalry-tag input on Death Card (CC-PLAN D9 leftover) ⛓ none
 - [ ] **P3.2** Candle-rain mutation variant (CC-PLAN D9 leftover) ⛓ none
+- [ ] **P3.5** **Timeframe selector** (owner proposal 2026-10-01, tech-reviewed ACCEPT):
+  1h/4h/1d chart choice on the ready panel — same pure pipeline (seed keys on
+  symbol|date|interval), per-tf leaderboards (no board mixing), archive stays
+  daily-only in V1, intraday fallback stays honest-synthetic when feed lacks data ⛓ none
+- [ ] **P3.6** **Skill-jump controls** (from PLATFORMER-UX-RESEARCH): implement the
+  doc's low-risk recommendations (e.g. RUSH speed-mod with score risk-premium);
+  variable-height jump + coyote/buffer already live (P0/P2.7) — teach, then extend ⛓ research doc
 - [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — REQUIRED before any launch
   announcement
 - [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner brief → identity doc → assets; E6)
@@ -153,7 +171,7 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 | Gate | Phase | Status |
 |---|---|---|
 | G1 | P1 | ✅ PASS 2026-09-30 (owner-confirmed) |
-| G2 | P2 | ⬜ pending |
+| G2 | P2 | ✅ PASS 2026-10-01 (owner-confirmed in chat; feedback → P2.7) |
 | G3 | P3 | ⬜ pending |
 | G4 | P4 | ⬜ pending |
 | G5 | P5 | ⬜ pending |
@@ -161,8 +179,8 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: GATE G2** — every P2 item is shipped. Gate criteria:
-> V1+A/B-acceptance by owner · H1/H2/H4 live on prod · bun test/lint/build green
-> (89/89) · determinism invariants intact (W5). **Owner confirmation in chat
-> required → then P3.** Evidence: eras+weather+report on prod after this deploy;
-> owner A/B = visit /?renderer=v2 vs /.
+> ▶ **NEXT ACTION: P3.1 — Rivalry-tag input on Death Card.** G2 passed
+> (owner-confirmed 2026-10-01) and the owner playtest notes shipped as P2.7
+> @ `31f19fd`. P3 order: P3.1 → P3.2 → P3.5 (timeframe) → P3.6 (skill-jump,
+> after PLATFORMER-UX-RESEARCH) → P3.3 🔒O6 → P3.4 🔒O5. Landing-page visual
+> identity work continues inside P3 (report-fold de-clutter already live in P2.7).
