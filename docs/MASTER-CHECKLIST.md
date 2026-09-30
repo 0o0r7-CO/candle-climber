@@ -64,8 +64,15 @@
   for volume-less feeds; feeds.test contract updated) · WEATHER HUD chip when v2
   finds real weather · live-verified: COVID terrain = STORM .99/FOG .49/LEGENDARY,
   today = GALE .41/CLEAR 🧪
-- [ ] **P2.4** Hook **H4 DAILY REPORT** — end-of-day aggregate card; same-day aggregates
-  work on memory store; cross-day history ⛓ O1
+- [x] **P2.4** 2026-09-30 @ `<commit>` — Hook **H4 DAILY REPORT** (minimal) shipped:
+  report.ts (PURE aggregateDay: climbers/top/median/best-streak/total-height/
+  top-mutation mode w/ deterministic tiebreak + reportNarrative/emptyNarrative —
+  every figure read off the store, §8 honesty red line: no invented counts, no
+  synthetic terrain claims) · /api/report (past completed days only, default
+  yesterday; future/malformed fall back) · ready-panel episode block + COPY
+  EPISODE share text (X posting lands with P5.1/O4) · live smoke: seeded W1-valid
+  submission accepted (rank 1), empty-day episode honest, tomorrow-cliffhanger
+  from public deterministic rotation 🧪
 - [ ] **P2.5** Hook **H3 WRECKAGE** — frozen death ghosts; per-device partial possible;
   full cross-user ⛓ O1
 - [x] **P2.6** 2026-09-30 @ `6b1a699` — W5 extension shipped: test/terrain-v2.test.ts
@@ -148,7 +155,7 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P2.4** — Hook **H4 DAILY REPORT** (minimal: same-day aggregates
-> on the memory store; end-of-day narrative card). Cross-day history stays ⛓ O1.
-> No owner input needed for the minimal version. (Gate G2 still requires owner
-> A/B on V1 + P2.5.)
+> ▶ **NEXT ACTION: P2.5** — Hook **H3 WRECKAGE** (minimal: per-device frozen death
+> ghosts via localStorage; full cross-user stays ⛓ O1). No owner input needed for
+> the minimal version. (Gate G2 then needs owner A/B on V1 — the only remaining
+> owner touch for P2.)

@@ -27,6 +27,15 @@ interface BoardEntry {
   date: string;
   ts?: number;
 }
+// H4 DAILY REPORT — aggregated over real submissions by /api/report
+interface ReportResp {
+  date: string;
+  symbol: string;
+  report: { climbers: number; topScore: number; topName: string; bestStreak: number; medianScore: number; totalHeight: number; topMutation: string | null; topMutationRuns: number } | null;
+  narrative: string[];
+  tomorrowSymbol: string;
+  store: string;
+}
 
 const BEST_KEY = "cc_best_v1";
 const NAME_KEY = "cc_name_v1";
@@ -55,6 +64,9 @@ export default function GameCanvas() {
   const [rank, setRank] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [muted, setMutedState] = useState(false);
+  // P2.4: yesterday's episode — honest aggregates over the day's submissions
+  const [report, setReport] = useState<ReportResp | null>(null);
+  const [reportCopied, setReportCopied] = useState(false);
   // P2.1: v1/v2 renderer A/B — /?renderer=v2 opts into the grammar+parallax+juice
   // renderer (render-only: physics/scoring/determinism identical). Set client-side
   // in the load effect to avoid SSR hydration mismatch.
@@ -100,6 +112,11 @@ export default function GameCanvas() {
           fetch(`/api/leaderboard?date=${d.seed.date}`)
             .then((r) => r.json())
             .then((b) => { if (alive) setTopBoard(b.entries ?? []); })
+            .catch(() => {});
+          // H4: yesterday's episode for the ready screen (cliffhanger loop)
+          fetch("/api/report")
+            .then((r) => r.json())
+            .then((rp: ReportResp) => { if (alive) setReport(rp); })
             .catch(() => {});
         }
       })
@@ -346,6 +363,16 @@ export default function GameCanvas() {
     setMuted(m);
   };
 
+  // H4: the report is designed to travel — copy the episode verbatim
+  const copyReport = () => {
+    if (!report) return;
+    const text = `CANDLE CLIMBER — DAILY REPORT ${report.date}\n${report.narrative.join("\n")}\nhttps://candle-climber.vercel.app`;
+    navigator.clipboard?.writeText(text).then(() => {
+      setReportCopied(true);
+      setTimeout(() => setReportCopied(false), 1600);
+    }).catch(() => {});
+  };
+
   const seedLabel = data ? `${data.seed.symbol} · ${data.seed.date}` : "";
   const stats = useMemo(() => marketStats(data?.candles ?? []), [data]);
   const weatherChip = v2 && weather && (weather.wind >= 0.15 || weather.fog >= 0.3)
@@ -440,6 +467,15 @@ export default function GameCanvas() {
                 <button className="cc-btn cc-btn-ghost" onClick={() => setArchOpen(true)}>ARCHIVE →</button>
               </div>
               {best > 0 && <p className="cc-best">PERSONAL BEST <b>{best.toLocaleString()}</b></p>}
+              {!archive && report && (
+                <div className="cc-report">
+                  <div className="cc-report-title">DAILY REPORT · {report.date} · {report.symbol}</div>
+                  {report.narrative.map((line, i) => (
+                    <p key={i} className="cc-report-line">{line}</p>
+                  ))}
+                  <button className="cc-report-copy" onClick={copyReport}>{reportCopied ? "COPIED ✓" : "COPY EPISODE"}</button>
+                </div>
+              )}
               <p className="cc-compliance">robinhood chain testnet · no real funds · nothing is guaranteed</p>
               {topBoard.length > 0 && (
                 <div className="cc-board cc-board-mini">
