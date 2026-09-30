@@ -172,6 +172,7 @@ export function drawHints(ctx: CanvasRenderingContext2D, e: Engine) {
   const bubbles: Record<number, string> = {
     0: "TAP / SPACE = JUMP",
     1: "HOLD = JUMP HIGHER",
+    2: "HOLD SHIFT = RUSH +25%", // P3.6 teach — red candles below override it
   };
   for (let i = 0; i <= Math.min(7, e.plats.length - 1); i++) {
     if (e.plats[i]?.crumble) bubbles[i] = "RED = DON'T LINGER";

@@ -2,7 +2,7 @@
 import type { Platform, Particle, RunResult, DeathCause } from "./types";
 import { CANDLE_W, PLATFORM_W, WORLD2_CHUNK, genWorld2Chunk } from "./level";
 import { BASE_MODS, type MutationMods } from "./mutations";
-import { BASE_GAIN, WORLD2_GAIN, COMBO_CAP, COMBO_STEP } from "@/lib/scoring";
+import { BASE_GAIN, WORLD2_GAIN, COMBO_CAP, COMBO_STEP, RUSH_GAIN } from "@/lib/scoring";
 import { hashString, mulberry32 } from "./rng";
 
 export const VIEW_W = 800; // logical units (canvas is scaled to fit)
@@ -18,6 +18,9 @@ const JUMP_CUT = 0.72;   // release early = short hop (variable-height jump)
 const COYOTE = 0.12;     // was 0.09
 const BUFFER = 0.16;     // was 0.12
 const CRUMBLE_TIME = 0.26;
+// P3.6 skill-jump controls (PLATFORMER-UX-RESEARCH §5/§6 contract):
+const RUSH_SPEED = 1.28;   // SHIFT held → camera ×1.28 (opt-in risk, may exceed the un-rushed cap)
+const HANG_GRAVITY = 0.5;  // half gravity while RISING with jump held (Celeste #3 "hang")
 const PLAYER_X_FRAC = 0.3; // screen anchor
 const PLAYER_W = 34;
 const PLAYER_H = 40;
@@ -50,6 +53,9 @@ export class Engine {
   py = 0; vy = 0;
   grounded = false; groundPlat: Platform | null = null;
   coyote = 0; buffer = 0; jumpHeld = false; jumpCut = false;
+  // P3.6 RUSH: opt-in risk input — hold to trade safety for height-speed.
+  // Deterministic (input state + fixed timestep), W5-pinned.
+  rush = false;
   // camera / world
   camX = 0; camY = 0; speed = CAM_BASE;
   time = 0;
@@ -92,6 +98,8 @@ export class Engine {
     this.jumpHeld = false;
     if (this.vy < 0 && !this.jumpCut) { this.vy *= JUMP_CUT; this.jumpCut = true; }
   }
+  pressRush() { this.rush = true; }
+  releaseRush() { this.rush = false; }
 
   private spawnFloat(x: number, y: number, text: string, color: string) {
     this.floats.push({ x, y, text, color, life: 0.9, maxLife: 0.9 });
@@ -182,9 +190,13 @@ export class Engine {
       return;
     }
     this.time += dt;
+    // P3.6: composition order is FIXED (W5 byte-determinism) — mutation mods
+    // shape the base curve first, the rush multiplier applies AFTER, so rush
+    // can push past the un-rushed cap (that headroom IS the risk).
+    const rushK = this.rush ? RUSH_SPEED : 1;
     const speedCap = CAM_MAX * this.mods.camSpeed;
     const speedBase = CAM_BASE * this.mods.camSpeed;
-    this.speed = Math.min(speedCap, speedBase + this.time * CAM_ACCEL);
+    this.speed = Math.min(speedCap, speedBase + this.time * CAM_ACCEL) * rushK;
     this.camX += this.speed * dt;
     if (this.world2) this.ensureWorld2Terrain();
 
@@ -192,8 +204,11 @@ export class Engine {
     this.buffer = Math.max(0, this.buffer - dt);
     this.coyote = Math.max(0, this.coyote - dt);
 
-    // gravity
-    this.vy += GRAVITY * this.mods.gravity * dt;
+    // gravity — P3.6 gravity-hang: half gravity while RISING with the jump
+    // still held (release ends both the hang and the rise). Mods first, hang
+    // factor after, fixed order.
+    const hangK = this.jumpHeld && this.vy < 0 ? HANG_GRAVITY : 1;
+    this.vy += GRAVITY * this.mods.gravity * hangK * dt;
     this.py += this.vy * dt;
 
     // platform pass detection (world x under player anchor)
@@ -207,7 +222,9 @@ export class Engine {
           if (p.up) { this.streak++; this.bestStreak = Math.max(this.bestStreak, this.streak); }
           else this.streak = 0;
           const mult = 1 + Math.min(this.streak, COMBO_CAP) * COMBO_STEP;
-          const gain = (this.world2 ? WORLD2_GAIN : BASE_GAIN) * mult;
+          // P3.6: rush premium composes AFTER the mode/combo multipliers,
+          // rounded last — score stays float; the floor happens once, at death.
+          const gain = (this.world2 ? WORLD2_GAIN : BASE_GAIN) * mult * (this.rush ? RUSH_GAIN : 1);
           this.score += gain;
           this.spawnFloat(
             p.x + p.w / 2,

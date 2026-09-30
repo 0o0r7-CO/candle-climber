@@ -103,9 +103,7 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
 - [x] **P3.1** Rivalry-tag input on Death Card (CC-PLAN D9 leftover) ⛓ none — DONE `normalizeRivalTag` pure normalizer (X alphabet, 1–15, leading @ tolerated, invalid ⇒ stamp omitted) + `RIVAL_KEY` persistence + optional input on death panel (gold-focus) + card stamp `CHALLENGE ISSUED → @handle — YOU'RE UP` + share text tags the rival. W5 94/94
 - [x] **P3.2** Candle-rain mutation variant (CC-PLAN D9 leftover) — DONE `rain.ts` pure glyph math (34 falling candles, ~70/30 red/green, α≤0.32, engine-time driven, drawn BEHIND playfield in BOTH renderers) + pool 6th entry `rain` (DECOR-ONLY: mods ≡ BASE_MODS, daily difficulty untouched) + W5 tests pin fairness + determinism. 100/100
 - [x] **P3.5** **Timeframe selector** (owner proposal 2026-10-01, tech-reviewed ACCEPT) — DONE 4 chips on ready panel (1W classic default · 1D · 4H · 1H), hidden for stooq/launch/archive. Interval whitelist in level-source (INTERVALS + isInterval + INTERVAL_MS); synthetic terrains seeded per date|interval (legacy 1w byte-identical); cache key + binance klines carry interval; run-token HMAC binds interval (legacy tokens verify as 1w, forged tf → null); boards PER-TF in memory+Mongo (legacy rows read as 1w, never mixed); submission interval pinned from token; report stays classic-board; deep link ?interval= + TF_KEY persistence; card shows honest tf label. Archive stays daily-only V1. W5 108/108
-- [ ] **P3.6** **Skill-jump controls** (from PLATFORMER-UX-RESEARCH): implement the
-  doc's low-risk recommendations (e.g. RUSH speed-mod with score risk-premium);
-  variable-height jump + coyote/buffer already live (P0/P2.7) — teach, then extend ⛓ research doc
+- [x] **P3.6** **Skill-jump controls** (PLATFORMER-UX-RESEARCH contract §6) — DONE RUSH: `Engine.rush` + `pressRush()/releaseRush()`, SHIFT held = camera ×1.28 (after mods, may exceed un-rushed cap) + gains ×1.25 (RUSH_GAIN in scoring.ts, composed after mode/combo, rounded last); gravity-hang: GRAVITY×0.5 while rising with jump held (Celeste #3); MAX_SCORE_PER_CANDLE 140→175 covers rushed world2 full-combo; Shift wired in GameCanvas (repeat/typing-safe, release unconditional); howto line + hint bubble teach RUSH; free-brake stays REJECTED per research. W5 116/116
 - [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — REQUIRED before any launch
   announcement
 - [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner brief → identity doc → assets; E6)
@@ -176,8 +174,9 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P3.6 — Skill-jump controls** per the PLATFORMER-UX-RESEARCH
-> contract (RUSH speed-mod with risk-premium gains + halved-gravity jump peak;
-> variable jump + coyote/buffer already live). Then P3.3 🔒O6 → P3.4 🔒O5
-> (owner-locked). P3.1 rivalry tag, P3.2 candle-rain, P3.5 timeframe selector
-> all shipped. Landing-page visual identity work continues inside P3.
+> ▶ **NEXT ACTION: P3.3 🔒O6 — Real-device mobile QA** (owner dependency: one
+> session, 1–2 phones) and **P3.4 🔒O5 mascot V2 re-brief** (owner brief).
+> ALL code items of P3 are shipped: P3.1 rivalry tag, P3.2 candle-rain,
+> P3.5 timeframe selector, P3.6 skill-jump (RUSH + gravity-hang). Gate G3
+> needs: rivalry tag + candle-rain live (✅ deployed), one clean real-device
+> session (🔒 O6), mascot assets if O5 delivered (🔒 O5) → owner confirmation → P4.

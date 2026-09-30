@@ -156,9 +156,10 @@ describe("W4 summit + graduation arc", () => {
   });
 
   test("e) leaderboard cap covers both engine gain modes", () => {
-    expect(MAX_SCORE_PER_CANDLE).toBeGreaterThanOrEqual(MAX_GAIN_NORMAL); // 140 >= 70
-    expect(MAX_SCORE_PER_CANDLE).toBeGreaterThanOrEqual(MAX_GAIN_WORLD2); // 140 >= 140
-    expect(MAX_SCORE_PER_CANDLE).toBe(140);
+    expect(MAX_SCORE_PER_CANDLE).toBeGreaterThanOrEqual(MAX_GAIN_NORMAL); // 175 >= 70
+    expect(MAX_SCORE_PER_CANDLE).toBeGreaterThanOrEqual(MAX_GAIN_WORLD2); // 175 >= 140
+    // P3.6: the cap now also covers the RUSH premium (world2 full combo × 1.25)
+    expect(MAX_SCORE_PER_CANDLE).toBe(175);
   });
 
   test("f) graduated death-card variant lines (pure helper, canvas-free)", () => {

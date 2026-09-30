@@ -348,6 +348,11 @@ export default function GameCanvas() {
       // G2 owner note: typing a name must never jump or restart the run
       const tag = (ev.target as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      // P3.6 RUSH (desktop): hold Shift = faster climb + 25% gains (opt-in risk)
+      if (ev.key === "Shift") {
+        engineRef.current?.pressRush();
+        return;
+      }
       if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "KeyW") {
         ev.preventDefault();
         if (phase === "ready" || phase === "dead") startRun();
@@ -362,6 +367,8 @@ export default function GameCanvas() {
       }
     };
     const up = (ev: KeyboardEvent) => {
+      // release rush unconditionally — even after alt-tab or input focus changes
+      if (ev.key === "Shift") engineRef.current?.releaseRush();
       if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "KeyW") engineRef.current?.release();
     };
     window.addEventListener("keydown", down);
@@ -539,6 +546,7 @@ export default function GameCanvas() {
               <div className="cc-howto">
                 <p><b className="lime">GREEN</b> candles hold. <b className="coral">RED</b> candles crumble.</p>
                 <p>Tap = hop · <b className="lime">HOLD</b> Space = higher jump · release early = short.</p>
+                <p><b className="lime">SHIFT</b> = RUSH — faster climb, +25% gains while held.</p>
                 {archive ? (
                   <p className="cc-next-level">famous days are famous difficulty — nobody designed this on purpose.</p>
                 ) : (
