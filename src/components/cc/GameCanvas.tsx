@@ -8,6 +8,8 @@ import { marketStats, fmtPct } from "@/game/cc/market";
 import { pickSeed, syntheticCandles, LIMIT, ALL_SYMBOLS } from "@/game/cc/level-source";
 import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
+import ArchiveBrowser from "@/components/cc/ArchiveBrowser";
+import { isArchiveDate } from "@/game/cc/archive";
 import { render, COLORS } from "@/game/cc/render";
 import { renderV2 } from "@/game/cc/render-v2";
 import { makeDeathCard } from "@/game/cc/deathcard";
@@ -30,6 +32,7 @@ const NAME_KEY = "cc_name_v1";
 const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
 const UNSCORED_MSG = "offline terrain — scoring disabled";
+const ARCHIVE_MSG = "practice — archive terrain is unscored";
 
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -55,6 +58,10 @@ export default function GameCanvas() {
   // renderer (render-only: physics/scoring/determinism identical). Set client-side
   // in the load effect to avoid SSR hydration mismatch.
   const [v2, setV2] = useState(false);
+  // P2.2: H1 ARCHIVE — /?symbol=&date=<past UTC date> plays real history as
+  // PRACTICE terrain (submission suppressed; W1 staleness stays authoritative).
+  const [archive, setArchive] = useState(false);
+  const [archOpen, setArchOpen] = useState(false);
   const seedRef = useRef<string>("");
 
   // load daily level + persisted prefs
@@ -66,14 +73,19 @@ export default function GameCanvas() {
     setMutedState(savedMute);
     if (savedMute) setMuted(true); // applies on next unlock
     // optional deep links (whitelist-checked; the server still pins the terrain
-    // and issues the run token): /?symbol=ETHUSDT opens that chart, and
-    // /?source=launch plays the vibe/vibe launch-of-the-day level.
+    // and issues the run token): /?symbol=ETHUSDT opens that chart,
+    // /?source=launch plays the vibe/vibe launch-of-the-day level, and
+    // /?date=<past UTC date> plays the archive (H1) — famous history as terrain.
     const params = new URLSearchParams(window.location.search);
     setV2(params.get("renderer") === "v2"); // whitelisted single value
     const requested = (params.get("symbol") ?? "").toUpperCase();
+    const requestedDate = params.get("date");
+    const isArch = isArchiveDate(requestedDate, utcDateStr());
+    setArchive(isArch);
     const query = new URLSearchParams();
     if (ALL_SYMBOLS.includes(requested)) query.set("symbol", requested);
-    if (params.get("source") === "launch") query.set("source", "launch"); // single whitelisted value
+    if (isArch) query.set("date", requestedDate as string); // server re-validates (past dates only)
+    if (!isArch && params.get("source") === "launch") query.set("source", "launch"); // single whitelisted value
     const qs = query.toString();
     fetch(`/api/candles${qs ? `?${qs}` : ""}`)
       .then((r) => r.json())
@@ -83,17 +95,21 @@ export default function GameCanvas() {
         setData(d);
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
-        fetch(`/api/leaderboard?date=${d.seed.date}`)
-          .then((r) => r.json())
-          .then((b) => { if (alive) setTopBoard(b.entries ?? []); })
-          .catch(() => {});
+        if (!isArch) {
+          fetch(`/api/leaderboard?date=${d.seed.date}`)
+            .then((r) => r.json())
+            .then((b) => { if (alive) setTopBoard(b.entries ?? []); })
+            .catch(() => {});
+        }
       })
       .catch(() => {
         if (!alive) return;
-        // API unreachable — derive the SAME daily level client-side from the
-        // shared seed (identical to what the server would serve; play never crashes).
-        const date = utcDateStr();
-        const { symbol } = pickSeed(date);
+        // API unreachable — derive the SAME level client-side from the
+        // shared seed (identical to what the server would serve; play never
+        // crashes). Archive deep links keep their date; terrain is synthetic
+        // (tokenless → unscored) until the API returns.
+        const date = isArch ? (requestedDate as string) : utcDateStr();
+        const symbol = ALL_SYMBOLS.includes(requested) ? requested : pickSeed(date).symbol;
         const d: CandleData = {
           seed: { date, symbol, interval: "1w", source: "synthetic" },
           candles: syntheticCandles(date, LIMIT),
@@ -323,7 +339,8 @@ export default function GameCanvas() {
 
   const seedLabel = data ? `${data.seed.symbol} · ${data.seed.date}` : "";
   const stats = useMemo(() => marketStats(data?.candles ?? []), [data]);
-  const canSubmit = Boolean(data?.runToken);
+  const canSubmit = Boolean(data?.runToken) && !archive; // archive = practice (H1)
+  const unscoredMsg = archive ? ARCHIVE_MSG : UNSCORED_MSG;
   const top = topBoard[0];
   const rivalGap = result && top && top.score > result.score ? top.score - result.score : 0;
 
@@ -339,6 +356,7 @@ export default function GameCanvas() {
           {graduated && <div className="cc-chip cc-chip-grad">GRADUATED</div>}
           {world2 && <div className="cc-chip cc-chip-grad2">POST-GRAD ×2</div>}
           {v2 && <div className="cc-chip cc-chip-mut" title="renderer v2 — grammar + parallax + juice">RENDER V2</div>}
+          {archive && <div className="cc-chip cc-chip-arch" title="archive terrain — practice only">ARCHIVE</div>}
         </div>
         <div className="cc-hud-right">
           <div className="cc-chip cc-chip-score">{hud.score.toLocaleString()}</div>
@@ -368,7 +386,7 @@ export default function GameCanvas() {
               <h1 className="cc-title">CANDLE<span>CLIMBER</span></h1>
               <p className="cc-tag">the chart is the level</p>
               <div className="cc-daily">
-                <span className="cc-daily-label" title="Levels reset at 00:00 UTC">TODAY&apos;S CHART · UTC</span>
+                <span className="cc-daily-label" title={archive ? "Real history — practice terrain" : "Levels reset at 00:00 UTC"}>{archive ? "ARCHIVE CHART · PRACTICE" : "TODAY&apos;S CHART · UTC"}</span>
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
                 <span className="cc-daily-src">{data.seed.source === "binance" || data.seed.source === "stooq" ? "live data" : data.seed.source === "vibe-launch" ? "vibe launch" : "synthetic"}</span>
               </div>
@@ -393,10 +411,21 @@ export default function GameCanvas() {
               </div>
               <div className="cc-howto">
                 <p><b className="lime">GREEN</b> candles hold. <b className="coral">RED</b> candles crumble.</p>
-                <p>{"Tap / Space to jump. One chart. Every player.\u00A0Daily."}</p>
-                <p className="cc-next-level">Every vibe/vibe launch becomes a future level.</p>
+                {archive ? (
+                  <p>documentary terrain — this day really happened. practice run: no scores.</p>
+                ) : (
+                  <p>{"Tap / Space to jump. One chart. Every player.\u00A0Daily."}</p>
+                )}
+                {archive ? (
+                  <p className="cc-next-level">famous days are famous difficulty — nobody designed this on purpose.</p>
+                ) : (
+                  <p className="cc-next-level">Every vibe/vibe launch becomes a future level.</p>
+                )}
               </div>
-              <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
+              <div className="cc-btn-row">
+                <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
+                <button className="cc-btn cc-btn-ghost" onClick={() => setArchOpen(true)}>ARCHIVE →</button>
+              </div>
               {best > 0 && <p className="cc-best">PERSONAL BEST <b>{best.toLocaleString()}</b></p>}
               <p className="cc-compliance">robinhood chain testnet · no real funds · nothing is guaranteed</p>
               {topBoard.length > 0 && (
@@ -433,10 +462,10 @@ export default function GameCanvas() {
                   className="cc-btn"
                   onClick={submitScore}
                   disabled={submitting || !canSubmit}
-                  title={canSubmit ? undefined : UNSCORED_MSG}
+                  title={canSubmit ? undefined : unscoredMsg}
                 >
                   {submitting ? "…" : "SUBMIT SCORE"}
-                  {!canSubmit && <span className="sr-only">{UNSCORED_MSG}</span>}
+                  {!canSubmit && <span className="sr-only">{unscoredMsg}</span>}
                 </button>
                 <button className="cc-btn" onClick={startRun}>RETRY</button>
               </div>
@@ -480,10 +509,10 @@ export default function GameCanvas() {
                   className="cc-btn"
                   onClick={submitScore}
                   disabled={submitting || !canSubmit}
-                  title={canSubmit ? undefined : UNSCORED_MSG}
+                  title={canSubmit ? undefined : unscoredMsg}
                 >
                   {submitting ? "…" : "SUBMIT SCORE"}
-                  {!canSubmit && <span className="sr-only">{UNSCORED_MSG}</span>}
+                  {!canSubmit && <span className="sr-only">{unscoredMsg}</span>}
                 </button>
                 <button className="cc-btn cc-btn-ghost" onClick={downloadCard}>DEATH CARD ↓</button>
                 <button className="cc-btn cc-btn-start" onClick={startRun}>RETRY</button>
@@ -504,6 +533,8 @@ export default function GameCanvas() {
           </div>
         )}
       </div>
+
+      {archOpen && <ArchiveBrowser onClose={() => setArchOpen(false)} />}
 
       <footer className="cc-footer">
         <a href="https://testnet.vibevibe.fun/" target="_blank" rel="noopener noreferrer">vibe/vibe testnet</a>

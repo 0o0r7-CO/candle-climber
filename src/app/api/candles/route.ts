@@ -6,10 +6,18 @@
 // carries an HMAC runToken that pins symbol+date+terrain for the leaderboard.
 // W3 rails: stock pairs via stooq weekly CSV (?symbol=TSLA|AMZN|NFLX) and the
 // vibe/vibe launch-of-the-day as a derived secondary source (?source=launch).
-// The server ALWAYS pins the date to today (utcDateStr) — no client date input.
+// The server ALWAYS pins today as the default (utcDateStr) — but P2.2 (H1
+// ARCHIVE) additionally honors ?date= for PAST UTC dates only: famous history
+// becomes playable terrain. Future or malformed dates are ignored outright
+// (the W1 no-future-terrain guarantee is absolute). Archive terrain is
+// clamped to closed candles by the end of that day, so a run token minted for
+// an archive date pins an immutable terrain; the leaderboard's staleness
+// rule keeps such tokens unscoreable, and the client plays archive as
+// PRACTICE (no submission) — see src/game/cc/archive.ts.
 import { NextResponse } from "next/server";
 import { utcDateStr } from "@/game/cc/rng";
 import { pickSeed, syntheticCandles, INTERVAL, LIMIT, WATCHLIST, STOCKS } from "@/game/cc/level-source";
+import { isArchiveDate, endOfDayMs, clampCandlesTo, binanceKlinesUrl } from "@/game/cc/archive";
 import { signRunToken } from "@/lib/run-token";
 import { parseStooqCsv } from "@/lib/stooq";
 import { getLaunchOfDay, launchSymbol, vibeLaunchCandles } from "@/lib/vibe-launch";
@@ -35,10 +43,12 @@ const BINANCE_HOSTS = [
 // any failure here degrades to the synthetic tokenless path).
 const STOOQ_HOSTS = ["https://stooq.com"];
 
-async function fetchBinance(symbol: string): Promise<Candle[] | null> {
+async function fetchBinance(symbol: string, endMs?: number): Promise<Candle[] | null> {
   for (const host of BINANCE_HOSTS) {
     try {
-      const url = `${host}/api/v3/klines?symbol=${symbol}&interval=${INTERVAL}&limit=${LIMIT}`;
+      // archive mode pins endTime so the window ENDS at the archive day;
+      // today-path passes no endMs and the URL is byte-identical to pre-archive.
+      const url = binanceKlinesUrl(host, symbol, INTERVAL, LIMIT, endMs);
       const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (!res.ok) { console.error("[candles]", host, "HTTP", res.status); continue; }
       const rows = (await res.json()) as unknown[];
@@ -48,7 +58,7 @@ async function fetchBinance(symbol: string): Promise<Candle[] | null> {
       // yields the exact same level no matter when it is fetched.
       const closed = rows.filter((r) => {
         const closeTime = Number((r as (string | number)[])?.[6]);
-        return Number.isFinite(closeTime) && closeTime <= Date.now();
+        return Number.isFinite(closeTime) && closeTime <= (endMs ?? Date.now());
       });
       if (closed.length < 40) continue;
       return closed.map((r) => {
@@ -69,7 +79,7 @@ async function fetchBinance(symbol: string): Promise<Candle[] | null> {
   return null;
 }
 
-async function fetchStooq(symbol: string): Promise<Candle[] | null> {
+async function fetchStooq(symbol: string, clamp?: (rows: Candle[]) => Candle[]): Promise<Candle[] | null> {
   for (const host of STOOQ_HOSTS) {
     try {
       const url = `${host}/q/d/l/?s=${symbol.toLowerCase()}.us&i=w`;
@@ -83,7 +93,14 @@ async function fetchStooq(symbol: string): Promise<Candle[] | null> {
         console.error("[candles/stooq]", host, "unusable payload (challenge/blocked?) or <40 closed rows");
         continue;
       }
-      return parsed;
+      // Archive mode clamps the full history to closed-by-that-day rows; if
+      // the clamped window is too thin, the synthetic path takes over.
+      const clamped = clamp ? clamp(parsed) : parsed;
+      if (clamped.length < 40) {
+        console.error("[candles/stooq]", host, "<40 rows closed by archive date");
+        continue;
+      }
+      return clamped;
     } catch (err) {
       console.error("[candles/stooq]", host, "fetch failed:", (err as Error).message);
       continue;
@@ -94,14 +111,21 @@ async function fetchStooq(symbol: string): Promise<Candle[] | null> {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  // Date-clamp (P0 follow-up): the server ALWAYS pins today — ?date= is not
-  // honored, so no terrain (or run token) can ever be minted for a future date.
-  const date = utcDateStr();
+  // Date-clamp (P0 follow-up, extended by P2.2): the server pins today unless
+  // ?date= names a strictly PAST, well-formed UTC date (H1 ARCHIVE). Future or
+  // malformed ?date= values are ignored — no terrain (or run token) can ever
+  // be minted for a future date.
+  const today = utcDateStr();
+  const requestedDate = searchParams.get("date");
+  const isArchive = isArchiveDate(requestedDate, today);
+  const date = isArchive ? (requestedDate as string) : today;
 
   // ?source=launch — vibe/vibe launch-of-the-day: derived terrain built from a
   // real launch's metrics, server-vouched with a run token. The value is
   // whitelisted to the single string "launch"; anything else is ignored.
-  if (searchParams.get("source") === "launch") {
+  // (Launch-of-the-day is a TODAY concept — an archive ?date= takes priority
+  // and the launch source is skipped.)
+  if (!isArchive && searchParams.get("source") === "launch") {
     try {
       const launch = await getLaunchOfDay(date);
       if (launch) {
@@ -130,8 +154,9 @@ export async function GET(req: Request) {
   }
 
   // Honor ?symbol= when it is one of the whitelisted pairs (crypto rotation or
-  // stock rails); otherwise the daily seeded rotation decides (default
-  // behavior unchanged). Unknown symbols silently fall back to the daily pick.
+  // stock rails); otherwise the daily seeded rotation decides for the level
+  // date — for an archive date that is THAT day's rotation symbol, so the
+  // archive browser can list past dailies without any server allow-list.
   const requested = (searchParams.get("symbol") ?? "").toUpperCase();
   const symbol = WATCHLIST.includes(requested) || STOCKS.includes(requested)
     ? requested
@@ -147,7 +172,12 @@ export async function GET(req: Request) {
     candles = hit.candles;
     source = hit.source; // restore true source — a cached synthetic must stay synthetic (and tokenless)
   } else {
-    const live = isStock ? await fetchStooq(symbol) : await fetchBinance(symbol);
+    // Archive mode ends every fetch window at the end of the archive day:
+    // binance via endTime, stooq by clamping the parsed full history.
+    const endMs = isArchive ? endOfDayMs(date) : undefined;
+    const live = isStock
+      ? (await fetchStooq(symbol, (rows) => (isArchive ? clampCandlesTo(rows, date) : rows)))
+      : await fetchBinance(symbol, endMs);
     if (live) {
       candles = live;
     } else {

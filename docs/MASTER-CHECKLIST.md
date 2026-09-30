@@ -46,8 +46,14 @@
 - [x] **P2.1** 2026-09-30 @ `6b1a699` — Visual **V1** shipped: terrain-v2.ts (pure
   translation) + render-v2.ts (sky/ghosts/ridge/playfield/foreground + squash-stretch,
   trail, pre-rendered glow sprites) behind `?renderer=v2` + HUD chip; engine untouched
-- [ ] **P2.2** Hook **H1 ARCHIVE** — era browser + difficulty auto-tags (minimal version
-  on current renderer; era palettes land with V1/V3) · recommended after P2.1
+- [x] **P2.2** 2026-09-30 @ `<commit>` — Hook **H1 ARCHIVE** shipped: archive.ts (pure:
+  date validation no-future-absolute, closed-candle clamping, difficulty auto-tag
+  CALM/ROCKY/BRUTAL/LEGENDARY, recent-dailies replay, whitelisted deep links) ·
+  /api/candles honors `?date=` for PAST UTC dates only (today path byte-identical;
+  launch source skipped for archive) · ArchiveBrowser (6 curated eras + 10 recent
+  dailies, lazily computed tags, renderer=v2 carried) · archive runs are PRACTICE
+  (submission suppressed; W1 staleness untouched) · live-verified: COVID/SNL/May-crash/
+  FTX tag LEGENDARY on real binance data 🧪
 - [ ] **P2.3** Visual **V2** — Weather systems (ATR wind, volume fog, session sky) ⛓ P2.1
 - [ ] **P2.4** Hook **H4 DAILY REPORT** — end-of-day aggregate card; same-day aggregates
   work on memory store; cross-day history ⛓ O1
@@ -133,5 +139,6 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P2.1** — Visual V1 (translation grammar + parallax + juice) behind
-> `?renderer=v2` feature flag, with P2.6 tests shipped together. No owner input needed.
+> ▶ **NEXT ACTION: P2.3** — Visual **V2** weather systems (ATR wind, volume fog,
+> session sky) ⛓ P2.1 — derived in the same pure translation layer (H2, W5-safe).
+> No owner input needed. (Gate G2 still requires owner A/B on V1 + P2.4/P2.5.)
