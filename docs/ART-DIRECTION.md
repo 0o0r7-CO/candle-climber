@@ -90,8 +90,8 @@ longer history — no other game on the launchpad has a background that is also 
 |---|---|---|
 | **V1 — grammar foundation** | translation layer + palette-mapped materials + 5-layer parallax + juice pass (squash/stretch, trails, landing dust, camera) | feature-flagged side-by-side with current renderer for owner A/B |
 | **V2 — mood systems** | Weather (wind/fog/tremor) + session-time sky | after V1 acceptance |
-| **V3 — hook visuals** | Wreckage ghosts, Daily Report card art, Archive era palettes, biome accents | with P0 hook rollout |
-| **V4 — token era** | Mirror levels ($WICK's own chart), Wick Vault visuals, burn-counter HUD, graduation celebration scene | with P1/P2 rollout |
+| **V3 — hook visuals** | Wreckage ghosts, Daily Report card art, Archive era palettes, biome accents | with G0 hook rollout (product phase P2) |
+| **V4 — token era** | Mirror levels ($WICK's own chart), Wick Vault visuals, burn-counter HUD, graduation celebration scene | with G1/G2 rollout (product phases P4/P6) |
 
 Untouched by all of the above: physics, determinism, scoring, anti-cheat. V1 is render-only
 by construction — the engine consumes `TerrainEntity[]` exactly as it consumes platforms today.

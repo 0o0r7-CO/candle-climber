@@ -79,7 +79,7 @@ verifiable · the token's own chart is also a chart.
   ART-DIRECTION §4).
 - **Psychology:** narrative stakes + honor badge ("I survived COVID day"). Effortless
   content depth: every historical day is a level forever.
-- **Token tie:** Archive marathons feed airdrop weights. **Phase: P0** (no token needed).
+- **Token tie:** Archive marathons feed airdrop weights. **Growth phase: G0** (no token needed).
 
 ### H2 · WEATHER — "you feel volatility with your hands"
 - **Pitch:** candle statistics become physics: day ATR = wind (swaying terrain, particle
@@ -99,7 +99,7 @@ verifiable · the token's own chart is also a chart.
   pipeline; store per (symbol,date) in Mongo, render as cached sprites.
 - **Psychology:** social proof + collective loss aversion + "see your own corpse tomorrow".
 - **Token tie:** holders' ghosts could carry a subtle holder-aura (identity, not power).
-  **Phase: P0** (needs board persistence = E9 Atlas unlock).
+  **Growth phase: G0** (needs board persistence = E9 Atlas unlock).
 
 ### H4 · DAILY REPORT — "every night, one episode"
 - **Pitch:** auto-generated end-of-day narrative from real aggregate data: "2,341 climbers
@@ -122,7 +122,7 @@ verifiable · the token's own chart is also a chart.
 - **Psychology:** asymmetric-information texture — "I can read the market" — the
   trading dopamine loop with zero monetary risk.
 - **Token tie:** prediction accuracy = airdrop weight (holder-track participation).
-  **Phase: P1** (can exist pre-launch but shines with weights).
+  **Growth phase: G1** (can exist pre-launch but shines with weights).
 
 ### H6 · MIRROR — "your token's chart is a level"
 - **Pitch:** after launch, $WICK's own price chart becomes a playable level. Pump = smooth
@@ -132,7 +132,7 @@ verifiable · the token's own chart is also a chart.
   feed the $WICK token's own OHLC series into the same pipeline.
 - **Psychology:** holders intrinsically return daily to play their own money's terrain —
   the only token on the launchpad whose chart is playable.
-- **Token tie:** IS the token tie. **Phase: P2** (needs live token history).
+- **Token tie:** IS the token tie. **Growth phase: G2** (needs live token history).
 
 ### H7 · WICK VAULT (bonus) — "the highest wick holds a treasure"
 - **Pitch:** each day's highest wick carries a vault visible to everyone; opening it
@@ -140,15 +140,18 @@ verifiable · the token's own chart is also a chart.
 - **Mechanic:** place a vault entity at the level's peak wick; server verifies balance
   tier on open; grants cosmetic/weight rewards.
 - **Psychology:** aspirational verticality (the game's core verb) + holder identity.
-- **Token tie:** direct. **Phase: P1** (launch day).
+- **Token tie:** direct. **Growth phase: G1** (launch day).
 
-## 7. Phasing mapped to existing milestones
+## 7. Growth phases (G0–G2) mapped to the canonical product phases in MASTER-CHECKLIST.md
+
+> G0 items ship inside product phase P2 · G1 inside P4 · G2 inside P6. The canonical
+> order, ticks and gates live in docs/MASTER-CHECKLIST.md — this section only maps.
 
 | Phase | Contents | Depends on |
 |---|---|---|
-| **P0** (now — no token, no owner input) | H1 Archive browser · H2 Weather systems · H3 Wreckage · H4 Daily Report | nothing (H3 wants Atlas E9) |
-| **P1** (launch day, W6) | Balance Gate tiers · H7 Wick Vault · airdrop-weight accounting (streaks, predictions, archive marathons) · #project-showcase post | $WICK live |
-| **P2** (post-graduation) | H6 Mirror · in-game spend/burn · treasury tournaments · burn counter UI | graduation |
+| **G0** (now — no token, no owner input) | H1 Archive browser · H2 Weather systems · H3 Wreckage · H4 Daily Report | nothing (H3 wants Atlas E9) |
+| **G1** (launch day, W6) | Balance Gate tiers · H7 Wick Vault · airdrop-weight accounting (streaks, predictions, archive marathons) · #project-showcase post | $WICK live |
+| **G2** (post-graduation) | H6 Mirror · in-game spend/burn · treasury tournaments · burn counter UI | graduation |
 
 ## 8. Red lines (honesty rules, non-negotiable)
 

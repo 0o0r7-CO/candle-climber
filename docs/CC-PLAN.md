@@ -67,6 +67,9 @@ deployed) → Atlas `DATABASE_URL` (pending, E9) → Reown projectId (later phas
 No paid services anywhere.
 
 ## 6. Milestones
+
+> Canonical execution order, ticks and gates: **docs/MASTER-CHECKLIST.md**
+> (P0+P1 complete — G1 PASS; current pointer: P2.1 Visual V1).
 - D1–3 (now): playable slice — engine + real BTC/ETH/SOL/DOGE candles + daily seed + death
 - D4–7: leaderboard + death cards + polish + showcase GIF capture
   ✅ leaderboard v2 (env-gated Atlas M0 + memory fallback, anti-cheat, rate limit)
@@ -78,7 +81,7 @@ No paid services anywhere.
 - D10+: token launch via vibevibe bonding curve; payouts to top-5 daily (testnet)
   → now fully specified: docs/TOKEN-LAUNCHPAD-RESEARCH.md (verified mechanics, 5-ETH
   graduation, W6 checklist) · docs/GROWTH-AND-HOOKS-STRATEGY.md (Balance Gate + identity-
-  native hooks H1–H7, phases P0–P2) · docs/ART-DIRECTION.md (candle-to-world grammar,
+  native hooks H1–H7, growth phases G0–G2) · docs/ART-DIRECTION.md (candle-to-world grammar,
   visual roadmap V1–V4)
 - D11–14: duels prototype, guild rally, mainnet watch
 
