@@ -1,7 +1,9 @@
 // Candle Climber engine — fixed-timestep physics, auto-scroll runner over candle platforms
 import type { Platform, Particle, RunResult, DeathCause } from "./types";
-import { PLATFORM_W } from "./level";
+import { CANDLE_W, PLATFORM_W, WORLD2_CHUNK, genWorld2Chunk } from "./level";
 import { BASE_MODS, type MutationMods } from "./mutations";
+import { BASE_GAIN, WORLD2_GAIN, COMBO_CAP, COMBO_STEP } from "@/lib/scoring";
+import { hashString, mulberry32 } from "./rng";
 
 export const VIEW_W = 800; // logical units (canvas is scaled to fit)
 export const VIEW_H = 480;
@@ -19,12 +21,15 @@ const CAM_BASE = 175; // px/s
 const CAM_ACCEL = 5.5; // px/s per second
 const CAM_MAX = 470;
 
-export type SfxName = "jump" | "land" | "crumble" | "milestone";
+export type SfxName = "jump" | "land" | "crumble" | "milestone" | "victory";
 
 export interface EngineCallbacks {
   onDeath: (r: RunResult) => void;
   onScore: (score: number, combo: number) => void;
   onSfx?: (name: SfxName) => void;
+  /** W4: fired once when the player lands on / passes the summit platform.
+   *  The run does NOT end here — graduation is a milestone, not a death. */
+  onGraduate?: () => void;
 }
 
 export interface FloatText {
@@ -50,6 +55,12 @@ export class Engine {
   dead = false; deathCause: DeathCause = 'fell'; deathT = 0;
   shake = 0;
   showHints = false; // first-run onboarding bubbles (set by GameCanvas)
+  // W4 graduation arc: reached the summit (run keeps going) / entered the
+  // post-graduation "buyback world" (doubled gains, endless procedural sky).
+  graduated = false;
+  world2 = false;
+  private w2rnd: (() => number) | null = null;
+  private seedStr: string;
   private cb: EngineCallbacks;
 
   // player world x is always locked to the screen anchor (30% of view)
@@ -57,10 +68,11 @@ export class Engine {
     return this.camX + VIEW_W * PLAYER_X_FRAC - PLAYER_W / 2;
   }
 
-  constructor(plats: Platform[], cb: EngineCallbacks, mods: MutationMods = BASE_MODS) {
+  constructor(plats: Platform[], cb: EngineCallbacks, mods: MutationMods = BASE_MODS, seedStr = "") {
     this.plats = plats;
     this.cb = cb;
     this.mods = mods;
+    this.seedStr = seedStr;
     // start ON the first platform: camera aligned so the player anchor
     // sits right on the platform center (safe runway)
     const start = plats.find((p) => p.state === "solid") ?? plats[0];
@@ -109,7 +121,42 @@ export class Engine {
       bestStreak: this.bestStreak,
       cause,
       candleIndex: this.candlesPassed,
+      graduated: this.graduated,
+      world2: this.world2,
     });
+  }
+
+  // ---- W4 graduation arc ----
+
+  // Summit reached: a milestone, not a death. Idempotent.
+  private graduate() {
+    if (this.graduated) return;
+    this.graduated = true;
+    this.cb.onSfx?.("victory");
+    this.cb.onGraduate?.();
+  }
+
+  // Enter the post-graduation "buyback world": doubled per-candle gains and an
+  // endless deterministic sky beyond the summit. Idempotent.
+  enterWorld2() {
+    if (this.world2) return;
+    this.world2 = true;
+    if (!this.w2rnd) this.w2rnd = mulberry32(hashString(this.seedStr + ":world2"));
+    this.ensureWorld2Terrain();
+    this.cb.onSfx?.("milestone");
+  }
+
+  // Chunked generation: extend the level whenever the camera nears the current
+  // terrain edge. Trigger points are pure functions of camX (deterministic),
+  // and the chunk RNG is consumed sequentially, so the same seed + same
+  // advance steps always yield identical platforms.
+  private ensureWorld2Terrain() {
+    if (!this.w2rnd) return;
+    while (this.camX + VIEW_W + 480 > (this.plats.length - 1) * CANDLE_W) {
+      const last = this.plats[this.plats.length - 1];
+      const chunk = genWorld2Chunk(this.plats.length, WORLD2_CHUNK, last.y, this.w2rnd);
+      this.plats.push(...chunk);
+    }
   }
 
   private solidUnder(px: number, plat: Platform): boolean {
@@ -135,6 +182,7 @@ export class Engine {
     const speedBase = CAM_BASE * this.mods.camSpeed;
     this.speed = Math.min(speedCap, speedBase + this.time * CAM_ACCEL);
     this.camX += this.speed * dt;
+    if (this.world2) this.ensureWorld2Terrain();
 
     // jump input
     this.buffer = Math.max(0, this.buffer - dt);
@@ -149,12 +197,13 @@ export class Engine {
     for (const p of this.plats) {
       if (!p.passed && p.x + p.w < focus) {
         p.passed = true;
+        if (p.summit) this.graduate();
         if (p.w > 0) {
           this.candlesPassed = p.i + 1;
           if (p.up) { this.streak++; this.bestStreak = Math.max(this.bestStreak, this.streak); }
           else this.streak = 0;
-          const mult = 1 + Math.min(this.streak, 12) * 0.5;
-          const gain = 10 * mult;
+          const mult = 1 + Math.min(this.streak, COMBO_CAP) * COMBO_STEP;
+          const gain = (this.world2 ? WORLD2_GAIN : BASE_GAIN) * mult;
           this.score += gain;
           this.spawnFloat(
             p.x + p.w / 2,
@@ -182,6 +231,7 @@ export class Engine {
           this.grounded = true;
           this.coyote = COYOTE;
           this.groundPlat = p;
+          if (p.summit) this.graduate();
           if (p.crumble && p.state === "solid") { p.state = "crumbling"; p.crumbleT = 0; this.cb.onSfx?.("crumble"); }
           break;
         }

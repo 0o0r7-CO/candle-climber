@@ -13,7 +13,7 @@ import { makeDeathCard } from "@/game/cc/deathcard";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
-type Phase = "loading" | "ready" | "running" | "dead";
+type Phase = "loading" | "ready" | "running" | "graduated" | "dead";
 interface BoardEntry {
   name: string;
   score: number;
@@ -41,6 +41,8 @@ export default function GameCanvas() {
   const [mutation, setMutation] = useState<Mutation | null>(null);
   const [hud, setHud] = useState({ score: 0, combo: 0 });
   const [result, setResult] = useState<RunResult | null>(null);
+  const [graduated, setGraduated] = useState(false); // W4: summit reached
+  const [world2, setWorld2] = useState(false); // W4: post-grad buyback world
   const [best, setBest] = useState(0);
   const [name, setName] = useState("");
   const [board, setBoard] = useState<BoardEntry[]>([]);
@@ -102,6 +104,23 @@ export default function GameCanvas() {
       {
         onScore: (score, combo) => setHud({ score, combo }),
         onSfx: (s) => sfx[s](),
+        onGraduate: () => {
+          // W4: summit reached — pause for the celebration panel; the run is
+          // still live (score snapshot now, real RunResult only at death).
+          const eng = engineRef.current;
+          if (!eng) return;
+          setGraduated(true);
+          setResult({
+            score: Math.floor(eng.score),
+            candlesPassed: eng.candlesPassed,
+            bestStreak: eng.bestStreak,
+            candleIndex: eng.candlesPassed,
+            graduated: true,
+            world2: eng.world2,
+          });
+          setHud({ score: Math.floor(eng.score), combo: 0 });
+          setPhase("graduated");
+        },
         onDeath: (r) => {
           sfx.death();
           setResult(r);
@@ -119,6 +138,7 @@ export default function GameCanvas() {
         },
       },
       mut.mods,
+      d.seed.date + d.seed.symbol, // W4: world-2 sky seed (same string as the level)
     );
   }, []);
 
@@ -134,14 +154,28 @@ export default function GameCanvas() {
     setHud({ score: 0, combo: 0 });
     setResult(null);
     setRank(null);
+    setGraduated(false);
+    setWorld2(false);
     setPhase("running");
     lastRef.current = performance.now();
     accRef.current = 0;
   }, [data, mutation, buildEngine]);
 
+  // W4: from the GRADUATED panel, continue into the post-graduation buyback
+  // world — doubled gains, endless procedural sky. The run keeps its score.
+  const enterWorld2 = useCallback(() => {
+    const eng = engineRef.current;
+    if (!eng || !eng.graduated || eng.world2) return;
+    eng.enterWorld2();
+    setWorld2(true);
+    setPhase("running");
+    lastRef.current = performance.now();
+    accRef.current = 0;
+  }, []);
+
   // main loop
   useEffect(() => {
-    if (phase !== "running" && phase !== "dead") return;
+    if (phase !== "running" && phase !== "dead" && phase !== "graduated") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -166,7 +200,8 @@ export default function GameCanvas() {
       accRef.current += dt;
       const FIXED = 1 / 60;
       while (accRef.current >= FIXED) {
-        e.step(FIXED);
+        // "graduated" pauses the simulation while the celebration panel is up
+        if (phase === "running" || phase === "dead") e.step(FIXED);
         accRef.current -= FIXED;
       }
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
@@ -189,6 +224,13 @@ export default function GameCanvas() {
       if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "KeyW") {
         ev.preventDefault();
         if (phase === "ready" || phase === "dead") startRun();
+        else if (phase === "graduated") {
+          // Space on the graduated panel = enter world 2 (tap-to-continue parity);
+          // let focused buttons/inputs handle Space themselves.
+          const tag = (ev.target as HTMLElement | null)?.tagName;
+          if (tag === "BUTTON" || tag === "INPUT") return;
+          enterWorld2();
+        }
         else engineRef.current?.press();
       }
     };
@@ -198,7 +240,7 @@ export default function GameCanvas() {
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
-  }, [phase, startRun]);
+  }, [phase, startRun, enterWorld2]);
 
   const onPointerDown = (ev: React.PointerEvent) => {
     ev.preventDefault();
@@ -284,6 +326,8 @@ export default function GameCanvas() {
           {mutation && mutation.id !== "clean" && phase !== "loading" && (
             <div className="cc-chip cc-chip-mut" title={mutation.tagline}>{mutation.name}</div>
           )}
+          {graduated && <div className="cc-chip cc-chip-grad">GRADUATED</div>}
+          {world2 && <div className="cc-chip cc-chip-grad2">POST-GRAD ×2</div>}
         </div>
         <div className="cc-hud-right">
           <div className="cc-chip cc-chip-score">{hud.score.toLocaleString()}</div>
@@ -360,10 +404,46 @@ export default function GameCanvas() {
           </div>
         )}
 
+        {phase === "graduated" && result && (
+          <div className="cc-overlay">
+            <div className="cc-panel cc-panel-death">
+              <h2 className="cc-grad-headline">GRADUATED</h2>
+              <p className="cc-grad-flavor">curve summit reached · graduation: 5 eth class</p>
+              <div className="cc-death-score">
+                <span className="cc-death-num">{result.score.toLocaleString()}</span>
+                <span className="cc-death-sub">
+                  {result.candlesPassed} candles · best streak x{result.bestStreak} · PB {best.toLocaleString()}
+                </span>
+              </div>
+              <div className="cc-death-actions">
+                <button className="cc-btn cc-btn-start" onClick={enterWorld2}>WORLD 2 →</button>
+                <button className="cc-btn cc-btn-ghost" onClick={downloadCard}>DEATH CARD ↓</button>
+                <button
+                  className="cc-btn"
+                  onClick={submitScore}
+                  disabled={submitting || !canSubmit}
+                  title={canSubmit ? undefined : UNSCORED_MSG}
+                >
+                  {submitting ? "…" : "SUBMIT SCORE"}
+                  {!canSubmit && <span className="sr-only">{UNSCORED_MSG}</span>}
+                </button>
+                <button className="cc-btn" onClick={startRun}>RETRY</button>
+              </div>
+              <p className="cc-grad-next">world 2: the climb continues · gains ×2</p>
+              {rank !== null && <p className="cc-rank">GLOBAL RANK #{rank} TODAY</p>}
+            </div>
+          </div>
+        )}
+
         {phase === "dead" && result && (
           <div className="cc-overlay">
             <div className="cc-panel cc-panel-death">
               <h2 className="cc-liquidated">LIQUIDATED</h2>
+              {result.graduated && (
+                <p className="cc-rival cc-rival-grad">
+                  graduated{result.world2 ? " · world 2 reached" : ""}
+                </p>
+              )}
               <div className="cc-death-score">
                 <span className="cc-death-num">{result.score.toLocaleString()}</span>
                 <span className="cc-death-sub">

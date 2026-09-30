@@ -639,6 +639,42 @@
 .cc-realmove-row b.down { color: var(--cc-down); }
 .cc-realmove-sep { color: var(--cc-faint); }
 
+/* ---- W4: graduation arc (summit → GRADUATED → world 2) ---- */
+.cc-chip-grad {
+  color: #E0B04E;
+  border-color: rgba(224, 176, 78, 0.5);
+  background: rgba(224, 176, 78, 0.10);
+  white-space: nowrap;
+}
+.cc-chip-grad2 {
+  color: var(--cc-ink);
+  background: var(--cc-lime);
+  border-color: var(--cc-lime);
+  white-space: nowrap;
+}
+.cc-grad-headline {
+  font-family: var(--cc-display);
+  font-weight: 700;
+  font-size: clamp(30px, 6vw, 42px);
+  color: #E0B04E;
+  letter-spacing: 0.04em;
+}
+.cc-grad-flavor {
+  font-family: var(--cc-mono);
+  font-size: 12px;
+  color: var(--cc-faint);
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+.cc-grad-next {
+  font-family: var(--cc-mono);
+  font-size: 12px;
+  color: var(--cc-lime);
+  letter-spacing: 0.06em;
+  margin-top: 10px;
+}
+.cc-rival-grad { color: #E0B04E; letter-spacing: 0.1em; }
+
 /* scrollbars */
 .cc-panel::-webkit-scrollbar, .cc-board::-webkit-scrollbar { width: 6px; }
 .cc-panel::-webkit-scrollbar-thumb, .cc-board::-webkit-scrollbar-thumb {

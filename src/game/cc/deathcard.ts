@@ -8,6 +8,24 @@ const CAUSE_LINES: Record<string, string> = {
   wicked: "WICKED. Spiked by the wick.",
 };
 
+// ---- W4 graduation arc: card milestone variant ----
+// Pure helper (no canvas) so tests can assert the variant logic without a DOM.
+// Game-fiction only — honest milestone language, no reward/yield promises.
+export interface MilestoneLines {
+  ribbon: string | null; // "GRADUATED" headline ribbon, null for plain deaths
+  sub: string | null; // summit flavor line
+  world2Line: string | null; // present when the run reached world 2
+}
+
+export function milestoneLines(r: Pick<RunResult, "graduated" | "world2">): MilestoneLines {
+  if (!r.graduated) return { ribbon: null, sub: null, world2Line: null };
+  return {
+    ribbon: "GRADUATED",
+    sub: "curve summit reached · graduation: 5 eth class",
+    world2Line: r.world2 ? "world 2 reached · post-grad ×2" : null,
+  };
+}
+
 interface CardOpts {
   result: RunResult;
   symbol: string;
@@ -106,29 +124,59 @@ export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
     sx += 314;
   }
 
-  // cause line
-  ctx.fillStyle = COLORS.down;
-  ctx.font = "600 40px 'Clash Display', sans-serif";
-  ctx.fillText(CAUSE_LINES[o.result.cause] ?? CAUSE_LINES.fell, 72, 1010);
+  // cause line / graduation milestone block (W4)
+  const ms = milestoneLines(o.result);
+  const causeLine = o.result.cause ? (CAUSE_LINES[o.result.cause] ?? CAUSE_LINES.fell) : null;
+  if (ms.ribbon) {
+    // graduated variant: gold milestone block replaces cause/mutation/rival copy
+    let my = 1010;
+    ctx.fillStyle = COLORS.gold;
+    ctx.font = "600 46px 'Clash Display', sans-serif";
+    ctx.fillText(ms.ribbon, 72, my);
+    my += 52;
+    if (ms.sub) {
+      ctx.fillStyle = COLORS.faint;
+      ctx.font = "500 27px 'JetBrains Mono', monospace";
+      ctx.fillText(ms.sub, 72, my);
+      my += 42;
+    }
+    if (ms.world2Line) {
+      ctx.fillStyle = COLORS.lime;
+      ctx.font = "500 27px 'JetBrains Mono', monospace";
+      ctx.fillText(ms.world2Line, 72, my);
+      my += 42;
+    }
+    if (causeLine) {
+      // the run later ended (world 2 liquidation) — keep it honest, lowercase
+      ctx.fillStyle = COLORS.down;
+      ctx.font = "500 26px 'JetBrains Mono', monospace";
+      ctx.fillText(causeLine.toLowerCase(), 72, my);
+    }
+  } else if (causeLine) {
+    // cause line
+    ctx.fillStyle = COLORS.down;
+    ctx.font = "600 40px 'Clash Display', sans-serif";
+    ctx.fillText(causeLine, 72, 1010);
 
-  // mutation line (when today's chart is mutated)
-  let y = 1062;
-  if (o.mutationName) {
-    ctx.fillStyle = "#8A82E8";
-    ctx.font = "500 30px 'JetBrains Mono', monospace";
-    ctx.fillText("MUTATION: " + o.mutationName, 72, y);
-    y += 52;
-  }
+    // mutation line (when today's chart is mutated)
+    let y = 1062;
+    if (o.mutationName) {
+      ctx.fillStyle = "#8A82E8";
+      ctx.font = "500 30px 'JetBrains Mono', monospace";
+      ctx.fillText("MUTATION: " + o.mutationName, 72, y);
+      y += 52;
+    }
 
-  // rival line — the competitive hook
-  if (o.isTop) {
-    ctx.fillStyle = COLORS.lime;
-    ctx.font = "600 42px 'Clash Display', sans-serif";
-    ctx.fillText("YOU'RE #1 ON TODAY'S CHART", 72, y);
-  } else if (o.rivalName && o.rivalGap) {
-    ctx.fillStyle = COLORS.faint;
-    ctx.font = "600 36px 'Clash Display', sans-serif";
-    ctx.fillText(`TOP: ${o.rivalName.toUpperCase().slice(0, 14)} — ${o.rivalGap.toLocaleString()} PTS AHEAD`, 72, y);
+    // rival line — the competitive hook
+    if (o.isTop) {
+      ctx.fillStyle = COLORS.lime;
+      ctx.font = "600 42px 'Clash Display', sans-serif";
+      ctx.fillText("YOU'RE #1 ON TODAY'S CHART", 72, y);
+    } else if (o.rivalName && o.rivalGap) {
+      ctx.fillStyle = COLORS.faint;
+      ctx.font = "600 36px 'Clash Display', sans-serif";
+      ctx.fillText(`TOP: ${o.rivalName.toUpperCase().slice(0, 14)} — ${o.rivalGap.toLocaleString()} PTS AHEAD`, 72, y);
+    }
   }
 
   // mascot face (our blockbot, original)

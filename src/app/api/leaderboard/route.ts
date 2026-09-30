@@ -9,9 +9,14 @@
 import { NextResponse } from "next/server";
 import { getBoard, type BoardEntry } from "@/lib/leaderboard-store";
 import { verifyRunToken, isTokenStale } from "@/lib/run-token";
+// W4: raised 70 -> 140 — engine max gain: 10 base (20 post-grad world 2)
+// × combo cap (1 + 12*0.5) = 7 → 70 / 140. Shared with the engine via
+// src/lib/scoring.ts and coupled by test/summit.test.ts.
+import { MAX_SCORE_PER_CANDLE } from "@/lib/scoring";
 
-const MAX_SCORE_PER_CANDLE = 70; // engine max gain: 10 * (1 + 12 * 0.5) = 70
-const MAX_CANDLES = 1000;
+// world 2 extends the terrain indefinitely (W4); 5000 closed candles ≈ a
+// 20+ minute run — the score caps below remain the real anti-cheat gates.
+const MAX_CANDLES = 5000;
 
 /* per-IP rate limit: 20 submissions / minute / instance */
 const hits = new Map<string, number[]>();

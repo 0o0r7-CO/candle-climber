@@ -54,4 +54,11 @@ export const sfx = {
   crumble: () => noise(0.22, 0.12),
   death: () => { blip(320, 60, 0.5, "sawtooth", 0.12); noise(0.3, 0.1); },
   milestone: () => { blip(520, 780, 0.1, "square", 0.08); setTimeout(() => blip(660, 990, 0.12, "square", 0.08), 90); },
+  // W4: summit graduation fanfare (summit land) — short rising arpeggio
+  victory: () => {
+    blip(523, 523, 0.09, "square", 0.09);
+    setTimeout(() => blip(659, 659, 0.09, "square", 0.09), 100);
+    setTimeout(() => blip(784, 784, 0.09, "square", 0.09), 200);
+    setTimeout(() => blip(1046, 1568, 0.22, "square", 0.09), 300);
+  },
 };

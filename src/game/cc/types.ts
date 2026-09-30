@@ -36,6 +36,10 @@ export interface Platform {
   state: 'solid' | 'crumbling' | 'gone';
   crumbleT: number; // seconds since crumble started
   passed: boolean; // camera already passed it
+  /** W4 graduation arc: the FINAL platform of the daily level is the summit —
+   *  landing on it (or passing its x) graduates the run. Purely derived from
+   *  the seed-derived platform list, so it stays deterministic. */
+  summit?: boolean;
 }
 
 export interface Particle {
@@ -49,6 +53,10 @@ export interface RunResult {
   score: number;
   candlesPassed: number;
   bestStreak: number;
-  cause: DeathCause;
+  /** Absent while the run is still live (e.g. the GRADUATED snapshot). */
+  cause?: DeathCause;
   candleIndex: number;
+  /** W4 graduation arc: milestone flags carried into the death card + UI. */
+  graduated?: boolean;
+  world2?: boolean;
 }

@@ -38,6 +38,8 @@ next-env.d.ts
 worklog.md
 prompt
 test
+!test/
+!test/**/*.test.ts
 local-*
 .claude
 .z-ai-config

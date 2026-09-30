@@ -18,11 +18,40 @@ export const COLORS = {
   gold: "#E0B04E",
 };
 
+// Summit marker — pole + flag + "SUMMIT" label (W4 graduation arc).
+// Subtle by design: same color system, no redesign — gold flag on the final
+// platform of the daily level.
+function drawSummit(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
+  const px = x + (w > 0 ? w / 2 : CANDLE_W / 2);
+  ctx.strokeStyle = COLORS.gold;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(px, y - 2);
+  ctx.lineTo(px, y - 66);
+  ctx.stroke();
+  ctx.fillStyle = COLORS.gold;
+  ctx.beginPath();
+  ctx.moveTo(px, y - 66);
+  ctx.lineTo(px + 26, y - 58);
+  ctx.lineTo(px, y - 50);
+  ctx.closePath();
+  ctx.fill();
+  ctx.font = "700 10px 'JetBrains Mono', monospace";
+  ctx.textAlign = "center";
+  ctx.fillStyle = COLORS.gold;
+  ctx.fillText("SUMMIT", px, y - 76);
+  ctx.textAlign = "left";
+}
+
 export function drawPlatform(ctx: CanvasRenderingContext2D, p: Platform, camX: number, camY: number) {
-  if (p.state === "gone" || p.w === 0) return;
   const x = p.x - camX;
   const y = p.y - camY;
   if (x > VIEW_W + 40 || x + p.w < -40) return;
+  if (p.state === "gone" || p.w === 0) {
+    // a summit that landed on a gap candle still shows its marker
+    if (p.summit) drawSummit(ctx, x, y, p.w);
+    return;
+  }
 
   // wick line
   const wx = x + p.w / 2;
@@ -59,6 +88,8 @@ export function drawPlatform(ctx: CanvasRenderingContext2D, p: Platform, camX: n
   ctx.lineWidth = 2;
   roundRect(ctx, cx - 2, p.y - camY - 4, p.w + 4, 8, 4);
   ctx.stroke();
+
+  if (p.summit) drawSummit(ctx, x, y, p.w);
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
