@@ -19,7 +19,8 @@ export interface Mutation {
 
 export const BASE_MODS: MutationMods = { gravity: 1, jump: 1, camSpeed: 1, crumbleTime: 0.26 };
 
-const POOL: Mutation[] = [
+// exported for W5 contract tests (pool invariants, P3.2 fairness/dead-variant)
+export const POOL: Mutation[] = [
   {
     id: "clean",
     name: "CLEAN CHART",
@@ -49,6 +50,15 @@ const POOL: Mutation[] = [
     name: "PAPER HANDS",
     tagline: "Red candles fold twice as fast today.",
     mods: { gravity: 1, jump: 1, camSpeed: 1, crumbleTime: 0.15 },
+  },
+  {
+    // P3.2 candle-rain visual variant (CC-PLAN D9 leftover): DECOR-ONLY entry —
+    // mods stay at base so the daily difficulty / score economy is untouched;
+    // renderers gate the falling-candle layer on this id (src/game/cc/rain.ts).
+    id: "rain",
+    name: "CANDLE RAIN",
+    tagline: "The whole tape is falling. Eye weather only — skill unchanged.",
+    mods: BASE_MODS,
   },
 ];
 

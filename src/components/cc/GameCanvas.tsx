@@ -55,6 +55,9 @@ export default function GameCanvas() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<CandleData | null>(null);
   const [mutation, setMutation] = useState<Mutation | null>(null);
+  // P3.2: mutation id flows into the renderers via ref — the RAF loop must not
+  // re-subscribe on mutation change (same pattern as seedRef/wrecksRef)
+  const mutationIdRef = useRef<string | undefined>(undefined);
   const [hud, setHud] = useState({ score: 0, combo: 0 });
   const [result, setResult] = useState<RunResult | null>(null);
   const [graduated, setGraduated] = useState(false); // W4: summit reached
@@ -283,8 +286,8 @@ export default function GameCanvas() {
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current);
-      else render(ctx, e);
+      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current);
+      else render(ctx, e, seedRef.current, mutationIdRef.current);
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
@@ -293,6 +296,11 @@ export default function GameCanvas() {
       window.removeEventListener("resize", resize);
     };
   }, [phase, v2, weather]);
+
+  // P3.2: mirror mutation state → ref consumed by the RAF render loop
+  useEffect(() => {
+    mutationIdRef.current = mutation?.id;
+  }, [mutation]);
 
   // input
   useEffect(() => {

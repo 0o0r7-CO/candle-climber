@@ -1,6 +1,7 @@
 // Canvas renderer — locked vibe/vibe design language
 import { Engine, VIEW_W, VIEW_H, type FloatText } from "./engine";
 import { CANDLE_W } from "./level";
+import { drawCandleRain } from "./rain";
 import type { Platform, Particle } from "./types";
 
 export const COLORS = {
@@ -225,12 +226,14 @@ function drawBackdrop(ctx: CanvasRenderingContext2D, camX: number, camY: number)
   ctx.fillRect(0, VIEW_H - 130, VIEW_W, 130);
 }
 
-export function render(ctx: CanvasRenderingContext2D, e: Engine) {
+export function render(ctx: CanvasRenderingContext2D, e: Engine, seedStr = "", mutationId?: string) {
   ctx.save();
   const sx = e.shake > 0 ? (Math.random() - 0.5) * e.shake : 0;
   const sy = e.shake > 0 ? (Math.random() - 0.5) * e.shake : 0;
   ctx.translate(sx, sy);
   drawBackdrop(ctx, e.camX, e.camY);
+  // P3.2 candle-rain: decor layer behind the playfield (never occludes caps)
+  if (mutationId === "rain") drawCandleRain(ctx, e, seedStr, VIEW_W, VIEW_H);
 
   // visible platforms only
   const i0 = Math.max(0, Math.floor(e.camX / CANDLE_W) - 2);

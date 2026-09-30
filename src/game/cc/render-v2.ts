@@ -15,6 +15,7 @@ import { CANDLE_W, PLATFORM_W } from "./level";
 import { COLORS, roundRect, drawSummit, drawHints, drawFloats, drawParticles } from "./render";
 import { buildTerrainV2, type TerrainV2, type SlabDecor } from "./terrain-v2";
 import { NEUTRAL_WEATHER, type Weather } from "./weather";
+import { drawCandleRain } from "./rain";
 import { type Wreck } from "./wreckage";
 import { hashString, mulberry32 } from "./rng";
 import type { Platform } from "./types";
@@ -572,7 +573,7 @@ function drawWrecks(ctx: CanvasRenderingContext2D, e: Engine, wrecks: Wreck[]) {
 
 /* --------------------------------- entry ----------------------------------- */
 
-export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = []) {
+export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = [], mutationId?: string) {
   const st = getState(e, seedStr);
   const t = st.terrain;
 
@@ -606,6 +607,10 @@ export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: stri
   drawGhostsV2(ctx, e, t);
   drawRidgeV2(ctx, e);
   ctx.restore();
+
+  // P3.2 candle-rain: decor layer between backdrop and playfield (never
+  // occludes slabs/caps; engine-time driven — same seed+time ⇒ same frame)
+  if (mutationId === "rain") drawCandleRain(ctx, e, seedStr, VIEW_W, VIEW_H);
 
   // visible window (playfield space)
   const i0 = Math.max(0, Math.floor(e.camX / CANDLE_W) - 2);
