@@ -68,6 +68,7 @@ export default function GameCanvas() {
   // P2.4: yesterday's episode — honest aggregates over the day's submissions
   const [report, setReport] = useState<ReportResp | null>(null);
   const [reportCopied, setReportCopied] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false); // G2 de-clutter: folded by default
   // P2.1: v1/v2 renderer A/B — /?renderer=v2 opts into the grammar+parallax+juice
   // renderer (render-only: physics/scoring/determinism identical). Set client-side
   // in the load effect to avoid SSR hydration mismatch.
@@ -294,6 +295,9 @@ export default function GameCanvas() {
   useEffect(() => {
     const down = (ev: KeyboardEvent) => {
       if (ev.repeat) return;
+      // G2 owner note: typing a name must never jump or restart the run
+      const tag = (ev.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "KeyW") {
         ev.preventDefault();
         if (phase === "ready" || phase === "dead") startRun();
@@ -316,6 +320,9 @@ export default function GameCanvas() {
   }, [phase, startRun, enterWorld2]);
 
   const onPointerDown = (ev: React.PointerEvent) => {
+    // G2 owner note: the death/ready panels live inside the stage — never hijack
+    // clicks meant for the name input or any other control inside them
+    if ((ev.target as HTMLElement | null)?.closest("input,button,a,select,textarea,label")) return;
     ev.preventDefault();
     if (phase === "ready") { startRun(); return; }
     engineRef.current?.press();
@@ -472,15 +479,11 @@ export default function GameCanvas() {
               </div>
               <div className="cc-howto">
                 <p><b className="lime">GREEN</b> candles hold. <b className="coral">RED</b> candles crumble.</p>
-                {archive ? (
-                  <p>documentary terrain — this day really happened. practice run: no scores.</p>
-                ) : (
-                  <p>{"Tap / Space to jump. One chart. Every player.\u00A0Daily."}</p>
-                )}
+                <p>Tap = hop · <b className="lime">HOLD</b> Space = higher jump · release early = short.</p>
                 {archive ? (
                   <p className="cc-next-level">famous days are famous difficulty — nobody designed this on purpose.</p>
                 ) : (
-                  <p className="cc-next-level">Every vibe/vibe launch becomes a future level.</p>
+                  <p className="cc-next-level">One chart. Every player. Daily.</p>
                 )}
               </div>
               <div className="cc-btn-row">
@@ -489,15 +492,25 @@ export default function GameCanvas() {
               </div>
               {best > 0 && <p className="cc-best">PERSONAL BEST <b>{best.toLocaleString()}</b></p>}
               {!archive && report && (
-                <div className="cc-report">
-                  <div className="cc-report-title">DAILY REPORT · {report.date} · {report.symbol}</div>
-                  {report.narrative.map((line, i) => (
-                    <p key={i} className="cc-report-line">{line}</p>
-                  ))}
-                  <button className="cc-report-copy" onClick={copyReport}>{reportCopied ? "COPIED ✓" : "COPY EPISODE"}</button>
+                <div className="cc-report cc-report-fold">
+                  <button
+                    className="cc-report-toggle"
+                    onClick={() => setReportOpen((o) => !o)}
+                    aria-expanded={reportOpen}
+                  >
+                    <span className="cc-report-arrow" aria-hidden>{reportOpen ? "▾" : "▸"}</span>
+                    DAILY REPORT · {report.date} · {report.symbol}
+                  </button>
+                  {reportOpen && (
+                    <>
+                      {report.narrative.map((line, i) => (
+                        <p key={i} className="cc-report-line">{line}</p>
+                      ))}
+                      <button className="cc-report-copy" onClick={copyReport}>{reportCopied ? "COPIED ✓" : "COPY EPISODE"}</button>
+                    </>
+                  )}
                 </div>
               )}
-              <p className="cc-compliance">robinhood chain testnet · no real funds · nothing is guaranteed</p>
               {topBoard.length > 0 && (
                 <div className="cc-board cc-board-mini">
                   <div className="cc-board-title">TOP 3 TODAY</div>

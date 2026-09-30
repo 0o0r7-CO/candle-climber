@@ -3,12 +3,12 @@ import type { Candle, Platform } from "./types";
 import { hashString, mulberry32 } from "./rng";
 
 export const CANDLE_W = 96;
-export const PLATFORM_W = 62;
+export const PLATFORM_W = 72; // was 62 — G2: wider caps, less dead space between candles
 export const AMP_MIN = 150; // px between rolling low/high closes
 export const AMP_MAX = 330;
 
 const LAUNCH_PAD = 4; // first N candles: flat, contiguous, safe runway
-export const MAX_UP = 112;   // jump reach ≈ 137px — keep every step reachable
+export const MAX_UP = 112;   // jump reach ≈ 158px (JUMP_V 815) — keep every step reachable
 export const MAX_DOWN = 170;
 
 export function buildPlatforms(candles: Candle[], seedStr: string): Platform[] {
@@ -46,7 +46,7 @@ export function buildPlatforms(candles: Candle[], seedStr: string): Platform[] {
 
     const hiY = Math.min(cY, norm(candles[i].h));
     const loY = Math.max(cY, norm(candles[i].l));
-    const gap = launch ? false : !tiny && gapRnd() < 0.18;
+    const gap = launch ? false : !tiny && gapRnd() < 0.13; // was 0.18 — G2: full gaps rarer
     const crumble = launch ? false : !up;
     const w = launch ? CANDLE_W : gap ? 0 : PLATFORM_W;
 

@@ -913,3 +913,23 @@
   cursor: pointer;
 }
 .cc-report-copy:hover { color: var(--cc-lime); border-color: rgba(204, 255, 0, 0.3); }
+
+/* G2 owner notes: ready-panel de-clutter — the report folds into one line */
+.cc-report-fold { padding: 8px 12px; }
+.cc-report-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--cc-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--cc-lime);
+  text-align: left;
+}
+.cc-report-arrow { color: var(--cc-faint); width: 10px; flex: none; }
+.cc-report-toggle:hover .cc-report-arrow { color: var(--cc-lime); }
