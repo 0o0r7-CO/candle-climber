@@ -5,6 +5,11 @@ export interface Candle {
   h: number; // high
   l: number; // low
   c: number; // close
+  /** Volume (base asset), when the feed provides it (binance/stooq). Absent
+   *  for synthetic/derived terrain — weather fog falls back to a baseline.
+   *  Optional since P2.3; JSON.stringify drops undefined, so candle JSON and
+   *  run-token fingerprints stay stable for feeds without volume. */
+  v?: number;
 }
 
 export interface SeedInfo {

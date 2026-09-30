@@ -49,6 +49,7 @@ describe("W5 stooq CSV parser (pure)", () => {
       h: 11,
       l: 9.5,
       c: 10.5,
+      v: 1000000, // P2.3: volume rides along for the H2 weather fog
     });
     expect(candles![1].t).toBe(candles![0].t + WEEK_MS);
     expect(candles![44].t).toBe(Date.parse("2026-09-21T00:00:00Z"));

@@ -63,12 +63,15 @@ async function fetchBinance(symbol: string, endMs?: number): Promise<Candle[] | 
       if (closed.length < 40) continue;
       return closed.map((r) => {
         const k = r as (string | number)[];
+        const vol = Number(k[5]);
         return {
           t: Number(k[0]),
           o: Number(k[1]),
           h: Number(k[2]),
           l: Number(k[3]),
           c: Number(k[4]),
+          // volume feeds the H2 weather fog (P2.3); 0/NaN -> omitted
+          ...(Number.isFinite(vol) && vol > 0 ? { v: vol } : {}),
         };
       });
     } catch (err) {

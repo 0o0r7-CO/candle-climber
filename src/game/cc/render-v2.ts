@@ -14,6 +14,7 @@ import { Engine, VIEW_W, VIEW_H } from "./engine";
 import { CANDLE_W, PLATFORM_W } from "./level";
 import { COLORS, roundRect, drawSummit, drawHints, drawFloats, drawParticles } from "./render";
 import { buildTerrainV2, type TerrainV2, type SlabDecor } from "./terrain-v2";
+import { NEUTRAL_WEATHER, type Weather } from "./weather";
 import { hashString, mulberry32 } from "./rng";
 import type { Platform } from "./types";
 
@@ -99,7 +100,7 @@ function ly(wy: number, camY: number, f: number, k: number, ay: number): number 
 
 /* ------------------------------- L1 · sky -------------------------------- */
 
-function drawSkyV2(ctx: CanvasRenderingContext2D, e: Engine, t: TerrainV2) {
+function drawSkyV2(ctx: CanvasRenderingContext2D, e: Engine, t: TerrainV2, w: Weather) {
   const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
   g.addColorStop(0, COLORS.bgDeep);
   g.addColorStop(1, COLORS.bg);
@@ -121,6 +122,18 @@ function drawSkyV2(ctx: CanvasRenderingContext2D, e: Engine, t: TerrainV2) {
     band.addColorStop(1, `rgba(${bandColor},${bandAlpha})`);
     ctx.fillStyle = band;
     ctx.fillRect(0, VIEW_H - 220, VIEW_W, 220);
+  }
+
+  // H2 weather: high wind loads the sky with a drifting cloud veil (deterministic
+  // from engine time; storm days read as storm days — mood follows the data)
+  if (w.wind > 0.3) {
+    const drift = ((e.time * 34 * w.windDir) % (VIEW_W + 420) + VIEW_W + 420) % (VIEW_W + 420) - 210;
+    const cloud = ctx.createLinearGradient(drift - 260, 0, drift + 260, VIEW_H * 0.8);
+    cloud.addColorStop(0, "rgba(16,18,20,0)");
+    cloud.addColorStop(0.5, `rgba(16,18,20,${0.16 * w.wind})`);
+    cloud.addColorStop(1, "rgba(16,18,20,0)");
+    ctx.fillStyle = cloud;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   }
 
   // price grid — dimmer than v1 (the world layers carry the depth now)
@@ -449,7 +462,7 @@ function drawPlayerV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State) {
 
 /* ----------------------------- L5 · foreground ----------------------------- */
 
-function drawForegroundV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State) {
+function drawForegroundV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State, w: Weather) {
   // ambient rising tick particles — pure function of engine time
   for (const q of st.amb) {
     const yy = ((q.y - e.time * q.sp) % VIEW_H + VIEW_H) % VIEW_H;
@@ -459,6 +472,45 @@ function drawForegroundV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State)
     ctx.fillRect(xx, yy, q.s, q.s);
   }
   ctx.globalAlpha = 1;
+
+  // H2 weather: wind streaks — horizontal lines whose count/speed/alpha derive
+  // from ATR wind (deterministic per index from engine time; no wall clock)
+  if (w.wind > 0.12) {
+    const dir = w.windDir;
+    const count = 3 + Math.floor(w.wind * 22);
+    ctx.strokeStyle = "rgba(174,182,188,1)";
+    ctx.lineCap = "round";
+    for (let k = 0; k < count; k++) {
+      const h1 = hashString(`cc-wind:${k}`);
+      const speed = (190 + (h1 % 9) * 34) * (0.35 + w.wind);
+      const span = VIEW_W + 120;
+      const x0 = ((((h1 % span) + dir * e.time * speed) % span) + span) % span;
+      const xx = dir >= 0 ? x0 - 60 : span - 60 - x0;
+      const yy = (h1 >>> 3) % VIEW_H;
+      const len = 10 + (h1 % 17) * (1.4 + w.wind * 2.2);
+      ctx.globalAlpha = 0.05 + w.wind * 0.16;
+      ctx.lineWidth = 1 + ((h1 >>> 5) % 2) * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(xx, yy);
+      ctx.lineTo(xx + dir * len, yy);
+      ctx.stroke();
+    }
+    ctx.lineCap = "butt";
+  }
+
+  // H2 weather: volume fog — a right-edge lookahead veil (density = recent
+  // volume vs history; honestly data-driven per ART-DIRECTION §4)
+  if (w.fog > 0.08) {
+    const fg = ctx.createLinearGradient(VIEW_W * 0.45, 0, VIEW_W, 0);
+    fg.addColorStop(0, "rgba(16,18,20,0)");
+    fg.addColorStop(1, `rgba(16,18,20,${Math.min(0.45, w.fog * 0.5)})`);
+    ctx.fillStyle = fg;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    // faint full-screen mood tint
+    ctx.fillStyle = `rgba(16,18,20,${w.fog * 0.07})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+
   // vignette (cached gradient)
   if (!st.vignette) {
     const v = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.42, VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.95);
@@ -472,7 +524,7 @@ function drawForegroundV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State)
 
 /* --------------------------------- entry ----------------------------------- */
 
-export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string) {
+export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER) {
   const st = getState(e, seedStr);
   const t = st.terrain;
 
@@ -489,11 +541,23 @@ export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: stri
   ctx.save();
   const sx = e.shake > 0 ? (Math.random() - 0.5) * e.shake : 0;
   const sy = e.shake > 0 ? (Math.random() - 0.5) * e.shake : 0;
-  ctx.translate(sx, sy);
+  // H2 tremor: deterministic cosmetic camera noise — red-dense tails + high
+  // wind make the screen breathe; never more than ~2.2px, engine untouched
+  const tremAmp = weather.tremor * 1.2 + weather.wind * 0.8;
+  const tx = sx + (tremAmp > 0.05 ? Math.sin(e.time * 37) * tremAmp : 0);
+  const ty = sy + (tremAmp > 0.05 ? Math.cos(e.time * 29) * tremAmp * 0.6 : 0);
+  ctx.translate(tx, ty);
 
-  drawSkyV2(ctx, e, t);
+  drawSkyV2(ctx, e, t, weather);
+  // H2 wind sway: background layers (ghosts + ridge) lean with the wind —
+  // playfield caps NEVER move (market legibility is gameplay, ART-DIRECTION §1)
+  ctx.save();
+  if (weather.wind > 0.05) {
+    ctx.translate(Math.sin(e.time * 0.9) * 7 * weather.wind * weather.windDir, Math.sin(e.time * 0.7) * 2 * weather.wind);
+  }
   drawGhostsV2(ctx, e, t);
   drawRidgeV2(ctx, e);
+  ctx.restore();
 
   // visible window (playfield space)
   const i0 = Math.max(0, Math.floor(e.camX / CANDLE_W) - 2);
@@ -513,7 +577,7 @@ export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: stri
   drawParticles(ctx, e.particles, e.camX, e.camY);
   drawFloats(ctx, e.floats, e.camX, e.camY);
   if (!e.dead || e.deathT < 2.2) drawPlayerV2(ctx, e, st);
-  drawForegroundV2(ctx, e, st);
+  drawForegroundV2(ctx, e, st, weather);
 
   // progress candle ticker (top center, in-canvas — same as v1)
   const passed = e.plats[Math.min(e.candlesPassed, e.plats.length - 1)];

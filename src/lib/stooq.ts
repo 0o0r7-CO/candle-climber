@@ -39,7 +39,9 @@ export function parseStooqCsv(text: string, now: number): Candle[] | null {
     // A weekly row closes 7 days after its date — drop the in-progress week
     // (same determinism rule as the crypto path: only CLOSED candles count).
     if (t + 7 * 86_400_000 > now) continue;
-    out.push({ t, o, h, l, c });
+    // Volume (col 6) feeds the H2 weather fog (P2.3); malformed/zero -> omitted.
+    const v = Number(r[5]);
+    out.push({ t, o, h, l, c, ...(Number.isFinite(v) && v > 0 ? { v } : {}) });
   }
   if (out.length < MIN_CLOSED_ROWS) return null;
   return out;

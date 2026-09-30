@@ -12,6 +12,7 @@ import ArchiveBrowser from "@/components/cc/ArchiveBrowser";
 import { isArchiveDate } from "@/game/cc/archive";
 import { render, COLORS } from "@/game/cc/render";
 import { renderV2 } from "@/game/cc/render-v2";
+import { deriveWeather } from "@/game/cc/weather";
 import { makeDeathCard } from "@/game/cc/deathcard";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
@@ -198,6 +199,14 @@ export default function GameCanvas() {
     accRef.current = 0;
   }, []);
 
+  // P2.3 (H2): weather is derived from the SAME closed candles that shaped the
+  // terrain — pure, deterministic, render-only. Consumed by renderV2 (wind
+  // sway/streaks, volume fog, tremor) and surfaced in the HUD when it matters.
+  const weather = useMemo(
+    () => (data ? deriveWeather(data.candles, data.seed.date + data.seed.symbol) : null),
+    [data],
+  );
+
   // main loop
   useEffect(() => {
     if (phase !== "running" && phase !== "dead" && phase !== "graduated") return;
@@ -232,7 +241,7 @@ export default function GameCanvas() {
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      if (v2) renderV2(ctx, e, seedRef.current);
+      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined);
       else render(ctx, e);
       rafRef.current = requestAnimationFrame(step);
     };
@@ -241,7 +250,7 @@ export default function GameCanvas() {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", resize);
     };
-  }, [phase, v2]);
+  }, [phase, v2, weather]);
 
   // input
   useEffect(() => {
@@ -339,6 +348,9 @@ export default function GameCanvas() {
 
   const seedLabel = data ? `${data.seed.symbol} · ${data.seed.date}` : "";
   const stats = useMemo(() => marketStats(data?.candles ?? []), [data]);
+  const weatherChip = v2 && weather && (weather.wind >= 0.15 || weather.fog >= 0.3)
+    ? `${weather.windLabel} · ${weather.fogLabel}`
+    : null;
   const canSubmit = Boolean(data?.runToken) && !archive; // archive = practice (H1)
   const unscoredMsg = archive ? ARCHIVE_MSG : UNSCORED_MSG;
   const top = topBoard[0];
@@ -356,6 +368,7 @@ export default function GameCanvas() {
           {graduated && <div className="cc-chip cc-chip-grad">GRADUATED</div>}
           {world2 && <div className="cc-chip cc-chip-grad2">POST-GRAD ×2</div>}
           {v2 && <div className="cc-chip cc-chip-mut" title="renderer v2 — grammar + parallax + juice">RENDER V2</div>}
+          {weatherChip && <div className="cc-chip cc-chip-weather" title="H2 weather — ATR wind · volume fog">{weatherChip}</div>}
           {archive && <div className="cc-chip cc-chip-arch" title="archive terrain — practice only">ARCHIVE</div>}
         </div>
         <div className="cc-hud-right">
