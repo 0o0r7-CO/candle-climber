@@ -1,0 +1,45 @@
+# E2E GAMER BOT — owner directive 2026-10-01
+# A robot player boots the LIVE deployment (?renderer=v2), plays it (jump + RUSH),
+# captures screenshots + console logs, and fails the run on any uncaught page error,
+# non-whitelisted console error, or a static canvas. Free on GitHub Actions.
+# NOTE: on push this may race the Vercel deploy (tests previous prod) — nightly cron
+# always tests the settled production build.
+name: e2e-gamer-bot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 4 * * *" # nightly 04:00 UTC
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Play the game (prod smoke)
+        run: bun scripts/e2e-gamer-bot.ts
+        env:
+          GAME_URL: https://candle-climber.vercel.app/?renderer=v2
+          RUN_SECONDS: "24"
+
+      - name: Upload artifacts (screenshots + logs)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: e2e-artifacts/
+          retention-days: 14
