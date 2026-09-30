@@ -73,7 +73,7 @@
   EPISODE share text (X posting lands with P5.1/O4) · live smoke: seeded W1-valid
   submission accepted (rank 1), empty-day episode honest, tomorrow-cliffhanger
   from public deterministic rotation 🧪
-- [x] **P2.5** 2026-09-30 @ `<commit>` — Hook **H3 WRECKAGE** (minimal per-device)
+- [x] **P2.5** 2026-09-30 @ `2f90536` — Hook **H3 WRECKAGE** (minimal per-device)
   shipped: wreckage.ts (PURE recordWreck: immutable db, 30 wrecks/level cap,
   24-level eviction by latest-fatal ts, non-finite rejected; localStorage thin
   wrapper try/catch) · deaths freeze at the exact fall point (engine px/py via
