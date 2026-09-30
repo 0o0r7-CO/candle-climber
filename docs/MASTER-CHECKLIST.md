@@ -112,6 +112,12 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   frame diff). `.github/workflows/e2e.yml`: push main + nightly cron 04:00 UTC + manual dispatch, artifacts
   uploaded 14d. Verified locally against prod: PASS 24s, 4 deaths (valid), 0 errors, canvas animating —
   death rate also quantitatively re-confirms owner feedback F1 (early deaths). W5 116/116
+- [x] **P3.9** **G2-F1 second pass — start fairness** (gamer-bot metric, owner full-delegation
+  2026-10-01) — DONE clean NO_RUSH bot baseline (3x60s vs prod): naive input still died at 2–3s exactly at the
+  pad→terrain transition; fix LAUNCH_PAD 4→6 + EASE window (first 2 post-pad candles |Δy|≤48px + gapless) —
+  deterministic, identical for all players, real-chart shape resumes after ease; re-measure on prod: first-death
+  10–31s (immediate-death mode eliminated), deaths/60s unchanged (3–5 = normal naive cadence). W5 +ease pin
+  117/117, tsc+lint green
 - [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — REQUIRED before any launch
   announcement
 - [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner brief → identity doc → assets; E6)
