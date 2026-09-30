@@ -27,7 +27,9 @@ export async function GET(req: Request) {
 
   const store = getBoard();
   // 2000 = memory store's hard cap; for Mongo it is a sane M0-sized window.
-  const entries = await store.top(date, 2000);
+  // P3.5: the narrative describes the CLASSIC board ("1w") only — per-tf
+  // boards stay unmixed so episode figures never blend timeframes.
+  const entries = await store.top(date, 2000, "1w");
 
   const rep = aggregateDay(entries);
   const tomorrowSymbol = pickSeed(

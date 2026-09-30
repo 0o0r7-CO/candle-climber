@@ -512,6 +512,32 @@
 .cc-input-rival { width: 200px; }
 .cc-input-rival:focus { border-color: rgba(240, 177, 18, 0.55); }
 
+/* P3.5 timeframe selector — one quiet chip row on the ready panel */
+.cc-tf-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.cc-tf-chip {
+  font-family: var(--cc-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--cc-faint);
+  background: #101214;
+  border: 1px solid var(--cc-hairline);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.cc-tf-chip:hover { color: #fff; }
+.cc-tf-chip.cc-tf-on {
+  color: #ccff00;
+  border-color: rgba(204, 255, 0, 0.45);
+}
+
 .cc-board {
   margin-top: 14px;
   text-align: left;

@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { getBoard, type BoardEntry } from "@/lib/leaderboard-store";
 import { verifyRunToken, isTokenStale } from "@/lib/run-token";
+import { isInterval } from "@/game/cc/level-source";
 // W5: pure validation core (shape + anti-cheat caps) extracted to
 // src/lib/board-validation.ts — contract pinned by test/leaderboard-contract.test.ts.
 import { validateSubmission } from "@/lib/board-validation";
@@ -28,10 +29,13 @@ function rateLimited(ip: string): boolean {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
+  // P3.5: boards are per-timeframe ("1w" classic default) — never mixed
+  const interval = isInterval(searchParams.get("interval")) ? searchParams.get("interval")! : "1w";
   const store = getBoard();
-  const entries = await store.top(date, 50);
+  const entries = await store.top(date, 50, interval);
   return NextResponse.json({
     entries,
+    interval,
     store: store.kind,
     ...(store.lastError ? { dbError: store.lastError } : {}),
   });

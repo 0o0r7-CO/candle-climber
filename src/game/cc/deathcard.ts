@@ -11,6 +11,14 @@ export function normalizeRivalTag(raw: string): string | null {
   return /^[A-Za-z0-9_]{1,15}$/.test(h) ? "@" + h : null;
 }
 
+// P3.5: honest timeframe label on the card (the terrain IS the timeframe)
+const TF_LABEL: Record<string, string> = {
+  "1w": "WEEKLY CHART",
+  "1d": "DAILY CHART",
+  "4h": "4H CHART",
+  "1h": "1H CHART",
+};
+
 const CAUSE_LINES: Record<string, string> = {
   fell: "LIQUIDATED. Fell out of the chart.",
   crumbled: "PAPERHANDED. The candle crumbled under you.",
@@ -47,6 +55,7 @@ interface CardOpts {
   realMovePct?: number;
   difficulty?: string;
   rivalTag?: string; // P3.1: normalized "@handle" challenge stamp (null/undefined = omit)
+  interval?: string; // P3.5: seed.interval — picks the honest chart label
 }
 
 export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
@@ -88,7 +97,7 @@ export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
   ctx.fillText(o.symbol, 104, 352);
   ctx.fillStyle = COLORS.faint;
   ctx.font = "400 30px 'JetBrains Mono', monospace";
-  ctx.fillText(o.date + " · DAILY CHART", 104, 400);
+  ctx.fillText(o.date + " · " + (TF_LABEL[o.interval ?? "1d"] ?? "DAILY CHART"), 104, 400);
 
   // real-market legibility line — "you died on the REAL chart"
   if (typeof o.realMovePct === "number") {

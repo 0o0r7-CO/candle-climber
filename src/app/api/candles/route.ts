@@ -16,7 +16,7 @@
 // PRACTICE (no submission) — see src/game/cc/archive.ts.
 import { NextResponse } from "next/server";
 import { utcDateStr } from "@/game/cc/rng";
-import { pickSeed, syntheticCandles, INTERVAL, LIMIT, WATCHLIST, STOCKS } from "@/game/cc/level-source";
+import { pickSeed, syntheticCandles, INTERVAL, LIMIT, WATCHLIST, STOCKS, isInterval } from "@/game/cc/level-source";
 import { isArchiveDate, endOfDayMs, clampCandlesTo, binanceKlinesUrl } from "@/game/cc/archive";
 import { signRunToken } from "@/lib/run-token";
 import { parseStooqCsv } from "@/lib/stooq";
@@ -43,12 +43,12 @@ const BINANCE_HOSTS = [
 // any failure here degrades to the synthetic tokenless path).
 const STOOQ_HOSTS = ["https://stooq.com"];
 
-async function fetchBinance(symbol: string, endMs?: number): Promise<Candle[] | null> {
+async function fetchBinance(symbol: string, interval: string, endMs?: number): Promise<Candle[] | null> {
   for (const host of BINANCE_HOSTS) {
     try {
       // archive mode pins endTime so the window ENDS at the archive day;
-      // today-path passes no endMs and the URL is byte-identical to pre-archive.
-      const url = binanceKlinesUrl(host, symbol, INTERVAL, LIMIT, endMs);
+      // today-path passes no endMs. P3.5: interval flows through (1w/1d/4h/1h).
+      const url = binanceKlinesUrl(host, symbol, interval, LIMIT, endMs);
       const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (!res.ok) { console.error("[candles]", host, "HTTP", res.status); continue; }
       const rows = (await res.json()) as unknown[];
@@ -166,7 +166,14 @@ export async function GET(req: Request) {
     : pickSeed(date).symbol;
   const isStock = STOCKS.includes(symbol);
 
-  const key = `${symbol}|${date}`;
+  // P3.5 timeframe selector: ?interval= is whitelist-checked; the classic
+  // weekly level stays the default. ARCHIVE stays daily-only in V1 (the
+  // archive pipeline is weekly-shaped by design) and STOCK rails have no
+  // intraday feed — both honestly pin "1w" and echo it in seed.interval.
+  const requestedInterval = searchParams.get("interval");
+  const interval = !isArchive && !isStock && isInterval(requestedInterval) ? requestedInterval : INTERVAL;
+
+  const key = `${symbol}|${date}|${interval}`;
   let source: Source = isStock ? "stooq" : "binance";
   let candles: Candle[] = [];
 
@@ -180,25 +187,26 @@ export async function GET(req: Request) {
     const endMs = isArchive ? endOfDayMs(date) : undefined;
     const live = isStock
       ? (await fetchStooq(symbol, (rows) => (isArchive ? clampCandlesTo(rows, date) : rows)))
-      : await fetchBinance(symbol, endMs);
+      : await fetchBinance(symbol, interval, endMs);
     if (live) {
       candles = live;
     } else {
-      candles = syntheticCandles(date, LIMIT);
+      candles = syntheticCandles(date, LIMIT, interval);
       source = "synthetic";
     }
     cache.set(key, { ts: Date.now(), candles, source });
   }
 
   const data: CandleData = {
-    seed: { date, symbol, interval: INTERVAL, source },
+    seed: { date, symbol, interval, source },
     candles,
   };
   // Run tokens are issued for every pinned non-synthetic terrain (binance,
   // stooq, vibe-launch); the synthetic fallback stays tokenless, and tokenless
-  // runs are unscored client-side. The token lib is source-agnostic.
+  // runs are unscored client-side. The token lib is source-agnostic. P3.5:
+  // the token binds the timeframe, so per-tf boards stay server-authoritative.
   if (source !== "synthetic") {
-    data.runToken = signRunToken(symbol, date, candles.length, JSON.stringify(candles));
+    data.runToken = signRunToken(symbol, date, candles.length, JSON.stringify(candles), interval);
   }
   return NextResponse.json(data, {
     headers: { "Cache-Control": "public, max-age=300" },

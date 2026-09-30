@@ -46,9 +46,10 @@ export function validateSubmission(
     bestStreak: Math.max(0, Math.min(999, Math.floor(Number(body.bestStreak ?? 0)))),
     mutation: String(body.mutation ?? "").slice(0, 24) || undefined,
     // pinned exclusively from the verified token payload — client-claimed
-    // symbol/date are ignored
+    // symbol/date/interval are ignored (P3.5: boards never mix timeframes)
     symbol: tok.symbol,
     date: tok.date,
+    interval: tok.interval,
     ts: now,
   };
 

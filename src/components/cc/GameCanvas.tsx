@@ -5,7 +5,7 @@ import { Engine, VIEW_W, VIEW_H } from "@/game/cc/engine";
 import { buildPlatforms } from "@/game/cc/level";
 import { dailyMutation, type Mutation } from "@/game/cc/mutations";
 import { marketStats, fmtPct } from "@/game/cc/market";
-import { pickSeed, syntheticCandles, LIMIT, ALL_SYMBOLS } from "@/game/cc/level-source";
+import { pickSeed, syntheticCandles, LIMIT, ALL_SYMBOLS, INTERVALS, isInterval, type GameInterval } from "@/game/cc/level-source";
 import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
 import ArchiveBrowser from "@/components/cc/ArchiveBrowser";
@@ -43,6 +43,7 @@ const NAME_KEY = "cc_name_v1";
 const RIVAL_KEY = "cc_rival_v1"; // P3.1: remembered rivalry tag
 const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
+const TF_KEY = "cc_tf_v1"; // P3.5: remembered timeframe ("1w" classic default)
 const UNSCORED_MSG = "offline terrain — scoring disabled";
 const ARCHIVE_MSG = "practice — archive terrain is unscored";
 
@@ -86,10 +87,16 @@ export default function GameCanvas() {
   const wreckDBRef = useRef<WreckDB>({});
   const wrecksRef = useRef<Wreck[]>([]);
   const seedRef = useRef<string>("");
+  // P3.5: deep-link pins parsed once by the init effect, consumed by the loader
+  const requestedSymRef = useRef("");
+  const requestedDateRef = useRef<string | null>(null);
+  const launchRef = useRef(false);
+  const [tf, setTf] = useState<GameInterval>("1w"); // timeframe selector
+  const [booted, setBooted] = useState(false); // init ran → loader may fetch
 
-  // load daily level + persisted prefs
+  // init: persisted prefs + deep-link parsing (no fetching here — the loader
+  // effect below owns the fetch so a timeframe change re-loads cleanly)
   useEffect(() => {
-    let alive = true;
     setBest(Number(localStorage.getItem(BEST_KEY) ?? 0));
     setName(localStorage.getItem(NAME_KEY) ?? "");
     setRival(localStorage.getItem(RIVAL_KEY) ?? ""); // P3.1
@@ -98,8 +105,9 @@ export default function GameCanvas() {
     if (savedMute) setMuted(true); // applies on next unlock
     // optional deep links (whitelist-checked; the server still pins the terrain
     // and issues the run token): /?symbol=ETHUSDT opens that chart,
-    // /?source=launch plays the vibe/vibe launch-of-the-day level, and
-    // /?date=<past UTC date> plays the archive (H1) — famous history as terrain.
+    // /?source=launch plays the vibe/vibe launch-of-the-day level,
+    // /?date=<past UTC date> plays the archive (H1), and /?interval=1h|4h|1d
+    // pins the timeframe (P3.5) — famous history as terrain.
     const params = new URLSearchParams(window.location.search);
     setV2(params.get("renderer") === "v2"); // whitelisted single value
     wreckDBRef.current = loadWreckDB(); // H3: this device's death map
@@ -107,10 +115,32 @@ export default function GameCanvas() {
     const requestedDate = params.get("date");
     const isArch = isArchiveDate(requestedDate, utcDateStr());
     setArchive(isArch);
+    requestedSymRef.current = ALL_SYMBOLS.includes(requested) ? requested : "";
+    requestedDateRef.current = requestedDate;
+    launchRef.current = !isArch && params.get("source") === "launch"; // single whitelisted value
+    const reqIv = params.get("interval"); // P3.5: deep link beats the saved pref
+    if (isInterval(reqIv)) setTf(reqIv);
+    else if (isInterval(localStorage.getItem(TF_KEY))) setTf(localStorage.getItem(TF_KEY) as GameInterval);
+    setBooted(true);
+  }, []);
+
+  // level loader — re-runs on timeframe change (P3.5): same pipeline, seed keys
+  // carry the interval server-side; archive stays daily-only ("1w") in V1.
+  useEffect(() => {
+    if (!booted) return;
+    let alive = true;
+    setPhase("loading");
+    // a timeframe switch invalidates any run state from the previous terrain
+    setResult(null);
+    setRank(null);
+    setGraduated(false);
+    setWorld2(false);
+    const isArch = archive;
     const query = new URLSearchParams();
-    if (ALL_SYMBOLS.includes(requested)) query.set("symbol", requested);
-    if (isArch) query.set("date", requestedDate as string); // server re-validates (past dates only)
-    if (!isArch && params.get("source") === "launch") query.set("source", "launch"); // single whitelisted value
+    if (requestedSymRef.current) query.set("symbol", requestedSymRef.current);
+    if (isArch && requestedDateRef.current) query.set("date", requestedDateRef.current); // server re-validates (past dates only)
+    if (launchRef.current) query.set("source", "launch");
+    if (!isArch) query.set("interval", tf);
     const qs = query.toString();
     fetch(`/api/candles${qs ? `?${qs}` : ""}`)
       .then((r) => r.json())
@@ -122,7 +152,7 @@ export default function GameCanvas() {
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
         if (!isArch) {
-          fetch(`/api/leaderboard?date=${d.seed.date}`)
+          fetch(`/api/leaderboard?date=${d.seed.date}&interval=${tf}`)
             .then((r) => r.json())
             .then((b) => { if (alive) setTopBoard(b.entries ?? []); })
             .catch(() => {});
@@ -139,11 +169,12 @@ export default function GameCanvas() {
         // shared seed (identical to what the server would serve; play never
         // crashes). Archive deep links keep their date; terrain is synthetic
         // (tokenless → unscored) until the API returns.
-        const date = isArch ? (requestedDate as string) : utcDateStr();
-        const symbol = ALL_SYMBOLS.includes(requested) ? requested : pickSeed(date).symbol;
+        const date = isArch ? (requestedDateRef.current as string) : utcDateStr();
+        const symbol = requestedSymRef.current || pickSeed(date).symbol;
+        const iv: GameInterval = isArch ? "1w" : tf;
         const d: CandleData = {
-          seed: { date, symbol, interval: "1w", source: "synthetic" },
-          candles: syntheticCandles(date, LIMIT),
+          seed: { date, symbol, interval: iv, source: "synthetic" },
+          candles: syntheticCandles(date, LIMIT, iv),
         };
         seedRef.current = d.seed.date + d.seed.symbol;
         wrecksRef.current = wrecksFor(wreckDBRef.current, seedRef.current);
@@ -151,7 +182,15 @@ export default function GameCanvas() {
         setMutation(dailyMutation(d.seed.date + d.seed.symbol));
         setPhase("ready");
       });
-    return () => { alive = false; cancelAnimationFrame(rafRef.current); };
+    return () => { alive = false; };
+  }, [tf, archive, booted]);
+
+  // P3.5: timeframe switch — persist and let the loader effect re-fetch
+  const changeTf = useCallback((iv: GameInterval) => {
+    setTf((cur) => {
+      if (iv !== cur) localStorage.setItem(TF_KEY, iv);
+      return iv;
+    });
   }, []);
 
   const buildEngine = useCallback((d: CandleData, mut: Mutation) => {
@@ -359,7 +398,7 @@ export default function GameCanvas() {
       });
       const j = await res.json();
       if (typeof j.rank === "number") setRank(j.rank);
-      const b = await fetch(`/api/leaderboard?date=${data.seed.date}`).then((r) => r.json());
+      const b = await fetch(`/api/leaderboard?date=${data.seed.date}&interval=${tf}`).then((r) => r.json());
       setBoard(b.entries ?? []);
       setTopBoard(b.entries ?? []);
     } finally {
@@ -383,6 +422,7 @@ export default function GameCanvas() {
       realMovePct: stats?.changePct,
       difficulty: stats?.difficulty,
       rivalTag: challenge ?? undefined,
+      interval: data.seed.interval,
     });
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -505,6 +545,23 @@ export default function GameCanvas() {
                   <p className="cc-next-level">One chart. Every player. Daily.</p>
                 )}
               </div>
+              {/* P3.5 timeframe selector — owner proposal. Crypto dailies only:
+                  stock rails have no intraday feed, launch terrain is derived,
+                  archive stays weekly (V1) — all three hide the chips. */}
+              {!archive && data.seed.source !== "stooq" && data.seed.source !== "vibe-launch" && (
+                <div className="cc-tf-row" role="group" aria-label="Chart timeframe">
+                  {INTERVALS.map((iv) => (
+                    <button
+                      key={iv}
+                      className={`cc-tf-chip${tf === iv ? " cc-tf-on" : ""}`}
+                      onClick={() => changeTf(iv)}
+                      aria-pressed={tf === iv}
+                    >
+                      {iv.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="cc-btn-row">
                 <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
                 <button className="cc-btn cc-btn-ghost" onClick={() => setArchOpen(true)}>ARCHIVE →</button>

@@ -102,10 +102,7 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
 ### P3 — Share loop & identity completion
 - [x] **P3.1** Rivalry-tag input on Death Card (CC-PLAN D9 leftover) ⛓ none — DONE `normalizeRivalTag` pure normalizer (X alphabet, 1–15, leading @ tolerated, invalid ⇒ stamp omitted) + `RIVAL_KEY` persistence + optional input on death panel (gold-focus) + card stamp `CHALLENGE ISSUED → @handle — YOU'RE UP` + share text tags the rival. W5 94/94
 - [x] **P3.2** Candle-rain mutation variant (CC-PLAN D9 leftover) — DONE `rain.ts` pure glyph math (34 falling candles, ~70/30 red/green, α≤0.32, engine-time driven, drawn BEHIND playfield in BOTH renderers) + pool 6th entry `rain` (DECOR-ONLY: mods ≡ BASE_MODS, daily difficulty untouched) + W5 tests pin fairness + determinism. 100/100
-- [ ] **P3.5** **Timeframe selector** (owner proposal 2026-10-01, tech-reviewed ACCEPT):
-  1h/4h/1d chart choice on the ready panel — same pure pipeline (seed keys on
-  symbol|date|interval), per-tf leaderboards (no board mixing), archive stays
-  daily-only in V1, intraday fallback stays honest-synthetic when feed lacks data ⛓ none
+- [x] **P3.5** **Timeframe selector** (owner proposal 2026-10-01, tech-reviewed ACCEPT) — DONE 4 chips on ready panel (1W classic default · 1D · 4H · 1H), hidden for stooq/launch/archive. Interval whitelist in level-source (INTERVALS + isInterval + INTERVAL_MS); synthetic terrains seeded per date|interval (legacy 1w byte-identical); cache key + binance klines carry interval; run-token HMAC binds interval (legacy tokens verify as 1w, forged tf → null); boards PER-TF in memory+Mongo (legacy rows read as 1w, never mixed); submission interval pinned from token; report stays classic-board; deep link ?interval= + TF_KEY persistence; card shows honest tf label. Archive stays daily-only V1. W5 108/108
 - [ ] **P3.6** **Skill-jump controls** (from PLATFORMER-UX-RESEARCH): implement the
   doc's low-risk recommendations (e.g. RUSH speed-mod with score risk-premium);
   variable-height jump + coyote/buffer already live (P0/P2.7) — teach, then extend ⛓ research doc
@@ -179,7 +176,8 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P3.5 — Timeframe selector** (owner proposal, tech-reviewed
-> ACCEPT). P3.1 rivalry tag + P3.2 candle-rain shipped. Then: P3.6 (skill-jump,
-> PLATFORMER-UX-RESEARCH contract) → P3.3 🔒O6 → P3.4 🔒O5. Landing-page
-> visual identity work continues inside P3.
+> ▶ **NEXT ACTION: P3.6 — Skill-jump controls** per the PLATFORMER-UX-RESEARCH
+> contract (RUSH speed-mod with risk-premium gains + halved-gravity jump peak;
+> variable jump + coyote/buffer already live). Then P3.3 🔒O6 → P3.4 🔒O5
+> (owner-locked). P3.1 rivalry tag, P3.2 candle-rain, P3.5 timeframe selector
+> all shipped. Landing-page visual identity work continues inside P3.

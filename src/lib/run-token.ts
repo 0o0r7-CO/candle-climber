@@ -12,12 +12,16 @@
 // - The secret is never logged or exposed; the dev default keeps local dev
 //   working without any env setup.
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+// P3.5: the interval whitelist lives in the game's level-source (single
+// authority shared by client + server routes).
+import { INTERVALS, type GameInterval } from "@/game/cc/level-source";
 
 export interface RunTokenPayload {
   symbol: string;
   date: string; // UTC YYYY-MM-DD the terrain was seeded for
   count: number; // number of closed candles that shaped the terrain
   h: string; // sha256(candle JSON string).slice(0, 16) — terrain fingerprint
+  interval: string; // P3.5: terrain timeframe ("1w" default; legacy tokens without it verify as "1w")
 }
 
 export function getRunTokenSecret(): string {
@@ -29,9 +33,9 @@ export function getRunTokenSecret(): string {
   );
 }
 
-export function signRunToken(symbol: string, date: string, count: number, candleJson: string): string {
+export function signRunToken(symbol: string, date: string, count: number, candleJson: string, interval: GameInterval = "1w"): string {
   const h = createHash("sha256").update(candleJson).digest("hex").slice(0, 16);
-  const payload = Buffer.from(JSON.stringify({ symbol, date, count, h })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ symbol, date, count, h, interval })).toString("base64url");
   const sig = createHmac("sha256", getRunTokenSecret()).update(payload).digest("base64url");
   return `${payload}.${sig}`;
 }
@@ -60,7 +64,14 @@ export function verifyRunToken(token: unknown): RunTokenPayload | null {
   if (typeof p.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return null;
   if (typeof p.count !== "number" || !Number.isInteger(p.count) || p.count <= 0 || p.count > 10_000) return null;
   if (typeof p.h !== "string" || !/^[0-9a-f]{16}$/.test(p.h)) return null;
-  return { symbol: p.symbol, date: p.date, count: p.count, h: p.h };
+  // P3.5: interval is optional in the payload for legacy-token compatibility;
+  // when present it MUST be a whitelisted timeframe (anything else = forged).
+  let interval: string = "1w";
+  if (p.interval !== undefined) {
+    if (typeof p.interval !== "string" || !(INTERVALS as readonly string[]).includes(p.interval)) return null;
+    interval = p.interval;
+  }
+  return { symbol: p.symbol, date: p.date, count: p.count, h: p.h, interval: interval as GameInterval };
 }
 
 /** Expired when the current UTC date is past token date + 1 day (pure date-string compare). */

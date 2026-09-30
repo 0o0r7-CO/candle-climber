@@ -11,20 +11,22 @@ export interface BoardEntry {
   mutation?: string;
   symbol: string;
   date: string;
+  interval?: string; // P3.5: leaderboard boards are PER-TIMEFRAME ("1w" when absent — legacy entries)
   ts: number;
 }
 
 export interface BoardStore {
   readonly kind: "memory" | "mongo";
-  add(entry: BoardEntry): Promise<number>; // returns global-daily rank (1-based)
-  top(date: string | null, n: number): Promise<BoardEntry[]>;
+  add(entry: BoardEntry): Promise<number>; // returns global-daily rank (1-based, within entry.interval)
+  top(date: string | null, n: number, interval?: string): Promise<BoardEntry[]>;
   /** last connection error when a backing store is down (diagnostics) */
   readonly lastError?: string;
 }
 
 /* ---------------------------------- memory --------------------------------- */
 
-class MemoryStore implements BoardStore {
+// exported for W5 contract tests (P3.5 per-timeframe board separation)
+export class MemoryStore implements BoardStore {
   readonly kind = "memory" as const;
   private rows: BoardEntry[] = [];
   private readonly max = 2000;
@@ -32,13 +34,16 @@ class MemoryStore implements BoardStore {
   async add(entry: BoardEntry): Promise<number> {
     this.rows.push(entry);
     if (this.rows.length > this.max) this.rows.splice(0, this.rows.length - this.max);
-    const better = this.rows.filter((r) => r.date === entry.date && r.score > entry.score).length;
+    const iv = entry.interval ?? "1w";
+    const better = this.rows.filter(
+      (r) => r.date === entry.date && (r.interval ?? "1w") === iv && r.score > entry.score,
+    ).length;
     return better + 1;
   }
 
-  async top(date: string | null, n: number): Promise<BoardEntry[]> {
+  async top(date: string | null, n: number, interval: string = "1w"): Promise<BoardEntry[]> {
     return this.rows
-      .filter((r) => !date || r.date === date)
+      .filter((r) => (!date || r.date === date) && (r.interval ?? "1w") === interval)
       .sort((a, b) => b.score - a.score)
       .slice(0, n);
   }
@@ -86,14 +91,22 @@ class MongoStore implements BoardStore {
     const coll = await this.connect();
     if (!coll) return 1; // unreachable in practice — route falls back to memory store
     await coll.insertOne({ ...entry }); // BoardEntry has no _id field → driver auto-generates
-    const better = await coll.countDocuments({ date: entry.date, score: { $gt: entry.score } });
+    // rank within the entry's own timeframe board ("no board mixing", P3.5);
+    // legacy docs (no interval field) count as "1w"
+    const iv = entry.interval ?? "1w";
+    const ivq = iv === "1w" ? { $or: [{ interval: "1w" }, { interval: { $exists: false } }] } : { interval: iv };
+    const better = await coll.countDocuments({ date: entry.date, ...ivq, score: { $gt: entry.score } });
     return better + 1;
   }
 
-  async top(date: string | null, n: number): Promise<BoardEntry[]> {
+  async top(date: string | null, n: number, interval: string = "1w"): Promise<BoardEntry[]> {
     const coll = await this.connect();
     if (!coll) return [];
-    const q = date ? { date } : {};
+    // legacy entries predate the interval field — they are "1w" boards
+    const ivq = interval === "1w"
+      ? { $or: [{ interval: "1w" }, { interval: { $exists: false } }] }
+      : { interval };
+    const q = { ...(date ? { date } : {}), ...ivq };
     return coll.find(q).sort({ score: -1 }).limit(n).toArray();
   }
 }
