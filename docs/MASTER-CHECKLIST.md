@@ -118,9 +118,19 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   deterministic, identical for all players, real-chart shape resumes after ease; re-measure on prod: first-death
   10–31s (immediate-death mode eliminated), deaths/60s unchanged (3–5 = normal naive cadence). W5 +ease pin
   117/117, tsc+lint green
-- [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — REQUIRED before any launch
-  announcement
-- [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner brief → identity doc → assets; E6)
+- [x] **P3.10** **Sentry incident CANDLE-CLIMBER-2 — production unhandled rejection** (2026-10-01,
+  owner emailed the new-issue alert) — real player (Chrome 156/Win) on `/?renderer=v2`: `sound.ts ac()` used
+  `void ctx.resume()` → Chrome rejects with DOMException (keys exactly `code, message, stack` — the Sentry
+  synthetic signature) when resume() fires outside a user-gesture window; setTimeout-deferred sfx (milestone/
+  victory) do that by design. Fix `.catch(()=>{})` (audio = best-effort) + same-class hardening: submitScore
+  try/finally had NO catch (any POST/JSON failure escaped as unhandled rejection) → caught with graceful
+  fallback. Verified end-to-end: event ff17c94e → root cause → fix pushed `be9b97a` → CI + e2e-bot + Vercel
+  green → issue resolved with note. Lesson: DOMException inherits Error.stack in Chrome — enumerate keys, not
+  message, when triaging synthetic rejections. W5 117/117, tsc+lint green
+- [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — LambdaTest access provisioned by owner
+  (org 3358645, verified via API 2026-10-01) — REQUIRED before any launch announcement
+- [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner has visuals ready to share — request sent 2026-10-01;
+  E6)
 
 **Gate G3:** rivalry tag + candle-rain live 🧪 · one clean real-device session ·
 mascot assets merged (if O5 delivered) → owner confirmation → P4.
