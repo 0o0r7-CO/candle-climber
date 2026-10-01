@@ -174,7 +174,7 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 | **O4** | W7 X account | P5.1 | account creation |
 | **O5** | Mascot V2 brief | P3.4, E6 | character re-brief |
 | **O6** | Real devices for QA | P3.3 | 1 session, 1–2 phones |
-| **O7** | `SENTRY_AUTH_TOKEN` in the **Vercel dashboard** (present in local `.env` since 2026-10-01) | source maps + release pinning on Vercel builds (errors report fine without it) | add env var in Vercel → redeploy |
+| **O7** | ~~`SENTRY_AUTH_TOKEN` in the **Vercel dashboard**~~ ✅ **DONE 2026-10-01** — owner supplied new Vercel API token → env vars `SENTRY_AUTH_TOKEN` (secret) + `NEXT_PUBLIC_SENTRY_DSN` added via API to all targets → redeployed → root-caused missing source-map upload (no explicit `release` in `withSentryConfig` + Next 16 emits no client `.map` by default) → fixed in `next.config.ts` (commit `c8b8301`) → verified end-to-end: prod probe event attributed to release `c8b8301c…` with symbolicated frame `src/app/api/debug-sentry/route.ts` | ~~source maps + release pinning on Vercel builds~~ none | none — closed |
 
 ## 4. Gate ledger
 

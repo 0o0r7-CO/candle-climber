@@ -167,8 +167,21 @@ Owner created the Sentry account + admin token (`sntryu_…`); I did the rest en
   to the git SHA and uploads source maps (verified: "Successfully uploaded source maps").
   On Vercel the token must be added as env var **O7** or source-map upload is skipped
   (build still passes; error reporting itself does NOT need the token).
-- **Verified end-to-end**: probe event `70d24b5108954e8bb9dc0599c58493ee` → issue
-  `CANDLE-CLIMBER-1`, correct release (`603edca…`) + file attribution.
+- **O7 CLOSED (2026-10-01)**: owner-supplied Vercel API token → added `SENTRY_AUTH_TOKEN`
+  (secret) + `NEXT_PUBLIC_SENTRY_DSN` to all targets via API → redeployed.
+- **Source-map root-cause chain (commit `c8b8301`)**: (1) `withSentryConfig` had no
+  explicit `release` → plugin resolved the release name inconsistently across
+  environments; (2) `silent: true` swallowed all plugin diagnostics; (3) **Next 16 /
+  Turbopack emits ZERO client `.map` files by default** (verified: 0 maps in
+  `.next/static` vs 57 in `.next/server`) so client stack traces stayed minified.
+  Fix in `next.config.ts`: `release: { name: SENTRY_RELEASE || VERCEL_GIT_COMMIT_SHA ||
+  git rev-parse HEAD }`, `productionBrowserSourceMaps: true`, `silent: false`,
+  `debug: SENTRY_DEBUG==='1'`. Note: v11 CLI uploads via **artifact bundles**
+  (`artifactbundle/assemble`), so `/releases/{sha}/files/` returning 0 is EXPECTED —
+  verify by event symbolication, not the files endpoint.
+- **Verified end-to-end (twice)**: probe event `70d24b51…` (local, release `603edca…`)
+  and probe event from PROD on release `c8b8301c…` → issue `CANDLE-CLIMBER-1`,
+  symbolicated frame `src/app/api/debug-sentry/route.ts`, release attribution exact.
 - **Secrets**: auth token lives only in gitignored `.env` (never commit; rotate if leaked).
 - **TODO (UI-only, API refused)**: DSN key hardening — allowedDomains + rate limit under
   Project → Settings → Client Keys (2 minutes, non-blocking).
