@@ -71,3 +71,4 @@ agent-ctx/
 
 # e2e gamer-bot artifacts
 e2e-artifacts/
+.krea_creds
