@@ -7,7 +7,11 @@ function ac(): AudioContext | null {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AC) ctx = new AC();
   }
-  if (ctx?.state === "suspended") void ctx.resume();
+  // resume() rejects (NotAllowedError) when called outside a user-gesture
+  // window — e.g. setTimeout-deferred sfx (milestone/victory). A bare `void`
+  // leaves the rejection unhandled (CANDLE-CLIMBER-2: DOMException carries
+  // exactly the keys code/message/stack). Swallow: sound is best-effort.
+  if (ctx?.state === "suspended") ctx.resume().catch(() => {});
   return ctx;
 }
 

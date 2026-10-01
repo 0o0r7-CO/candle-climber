@@ -408,6 +408,10 @@ export default function GameCanvas() {
       const b = await fetch(`/api/leaderboard?date=${data.seed.date}&interval=${tf}`).then((r) => r.json());
       setBoard(b.entries ?? []);
       setTopBoard(b.entries ?? []);
+    } catch {
+      // Same incident class as CANDLE-CLIMBER-2 (unhandled rejection): a failed
+      // POST / JSON parse must not escape as an unhandled promise rejection.
+      // Score stays in local best; the panel keeps working for another try.
     } finally {
       setSubmitting(false);
     }
