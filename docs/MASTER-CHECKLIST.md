@@ -20,6 +20,13 @@
    commit docs+code together.
 5. Legend: 🔒 owner-dependent (blocked, not skippable) · ⛓ `<id>` depends on item ·
    🧪 has an automated verification (W5 suite / build / curl check).
+6. **Autonomous-run delegation (owner directive 2026-10-02):** gate confirmations and
+   phase-closure sign-offs are PRE-APPROVED for this run — evidence-based closure
+   (W5 suite + e2e-gamer-bot + LambdaTest real-device + Sentry clean + live probe)
+   substitutes for owner chat confirmation. Ping the owner ONLY for actions that are
+   physically his (wallet txs, account creation, platform balance top-ups). Never
+   loop/retry blindly; never fabricate results — bots and platform APIs are the
+   source of truth.
 
 ## 1. Completed (for the record)
 
@@ -127,13 +134,52 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   fallback. Verified end-to-end: event ff17c94e → root cause → fix pushed `be9b97a` → CI + e2e-bot + Vercel
   green → issue resolved with note. Lesson: DOMException inherits Error.stack in Chrome — enumerate keys, not
   message, when triaging synthetic rejections. W5 117/117, tsc+lint green
-- [ ] **P3.3** 🔒 **O6** Real-device mobile QA pass (E10) — LambdaTest access provisioned by owner
-  (org 3358645, verified via API 2026-10-01) — REQUIRED before any launch announcement
-- [ ] **P3.4** 🔒 **O5** Mascot V2 re-brief (owner has visuals ready to share — request sent 2026-10-01;
-  E6)
+- [ ] **P3.3** 🔒→🔓 **O6** Real-device mobile QA pass (E10) — LambdaTest cloud real-device
+  session (org 3358645, creds on file) replaces the "owner's own phones" reading of E10;
+  owner authorized platform-driven QA 2026-10-02 — REQUIRED before any launch announcement 🧪
+- [ ] **P3.4** ✅ **O5 RESOLVED by owner himself 2026-10-02**: mascot V2 = our own VIBES
+  pipeline (owner reviewed VIBES-CONTACT-SHEET + venom-variants). Final directives:
+  (a) 03_superwick + 06_pump-bubble rejected & archived in `rejected/`; (b) venom final
+  design = `MASCOT/VIBES/venom-variants/venom-v3-half-fused.png`; (c) USE ALL OTHER
+  characters — VIBES (cop/bull/frost) + all MASCOT root concepts — "همشون خوبن و با کیفیت".
+  Game integration lands as P3.11–P3.14 below.
+- [ ] **P3.11** **Character roster → game sprites (14 chars)** — 4-frame 96px transparent
+  sheets via proven pipeline (image-edit side-profile prompt + magenta-key postprocess):
+  5 existing (trader/bot/zombie/dapper/cowboy; re-export trader frame0) + 5 MASCOT
+  concepts (scarf-runner/visor-droid/grump/goblin/cadet working names) + 4 VIBES
+  (wickvenom-from-v3/wickcop/golden-bull/frost-liquidator) · KB push + contact sheet 🧪
+- [ ] **P3.12** **Character registry + pre-game SELECT screen** — `src/game/cc/characters.ts`
+  (id/name/vibe/sprite manifest/effect profile per char) + select UI on the ready flow
+  (portrait cards, selection persisted localStorage `CC_CHAR_KEY`, deep-link ?char=,
+  procedural fallback when no char chosen) 🧪
+- [ ] **P3.13** **Vibe mood→effect profiles in render-v2** — per-character ambient FX
+  (venom=red glitch+vignette, cop=cyan scanlines, bull=golden halo+sparks,
+  frost=snow+ice vignette, zombie=toxic haze, dapper=film grain, cowboy=dust,
+  bot=neon grid, trader=warm green, …) — decor-only, ZERO gameplay/physics impact,
+  deterministic per char id (W5 purity rule) 🧪
+- [ ] **P3.14** **Multi-char verification + ship** — W5 extension (registry purity/manifest
+  safety), e2e-gamer-bot pass with a selected skin, lint+build green, Vercel live 🧪
 
-**Gate G3:** rivalry tag + candle-rain live 🧪 · one clean real-device session ·
-mascot assets merged (if O5 delivered) → owner confirmation → P4.
+**Gate G3:** rivalry tag + candle-rain live 🧪 · one clean real-device session (LambdaTest)
+· character system merged (P3.11–P3.14) → evidence-based closure (owner pre-approved
+2026-10-02) → P4.
+
+### P7 — Rival AI & async duels (owner brainstorm, approved direction 2026-10-02)
+> Executable whenever P4–P6 are owner-blocked; does NOT gate them. Order below is
+> build order. All items decor/economy-side, W5 untouched.
+- [ ] **P7.1** **Rival AI bot (local, zero-infra)** — second headless Engine instance in the
+  same world, heuristic jump planner (lookahead + jump-feasibility), character-personality
+  params (risk/precision per vibe: venom reckless, cop precise, bull greedy, frost patient);
+  rendered as translucent rival climber with its own skin+FX; toggle: "solo / vs bot" 🧪
+- [ ] **P7.2** **Ghost runs** — record position-stream (NOT inputs — physics determinism not
+  required) per run, replay translucent ghost with rival's skin; storage: leaderboard-store
+  pattern (memory/Mongo) ⛓ none · server route ⛓ O1 (durability)
+- [ ] **P7.3** **Async duel** — challenge link/code → both climb SAME symbol+date+interval
+  (buildPlatforms already byte-deterministic per (candles,seed)) → duel record + winner
+  verdict + death-card integration (rivalry tag P3.1 becomes the invitation channel) ⛓ O1
+- [ ] **P7.4** **Realtime live race** (only on traction) — external WS service (PartyKit or
+  self-hosted); both clients simulate locally, avatar sync ~200ms; matchmaking queue
+  ⛓ infra decision (owner ping required for new service spend)
 
 ### P4 — $WICK launch (contains growth G1) — heavy owner dependency
 - [ ] **P4.0** 🔒 **O2** Owner: faucet test ETH into launch wallet
@@ -199,9 +245,11 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 
 ## 5. Current pointer
 
-> ▶ **NEXT ACTION: P3.3 🔒O6 — Real-device mobile QA** (owner dependency: one
-> session, 1–2 phones) and **P3.4 🔒O5 mascot V2 re-brief** (owner brief).
+> ▶ **NEXT ACTION (autonomous run, owner directive 2026-10-02):** P3.11 → P3.12 →
+> P3.13 → P3.14 (character system) → P3.3 LambdaTest real-device QA → close Gate
+> G3 with evidence → P7.1–P7.3 (rival AI + ghost + async duel) while P4–P6 remain
+> owner-blocked (wallet/account/balance actions). Krea API image-gen still 402
+> (separate API balance from workspace) — internal image-edit engine is the active
+> asset engine; Krea pipeline ready for when the owner tops up.
 > ALL code items of P3 are shipped: P3.1 rivalry tag, P3.2 candle-rain,
-> P3.5 timeframe selector, P3.6 skill-jump (RUSH + gravity-hang). Gate G3
-> needs: rivalry tag + candle-rain live (✅ deployed), one clean real-device
-> session (🔒 O6), mascot assets if O5 delivered (🔒 O5) → owner confirmation → P4.
+> P3.5 timeframe selector, P3.6 skill-jump (RUSH + gravity-hang).
