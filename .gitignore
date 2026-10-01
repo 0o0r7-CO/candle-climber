@@ -17,6 +17,9 @@ next-env.d.ts
 .env*
 !.env.example
 .gh_token
+.mongo_public_key
+.mongo_private_key
+.lambdatest_creds
 .gh_user
 .dvtoken
 .vercel_token
