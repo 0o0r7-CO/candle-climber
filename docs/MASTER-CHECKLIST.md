@@ -40,6 +40,10 @@
 ### P1 — product rails ✅ Gate G1 PASS (owner-confirmed)
 - [x] W3 stock-token rails (TSLA/AMZN/NFLX via stooq + vibe/vibe launch-of-the-day
   derived source, server date-clamp) 🧪
+- [ ] **W3.1 (open, found at prod gate)** stooq blocks Vercel egress too — `/api/candles?symbol=TSLA|AMZN|NFLX`
+  serve `source:"synthetic"` (honest label) from prod; rails verified tokened + deterministic.
+  Fix options: alternate no-key stock feed reachable from Vercel (Yahoo v8 chart / Alpha Vantage
+  free tier w/ key), or stooq via a proxy origin. Owner decision only if an API key is wanted.
 - [x] W4 graduation arc (SUMMIT milestone, GRADUATED victory state, post-grad WORLD 2)
 - [x] W5 vitest/bun anti-cheat & determinism suite — 25/25 (run-token, board-validation,
   stooq parser, vibe-launch, level determinism) 🧪
@@ -136,7 +140,18 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   message, when triaging synthetic rejections. W5 117/117, tsc+lint green
 - [ ] **P3.3** 🔒→🔓 **O6** Real-device mobile QA pass (E10) — LambdaTest cloud real-device
   session (org 3358645, creds on file) replaces the "owner's own phones" reading of E10;
-  owner authorized platform-driven QA 2026-10-02 — REQUIRED before any launch announcement 🧪
+  owner authorized platform-driven QA 2026-10-02 — REQUIRED before any launch announcement
+  → **PROGRESS 2026-10-02**: mobile-viewport QA via LambdaTest desktop grid + Chrome
+  mobile-emulation (Pixel 7 profile, 412×915): PASS — 15 char chips render, START works,
+  canvas animating, 0 runtime errors, video+console on dashboard (session
+  d7574597efeeed8418b85c36eb76bd0e, screenshots `qa/realdevice-*`). REAL-DEVICE attempts
+  (Galaxy S23 / Pixel 7 / Pixel 6 Pro × 3 rounds, queueTimeout 420s) all ended
+  `create-test-timeout` — device-automation slots appear unavailable on the plan. REMAINING
+  for closure: one real-device session; owner verify LambdaTest plan includes real-device
+  automation minutes (dashboard → Real Device → App/Web Automation availability) 🧪
+- [x] **P3.15** **Cosmetic fix from mobile QA** — `TODAY&apos;S` rendered literally
+  (HTML entity inside a JS string literal, not JSX text) → real apostrophe; found in
+  LambdaTest emulation screenshot; bun test 126/126, tsc+lint+build green (2026-10-02)
 - [ ] **P3.4** ✅ **O5 RESOLVED by owner himself 2026-10-02**: mascot V2 = our own VIBES
   pipeline (owner reviewed VIBES-CONTACT-SHEET + venom-variants). Final directives:
   (a) 03_superwick + 06_pump-bubble rejected & archived in `rejected/`; (b) venom final
@@ -263,3 +278,11 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > asset engine; Krea pipeline ready for when the owner tops up.
 > ALL code items of P3 are shipped: P3.1 rivalry tag, P3.2 candle-rain,
 > P3.5 timeframe selector, P3.6 skill-jump (RUSH + gravity-hang).
+>
+> **UPDATE 2026-10-02 (later session):** character system verified LIVE on prod via
+> LambdaTest mobile-emulation QA (PASS: 15 chips, animating, 0 errors) + P3.15
+> cosmetic fix shipped; real-device session still pending (plan slots — owner
+> verify). Infra: Codespace exec channel LIVE (paramiko-over-stdio bridge, KB
+> tools/), 8 service secrets migrated to repo-level Codespaces secrets. G3 closure
+> remains blocked ONLY on the real-device session; everything else of G3 verified.
+> Proceed: keep P7.1 (rival AI bot, local zero-infra) as the active build item.

@@ -544,7 +544,7 @@ export default function GameCanvas() {
               <h1 className="cc-title">CANDLE<span>CLIMBER</span></h1>
               <p className="cc-tag">the chart is the level</p>
               <div className="cc-daily">
-                <span className="cc-daily-label" title={archive ? "Real history — practice terrain" : "Levels reset at 00:00 UTC"}>{archive ? "ARCHIVE CHART · PRACTICE" : "TODAY&apos;S CHART · UTC"}</span>
+                <span className="cc-daily-label" title={archive ? "Real history — practice terrain" : "Levels reset at 00:00 UTC"}>{archive ? "ARCHIVE CHART · PRACTICE" : "TODAY'S CHART · UTC"}</span>
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
                 <span className="cc-daily-src">{data.seed.source === "binance" || data.seed.source === "stooq" ? "live data" : data.seed.source === "vibe-launch" ? "vibe launch" : "synthetic"}</span>
               </div>
