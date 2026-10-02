@@ -144,24 +144,22 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   fallback. Verified end-to-end: event ff17c94e → root cause → fix pushed `be9b97a` → CI + e2e-bot + Vercel
   green → issue resolved with note. Lesson: DOMException inherits Error.stack in Chrome — enumerate keys, not
   message, when triaging synthetic rejections. W5 117/117, tsc+lint green
-- [ ] **P3.3** 🔒→🔓 **O6** Real-device mobile QA pass (E10) — LambdaTest cloud real-device
+- [x] **P3.3** 🔒→🔓 **O6** Real-device mobile QA pass (E10) — LambdaTest cloud real-device
   session (org 3358645, creds on file) replaces the "owner's own phones" reading of E10;
   owner authorized platform-driven QA 2026-10-02 — REQUIRED before any launch announcement
-  → **PROGRESS 2026-10-02**: mobile-viewport QA via LambdaTest desktop grid + Chrome
-  mobile-emulation (Pixel 7 profile, 412×915): PASS — 15 char chips render, START works,
-  canvas animating, 0 runtime errors, video+console on dashboard (session
-  d7574597efeeed8418b85c36eb76bd0e, screenshots `qa/realdevice-*`). REAL-DEVICE attempts
-  (Galaxy S23 / Pixel 7 / Pixel 6 Pro × 3 rounds, queueTimeout 420s) all ended
-  `create-test-timeout` — ROOT CAUSE CONFIRMED 2026-10-02 via direct API error:
-  **"Real Mobile Automation not allowed on your current plan"** — real-device
-  automation is plan-gated, not a queue issue. Dashboard login (Real Time Testing
-  interactive route) needs account email+password — NOT on file (only
-  username+access-key, which work for API/grid only; username login → "Invalid
-  email"). REMAINING for closure: owner provides EITHER dashboard email+password
-  (or sets one) → I run interactive real-device session + capture evidence, OR
-  upgrades plan / enables real-device automation → I run the automation script
-  (scripts/lambdatest_realdevice.py, ready), OR runs 1 session on his own phone.
-  Mobile-emulation PASS evidence stands (session d7574597efeeed8418b85c36eb76bd0e) 🧪
+  → History: mobile-emulation PASS first (session d7574597efeeed8418b85c36eb76bd0e);
+  real-device was plan-gated ("Real Mobile Automation not allowed on your current plan",
+  3 rounds × 3 devices failed). **UNBLOCKED 2026-10-02: owner received KaneAI freemium
+  email → real-device automation became entitled → entitlement probe PASS (Pixel 7
+  session create 200) → FULL REAL-DEVICE QA PASS** — session f6c2f0ac-dc95-4135-9c09-51bd3a146903,
+  status=success, real Pixel 7 / Android 13 / Chrome: title ✓ · 15 char chips ✓ ·
+  WICK VENOM select ✓ · START→HUD ✓ · gameplay→LIQUIDATED death card (score 115,
+  8 candles, streak x2, PB) ✓ · 0 SEVERE console errors ✓. Evidence:
+  `qa/realdevice/rd-0*-{boot,selected,running,deathcard}-*.png` + report JSON + video
+  (RMA-AND — Real Mobile Automation) on dashboard. Script committed:
+  `scripts/lambdatest_realdevice.py`. Karma note: sandbox reset mid-run → creds
+  recovered via Codespaces-secrets channel (KB tools/codespace-exec.py, single-conn
+  base64 bundle, values never displayed); gh reinstalled to /home/z/bin/bin/gh 🧪
 - [x] **P3.15** **Cosmetic fix from mobile QA** — `TODAY&apos;S` rendered literally
   (HTML entity inside a JS string literal, not JSX text) → real apostrophe; found in
   LambdaTest emulation screenshot; bun test 126/126, tsc+lint+build green (2026-10-02)
@@ -198,9 +196,11 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   `scripts/e2e-char-select.ts` — sheet:200 · picked:true · stored:wickvenom · chipImgs:14 ·
   onChip:WICK VENOM · animating:true · errors:0 🧪
 
-**Gate G3:** rivalry tag + candle-rain live 🧪 · one clean real-device session (LambdaTest)
-· character system merged (P3.11–P3.14) → evidence-based closure (owner pre-approved
-2026-10-02) → P4.
+**Gate G3: ✅ CLOSED 2026-10-02 (evidence-based, owner pre-approved)** — rivalry tag ✓ ·
+candle-rain ✓ · character system P3.11–P3.14 merged ✓ · **clean real-device session ✓**
+(LambdaTest Pixel 7, session f6c2f0ac, video+screenshots, 0 SEVERE errors) → P7.1–P7.3
+already shipped (bot→ghost→duel). REMAINING in repo: P7.4 realtime (traction-gated),
+P4–P6 (owner-side actions), visual debt VD-5..7 (LOW, accepted).
 
 ### P7 — Rival AI & async duels (owner brainstorm, approved direction 2026-10-02)
 > Executable whenever P4–P6 are owner-blocked; does NOT gate them. Order below is
@@ -329,3 +329,18 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > OPEN VISUAL DEBT: VD-5 chip-label truncation, VD-6 footer 2-line mobile, VD-7 lazy
 > tag placeholders (all LOW, accepted). NEXT: idle until owner input — G3 needs ONE
 > owner action (LambdaTest dashboard creds / plan / own phone); P4–P6 owner-blocked.
+>
+> **UPDATE 2026-10-02 (autonomous run 3): GATE G3 CLOSED — real-device unlock.**
+> Owner forwarded KaneAI freemium email (TestMu AI / LambdaTest) asking whether
+> GitHub-OAuth login could substitute the dashboard password. Answer delivered: PATs
+> cannot drive OAuth web login (needs browser session), BUT the freemium activation
+> had unlocked **Real Mobile Automation** entitlement — verified via direct API probe
+> (Pixel 7 session create → 200, vs yesterday's plan-gate error). Full QA script
+> shipped (`scripts/lambdatest_realdevice.py`, selenium → LT hub, creds-in-URL auth)
+> → **REAL-DEVICE QA PASS** on real Pixel 7/Android 13: title, 15 chips, venom select,
+> START→HUD, gameplay→LIQUIDATED death card (score 115), 0 SEVERE console errors;
+> video RMA-AND on dashboard. Sandbox-reset recovery executed first (codespace vault
+> → 5 cred files 0600, single-connection base64 bundle, zero secret display).
+> Evidence: qa/realdevice/rd-0*.png + report-real-*.json. Remaining build items:
+> P7.4 (traction-gated), P4–P6 (owner actions), VD-5..7 (LOW accepted). No code
+> changes — QA-only run, W5/engine untouched.

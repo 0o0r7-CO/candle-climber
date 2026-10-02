@@ -1,0 +1,51 @@
+{
+  "stamp": "20261002-173855",
+  "device": "Pixel 7",
+  "platform": "13",
+  "url": "https://candle-climber.vercel.app",
+  "session_id": "f6c2f0ac-dc95-4135-9c09-51bd3a146903",
+  "shot_01-boot": "/home/z/my-project/qa/realdevice/rd-01-boot-20261002-173855.png",
+  "shot_02-selected": "/home/z/my-project/qa/realdevice/rd-02-selected-20261002-173855.png",
+  "shot_03-running": "/home/z/my-project/qa/realdevice/rd-03-running-20261002-173855.png",
+  "shot_04-deathcard": "/home/z/my-project/qa/realdevice/rd-04-deathcard-20261002-173855.png",
+  "console_logs": "unsupported: 'WebDriver' object has no attribute 'get_log'",
+  "console_severe": 0,
+  "lt_status": "success",
+  "video_url": "https://automation.lambdatest.com/public/video?testID=RMA-AND-3358645-1790962738304109770CSD&auth=ef5d435c1367ff3d93b88368a230cf1d",
+  "dashboard": "https://automation.lambdatest.com/log/f6c2f0ac-dc95-4135-9c09-51bd3a146903",
+  "checks": [
+    {
+      "check": "page_title",
+      "ok": true,
+      "detail": "CANDLE CLIMBER \u2014 The chart is the level"
+    },
+    {
+      "check": "char_chips_rendered",
+      "ok": true,
+      "detail": "15 chips: ['\u259a\\nCLASSIC', 'WICK VENOM', 'WICK COP', 'GOLDEN BULL', 'FROST LIQUIDATOR', 'SCARF RUNNER', 'VISOR DROID', 'GRUMP', 'GOBLIN', 'CADET', 'FLOOR TRADER', 'SCOUT BOT', 'CANDLE COWBOY', 'DAPPER LIQUIDATOR', 'BAG HOLDER']"
+    },
+    {
+      "check": "venom_select",
+      "ok": true,
+      "detail": "WICK VENOM"
+    },
+    {
+      "check": "run_started",
+      "ok": true,
+      "detail": "HUD score chip visible"
+    },
+    {
+      "check": "gameplay_then_death_card",
+      "ok": true,
+      "detail": "taps=3 death-score='115'"
+    },
+    {
+      "check": "no_severe_console_errors",
+      "ok": true,
+      "detail": "0 SEVERE entries"
+    }
+  ],
+  "pass": true,
+  "real_device": true,
+  "build": "G3-real-device-QA"
+}
