@@ -79,6 +79,9 @@ e2e-artifacts/
 .kb_pat
 .vercel_token
 .sentry_token
+.sentry_*
+.mongo_*
+.lt_*
 .mongo_keys
 .lambdatest_creds
 .krea_creds
