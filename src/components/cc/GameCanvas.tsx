@@ -15,6 +15,7 @@ import { renderV2 } from "@/game/cc/render-v2";
 import { deriveWeather } from "@/game/cc/weather";
 import { recordWreck, wrecksFor, loadWreckDB, saveWreckDB, type WreckDB, type Wreck } from "@/game/cc/wreckage";
 import { makeDeathCard, normalizeRivalTag } from "@/game/cc/deathcard";
+import { rosterList, isValidCharId, DEFAULT_CHAR_ID, CHAR_KEY } from "@/game/cc/characters";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
@@ -44,6 +45,7 @@ const RIVAL_KEY = "cc_rival_v1"; // P3.1: remembered rivalry tag
 const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
 const TF_KEY = "cc_tf_v1"; // P3.5: remembered timeframe ("1w" classic default)
+const CC_CHAR_KEY = CHAR_KEY; // P3.12: remembered character id ("default" = procedural)
 const UNSCORED_MSG = "offline terrain — scoring disabled";
 const ARCHIVE_MSG = "practice — archive terrain is unscored";
 
@@ -93,6 +95,9 @@ export default function GameCanvas() {
   const launchRef = useRef(false);
   const [tf, setTf] = useState<GameInterval>("1w"); // timeframe selector
   const [booted, setBooted] = useState(false); // init ran → loader may fetch
+  // P3.12: selected character — ref feeds the RAF renderer without re-subscribing
+  const [charId, setCharId] = useState<string>(DEFAULT_CHAR_ID);
+  const charIdRef = useRef<string>(DEFAULT_CHAR_ID);
 
   // init: persisted prefs + deep-link parsing (no fetching here — the loader
   // effect below owns the fetch so a timeframe change re-loads cleanly)
@@ -121,6 +126,12 @@ export default function GameCanvas() {
     const reqIv = params.get("interval"); // P3.5: deep link beats the saved pref
     if (isInterval(reqIv)) setTf(reqIv);
     else if (isInterval(localStorage.getItem(TF_KEY))) setTf(localStorage.getItem(TF_KEY) as GameInterval);
+    // P3.12: character — localStorage first, deep-link ?char= wins (same pattern as ?interval=)
+    const savedChar = localStorage.getItem(CC_CHAR_KEY) ?? DEFAULT_CHAR_ID;
+    const urlChar = new URLSearchParams(window.location.search).get("char");
+    const picked = isValidCharId(urlChar) ? (urlChar as string) : isValidCharId(savedChar) ? savedChar : DEFAULT_CHAR_ID;
+    setCharId(picked);
+    charIdRef.current = picked;
     setBooted(true);
   }, []);
 
@@ -191,6 +202,15 @@ export default function GameCanvas() {
       if (iv !== cur) localStorage.setItem(TF_KEY, iv);
       return iv;
     });
+  }, []);
+
+  // P3.12: character pick — persists + updates the renderer ref immediately
+  const pickChar = useCallback((id: string) => {
+    if (!isValidCharId(id)) return;
+    setCharId(id);
+    charIdRef.current = id;
+    try { localStorage.setItem(CC_CHAR_KEY, id); } catch { /* private mode — cosmetic only */ }
+    sfx.land();
   }, []);
 
   const buildEngine = useCallback((d: CandleData, mut: Mutation) => {
@@ -325,7 +345,7 @@ export default function GameCanvas() {
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current);
+      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current, charIdRef.current);
       else render(ctx, e, seedRef.current, mutationIdRef.current);
       rafRef.current = requestAnimationFrame(step);
     };
@@ -574,6 +594,32 @@ export default function GameCanvas() {
                   ))}
                 </div>
               )}
+              {/* P3.12 character select — roster row on the ready flow.
+                  Portraits are the sprites' own frame0; selection persists
+                  (CC_CHAR_KEY) and feeds renderV2 via charIdRef. Decor-only:
+                  no gameplay/physics reads anywhere in the pipeline. */}
+              <div className="cc-char-block">
+                <div className="cc-char-label">CHOOSE YOUR CLIMBER</div>
+                <div className="cc-char-row" role="radiogroup" aria-label="Character select">
+                  {rosterList().map((c) => (
+                    <button
+                      key={c.id}
+                      role="radio"
+                      aria-checked={charId === c.id}
+                      title={`${c.name} — ${c.blurb}`}
+                      className={`cc-char-chip${charId === c.id ? " cc-char-on" : ""}`}
+                      onClick={() => pickChar(c.id)}
+                    >
+                      {c.sheet ? (
+                        <img src={`/cc/chars/${c.id}/frame0.png`} alt="" width={34} height={48} loading="lazy" />
+                      ) : (
+                        <span className="cc-char-classic" aria-hidden>▚</span>
+                      )}
+                      <span className="cc-char-name">{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="cc-btn-row">
                 <button className="cc-btn cc-btn-start" onClick={startRun}>START CLIMB</button>
                 <button className="cc-btn cc-btn-ghost" onClick={() => setArchOpen(true)}>ARCHIVE →</button>

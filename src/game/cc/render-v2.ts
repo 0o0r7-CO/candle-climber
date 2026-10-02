@@ -18,6 +18,7 @@ import { NEUTRAL_WEATHER, type Weather } from "./weather";
 import { drawCandleRain } from "./rain";
 import { type Wreck } from "./wreckage";
 import { hashString, mulberry32 } from "./rng";
+import { getChar, type CharDef } from "./characters";
 import type { Platform } from "./types";
 
 interface V2State {
@@ -390,9 +391,248 @@ function drawSlabV2(ctx: CanvasRenderingContext2D, e: Engine, p: Platform, d: Sl
   }
 }
 
+/* --------------------- P3.12 character sprite system ----------------------- */
+
+interface CharSprite {
+  img: HTMLImageElement;
+  ok: boolean;
+  def: CharDef;
+}
+// module-level sprite cache — images load once per char id (client only)
+const charSprites = new Map<string, CharSprite>();
+
+function ensureCharSprite(def: CharDef): CharSprite | null {
+  if (!def.sheet || typeof window === "undefined" || typeof document === "undefined") return null;
+  let cs = charSprites.get(def.id);
+  if (!cs) {
+    const img = new Image();
+    cs = { img, ok: false, def };
+    img.onload = () => { if (cs) cs.ok = true; };
+    img.onerror = () => { if (cs) cs.ok = false; };
+    img.src = def.sheet; // same-origin public asset
+    charSprites.set(def.id, cs);
+  }
+  return cs.ok ? cs : null;
+}
+
+/** Blit one registry frame — bottom-center anchored on the player's feet. */
+function drawCharSprite(ctx: CanvasRenderingContext2D, e: Engine, cs: CharSprite) {
+  const def = cs.def;
+  const fi = Math.floor(e.time * 9) % Math.max(1, def.frames.length);
+  const f = def.frames[fi] ?? def.frames[0];
+  if (!f) return;
+  const destH = 52; // player box ~46px — sprite slightly taller for presence (hitbox untouched)
+  const destW = (f.w / def.frameH) * destH;
+  const dx = Math.round(e.px - e.camX + 17 - destW / 2);
+  const dy = Math.round(e.py - e.camY + 40 - destH);
+  ctx.drawImage(cs.img, f.x, f.y, f.w, f.h, dx, dy, destW, destH);
+}
+
+/* P3.13 vibe mood→effect profiles — DECOR-ONLY full-screen overlays.
+ * Every particle/line is a pure function of (charId, engine.time) via hashString —
+ * same seed+time ⇒ same frame (W5 purity). Zero gameplay/physics reads. */
+function drawCharFx(ctx: CanvasRenderingContext2D, e: Engine, charId: string) {
+  const fx = getChar(charId).fx;
+  if (fx === "none") return;
+  const t = e.time;
+  const h = (k: string) => hashString(`${charId}:${k}`);
+  switch (fx) {
+    case "venom": {
+      // red vignette pulse + deterministic glitch slices
+      const pulse = 0.05 + 0.03 * Math.sin(t * 2.1);
+      const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.3, VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.85);
+      g.addColorStop(0, "rgba(200,16,46,0)");
+      g.addColorStop(1, `rgba(200,16,46,${pulse})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      const slices = 2 + (h("n") % 3);
+      for (let k = 0; k < slices; k++) {
+        const ph = h(`s${Math.floor(t * 6)}:${k}`);
+        if (ph % 5 !== 0) continue; // ~1/5 frames slice
+        const yy = ph % VIEW_H;
+        const sh = 3 + (ph % 9);
+        ctx.globalAlpha = 0.05 + (ph % 7) * 0.012;
+        ctx.fillStyle = "#E01030";
+        ctx.fillRect(0, yy, VIEW_W, sh);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "cop": {
+      // cyan scanlines drifting up — surveillance feed
+      ctx.globalAlpha = 0.05;
+      ctx.fillStyle = "#37E0E8";
+      const gap = 4;
+      const off = (t * 26) % gap;
+      for (let y = -gap; y < VIEW_H; y += gap) ctx.fillRect(0, y + off, VIEW_W, 1.5);
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "bull": {
+      // golden halo + rising coin sparks
+      const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H * 0.62, VIEW_H * 0.25, VIEW_W / 2, VIEW_H * 0.62, VIEW_H * 0.9);
+      g.addColorStop(0, "rgba(224,176,78,0)");
+      g.addColorStop(1, `rgba(224,176,78,${0.06 + 0.03 * Math.sin(t * 1.7)})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      for (let k = 0; k < 14; k++) {
+        const ph = h(`sp${k}`);
+        const speed = 30 + (ph % 40);
+        const yy = VIEW_H - (((ph % VIEW_H) + t * speed) % VIEW_H);
+        const xx = (ph >>> 4) % VIEW_W;
+        ctx.globalAlpha = 0.12 + (ph % 5) * 0.03;
+        ctx.fillStyle = "#E0B04E";
+        ctx.fillRect(xx, yy, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "frost": {
+      // drifting snow + ice vignette
+      for (let k = 0; k < 22; k++) {
+        const ph = h(`sn${k}`);
+        const speed = 22 + (ph % 30);
+        const yy = (((ph % VIEW_H) + t * speed) % (VIEW_H + 8)) - 4;
+        const xx = ((ph >>> 3) % VIEW_W) + Math.sin(t * 0.8 + k) * 14;
+        ctx.globalAlpha = 0.14 + (ph % 4) * 0.05;
+        ctx.fillStyle = "#BFE8F2";
+        ctx.fillRect(xx, yy, 1.6, 1.6);
+      }
+      ctx.globalAlpha = 1;
+      const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.36, VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.92);
+      g.addColorStop(0, "rgba(120,190,214,0)");
+      g.addColorStop(1, "rgba(120,190,214,0.1)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      break;
+    }
+    case "scarf": {
+      // warm rose petals drifting right
+      for (let k = 0; k < 10; k++) {
+        const ph = h(`p${k}`);
+        const speed = 16 + (ph % 22);
+        const xx = (((ph % VIEW_W) + t * speed) % (VIEW_W + 12)) - 6;
+        const yy = ((ph >>> 5) % VIEW_H) + Math.sin(t * 1.1 + k * 1.7) * 18;
+        ctx.globalAlpha = 0.1 + (ph % 4) * 0.04;
+        ctx.fillStyle = "#E07856";
+        ctx.fillRect(xx, yy, 2.4, 1.6);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "visor": {
+      // lavender corner glows (calm)
+      const a = 0.05 + 0.02 * Math.sin(t * 0.9);
+      const g = ctx.createLinearGradient(0, VIEW_H, 0, 0);
+      g.addColorStop(0, `rgba(150,120,220,${a})`);
+      g.addColorStop(0.4, "rgba(150,120,220,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      break;
+    }
+    case "grump": {
+      // moss motes sinking slowly
+      for (let k = 0; k < 12; k++) {
+        const ph = h(`m${k}`);
+        const yy = (((ph % VIEW_H) - t * (10 + ph % 12)) % VIEW_H + VIEW_H) % VIEW_H;
+        const xx = (ph >>> 2) % VIEW_W;
+        ctx.globalAlpha = 0.07 + (ph % 4) * 0.02;
+        ctx.fillStyle = "#5FA06A";
+        ctx.fillRect(xx, yy, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "goblin": {
+      // low whisper fog — thin streaks near the bottom
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = "#7FE0C0";
+      for (let k = 0; k < 6; k++) {
+        const ph = h(`f${k}`);
+        const xx = (((ph % VIEW_W) + t * (12 + ph % 14)) % (VIEW_W + 90)) - 45;
+        const yy = VIEW_H * 0.72 + (ph % Math.floor(VIEW_H * 0.24));
+        ctx.fillRect(xx, yy, 34 + (ph % 40), 1.4);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "cadet": {
+      // steel glints — sparse top-edge ticks
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = "#9FB4BC";
+      for (let k = 0; k < 5; k++) {
+        const ph = h(`g${Math.floor(t * 2)}:${k}`);
+        if (ph % 3 !== 0) continue;
+        ctx.fillRect((ph >>> 3) % VIEW_W, 2 + (ph % 5), 5, 1.2);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "trader": {
+      // warm green ticker shimmer — slow horizontal bands
+      ctx.globalAlpha = 0.045;
+      ctx.fillStyle = "#5BD08A";
+      for (let k = 0; k < 3; k++) {
+        const yy = (((k * VIEW_H) / 3 + t * 9) % VIEW_H + VIEW_H) % VIEW_H;
+        ctx.fillRect(0, yy, VIEW_W, 6);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "scout": {
+      // neon grid — verticals fixed, horizon slowly scrolling
+      ctx.globalAlpha = 0.05;
+      ctx.strokeStyle = "#37E0E8";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x < VIEW_W; x += 44) { ctx.moveTo(x, 0); ctx.lineTo(x, VIEW_H); }
+      const oy = (t * 7) % 44;
+      for (let y = -44; y < VIEW_H; y += 44) { ctx.moveTo(0, y + oy); ctx.lineTo(VIEW_W, y + oy); }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "cowboy": {
+      // dust puffs skimming the floor
+      for (let k = 0; k < 9; k++) {
+        const ph = h(`d${k}`);
+        const xx = (((ph % VIEW_W) + t * (26 + ph % 20)) % (VIEW_W + 40)) - 20;
+        const yy = VIEW_H - 26 - (ph % 30) + Math.sin(t * 2 + k) * 3;
+        ctx.globalAlpha = 0.08 + (ph % 4) * 0.02;
+        ctx.fillStyle = "#C8B89A";
+        ctx.fillRect(xx, yy, 3, 1.6);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "dapper": {
+      // film grain — deterministic speckle field, re-keyed at 12fps
+      const step = Math.floor(t * 12);
+      ctx.globalAlpha = 0.05;
+      ctx.fillStyle = "#E8E4D8";
+      for (let k = 0; k < 40; k++) {
+        const ph = h(`gr${step}:${k}`);
+        ctx.fillRect((ph >>> 2) % VIEW_W, (ph >>> 9) % VIEW_H, 1.2, 1.2);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "zombie": {
+      // toxic haze — green tint breathing at the edges
+      const a = 0.05 + 0.025 * Math.sin(t * 1.3);
+      const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H * 0.55, VIEW_H * 0.3, VIEW_W / 2, VIEW_H * 0.55, VIEW_H * 0.9);
+      g.addColorStop(0, "rgba(110,200,120,0)");
+      g.addColorStop(1, `rgba(110,200,120,${a})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      break;
+    }
+  }
+}
+
 /* --------------------------- player + juice -------------------------------- */
 
-function drawPlayerV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State) {
+function drawPlayerV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State, charId: string) {
   const x = e.px - e.camX;
   const y = e.py - e.camY;
 
@@ -429,6 +669,13 @@ function drawPlayerV2(ctx: CanvasRenderingContext2D, e: Engine, st: V2State) {
     ctx.translate(x + 17, y + 40);
     ctx.scale(sx, sy);
     ctx.translate(-(x + 17), -(y + 40));
+  }
+  // P3.12: selected character sprite replaces the procedural body when loaded
+  const cs = getChar(charId).sheet ? ensureCharSprite(getChar(charId)) : null;
+  if (cs) {
+    drawCharSprite(ctx, e, cs);
+    ctx.restore();
+    return;
   }
   // body — chunky blockbot (same identity as v1)
   ctx.fillStyle = "#2A2F34";
@@ -573,7 +820,7 @@ function drawWrecks(ctx: CanvasRenderingContext2D, e: Engine, wrecks: Wreck[]) {
 
 /* --------------------------------- entry ----------------------------------- */
 
-export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = [], mutationId?: string) {
+export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = [], mutationId?: string, charId = "default") {
   const st = getState(e, seedStr);
   const t = st.terrain;
 
@@ -629,9 +876,12 @@ export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: stri
   drawHints(ctx, e);
   drawParticles(ctx, e.particles, e.camX, e.camY);
   drawFloats(ctx, e.floats, e.camX, e.camY);
-  if (!e.dead || e.deathT < 2.2) drawPlayerV2(ctx, e, st);
+  if (!e.dead || e.deathT < 2.2) drawPlayerV2(ctx, e, st, charId);
   drawWrecks(ctx, e, wrecks);
   drawForegroundV2(ctx, e, st, weather);
+  // P3.13: per-character mood overlay — decor only, drawn LAST (over everything,
+  // still inside the shake transform), pure function of (charId, engine time)
+  drawCharFx(ctx, e, charId);
 
   // progress candle ticker (top center, in-canvas — same as v1)
   const passed = e.plats[Math.min(e.candlesPassed, e.plats.length - 1)];

@@ -538,6 +538,74 @@
   border-color: rgba(204, 255, 0, 0.45);
 }
 
+/* P3.12 character select — roster chips (decor-only cosmetic system) */
+.cc-char-block {
+  margin-top: 12px;
+}
+.cc-char-label {
+  font-family: var(--cc-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--cc-faint);
+  margin-bottom: 6px;
+}
+.cc-char-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cc-char-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 58px;
+  padding: 6px 2px 4px;
+  background: #101214;
+  border: 1px solid var(--cc-hairline);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.cc-char-chip:hover {
+  border-color: rgba(204, 255, 0, 0.35);
+  transform: translateY(-1px);
+}
+.cc-char-chip img,
+.cc-char-chip .cc-char-classic {
+  height: 44px;
+  width: auto;
+  max-width: 50px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.cc-char-chip .cc-char-classic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  font-size: 22px;
+  color: #ccff00;
+}
+.cc-char-chip.cc-char-on {
+  border-color: rgba(204, 255, 0, 0.65);
+  background: rgba(204, 255, 0, 0.06);
+}
+.cc-char-name {
+  font-family: var(--cc-mono);
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cc-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 54px;
+}
+.cc-char-chip.cc-char-on .cc-char-name { color: #ccff00; }
+
 .cc-board {
   margin-top: 14px;
   text-align: left;

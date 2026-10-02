@@ -143,22 +143,32 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   design = `MASCOT/VIBES/venom-variants/venom-v3-half-fused.png`; (c) USE ALL OTHER
   characters — VIBES (cop/bull/frost) + all MASCOT root concepts — "همشون خوبن و با کیفیت".
   Game integration lands as P3.11–P3.14 below.
-- [ ] **P3.11** **Character roster → game sprites (14 chars)** — 4-frame 96px transparent
-  sheets via proven pipeline (image-edit side-profile prompt + magenta-key postprocess):
-  5 existing (trader/bot/zombie/dapper/cowboy; re-export trader frame0) + 5 MASCOT
-  concepts (scarf-runner/visor-droid/grump/goblin/cadet working names) + 4 VIBES
-  (wickvenom-from-v3/wickcop/golden-bull/frost-liquidator) · KB push + contact sheet 🧪
-- [ ] **P3.12** **Character registry + pre-game SELECT screen** — `src/game/cc/characters.ts`
-  (id/name/vibe/sprite manifest/effect profile per char) + select UI on the ready flow
-  (portrait cards, selection persisted localStorage `CC_CHAR_KEY`, deep-link ?char=,
-  procedural fallback when no char chosen) 🧪
-- [ ] **P3.13** **Vibe mood→effect profiles in render-v2** — per-character ambient FX
-  (venom=red glitch+vignette, cop=cyan scanlines, bull=golden halo+sparks,
-  frost=snow+ice vignette, zombie=toxic haze, dapper=film grain, cowboy=dust,
-  bot=neon grid, trader=warm green, …) — decor-only, ZERO gameplay/physics impact,
-  deterministic per char id (W5 purity rule) 🧪
-- [ ] **P3.14** **Multi-char verification + ship** — W5 extension (registry purity/manifest
-  safety), e2e-gamer-bot pass with a selected skin, lint+build green, Vercel live 🧪
+- [x] **P3.11** **Character roster → game sprites (14 chars)** — DONE 2026-10-02. 4-frame
+  96px transparent sheets via proven pipeline (image-edit side-profile prompt + magenta/green-key
+  postprocess + alpha-erosion + column-split): 5 existing (trader frame0 restored from manifest
+  coords / bot / cowboy / dapper / zombie) + 5 MASCOT concepts (scarfrunner green-key,
+  visordroid, grump, goblin, cadet) + 4 VIBES (wickvenom-from-v3 assembled from dual-raw
+  best-frames, wickcop, goldenbull, frostliquidator). Venom identity rule held in all 4 frames
+  (half-cream/half-black). Shipped to `public/cc/chars/*` + KB `MASCOT/SPRITES/` + contact sheet
+  `ROSTER-CONTACT-SHEET.png` (commit fe6f8a0) 🧪
+- [x] **P3.12** **Character registry + pre-game SELECT screen** — DONE 2026-10-02.
+  `src/game/cc/characters.ts` AUTO-GENERATED from manifests (gen_characters_ts.py): 15 entries
+  (14 sprites + procedural CLASSIC), pure data + getChar/isValidCharId/rosterList, no I/O (W5).
+  Select UI on ready panel: 15 portrait chips (frame0), aria radiogroup, persists
+  `cc_char_v1`, deep-link `?char=` wins over stored, invalid→classic. Renderer feed via
+  charIdRef (RAF never re-subscribes) 🧪
+- [x] **P3.13** **Vibe mood→effect profiles in render-v2** — DONE 2026-10-02. drawCharFx:
+  15 profiles (venom=red glitch+vignette, cop=cyan scanlines, bull=golden halo+coin sparks,
+  frost=snow+ice vignette, scarf=rose petals, visor=lavender glow, grump=moss motes,
+  goblin=whisper fog, cadet=steel glints, trader=ticker shimmer, scout=neon grid, cowboy=dust,
+  dapper=film grain, zombie=toxic haze) — DECOR-ONLY, drawn last inside shake transform,
+  every particle a pure function of (charId, engine.time) via hashString — deterministic, zero
+  gameplay/physics impact (W5 purity rule) 🧪
+- [x] **P3.14** **Multi-char verification + ship** — DONE 2026-10-02. W5 extension
+  `test/characters.test.ts` 9 tests (purity/manifest safety/fx coverage/guard); suite 126/126;
+  tsc+lint clean; build green; e2e-gamer-bot PASS (20s, 3 valid deaths, 0 errors); NEW
+  `scripts/e2e-char-select.ts` — sheet:200 · picked:true · stored:wickvenom · chipImgs:14 ·
+  onChip:WICK VENOM · animating:true · errors:0 🧪
 
 **Gate G3:** rivalry tag + candle-rain live 🧪 · one clean real-device session (LambdaTest)
 · character system merged (P3.11–P3.14) → evidence-based closure (owner pre-approved

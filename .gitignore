@@ -73,3 +73,15 @@ agent-ctx/
 e2e-artifacts/
 .krea_creds
 .sentry_token
+
+# ---- secrets (hard-fail: never commit) ----
+.gh_token
+.kb_pat
+.vercel_token
+.sentry_token
+.mongo_keys
+.lambdatest_creds
+.krea_creds
+worklog.md
+download/
+upload/
