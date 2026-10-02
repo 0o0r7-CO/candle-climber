@@ -1096,3 +1096,38 @@
 }
 .cc-report-arrow { color: var(--cc-faint); width: 10px; flex: none; }
 .cc-report-toggle:hover .cc-report-arrow { color: var(--cc-lime); }
+
+/* ---- Visual-debt sweep 2026-10-02 (ledger: docs/VISUAL-DEBT.md, VD-1..VD-4) ----
+   CSS-only; zero engine/gameplay impact (W5 untouched). Verified on prod via
+   browser sweep at 412x915 + 1280x800 (qa/visual-sweep/*). */
+
+/* VD-1 (mobile, chips-over-title): panels slid under the absolute HUD row when
+   content grew tall (e.g. weather chip present). Reserve HUD clearance so the
+   overlay box starts below the chips; panel height accounts for the padding. */
+.cc-overlay { padding-top: 76px; }
+.cc-panel { max-height: calc(100dvh - 92px); }
+
+/* VD-2 (mobile edge-clip): min(94vw) + 32px overlay padding overflowed
+   viewports under 533px, clipping archive blurbs mid-word at the screen edge
+   with no ellipsis. Size panels against the padded box instead. */
+.cc-panel { width: min(560px, calc(100vw - 32px)); }
+.cc-arch-panel { width: min(620px, calc(100vw - 32px)); }
+
+/* VD-3 (mobile HUD wrap): the seed chip wrapped to 3 lines (symbol / dot /
+   date), tripling HUD height. Keep every chip on one line; compact chips on
+   narrow screens so the row still fits beside weather + score. */
+.cc-hud-left > .cc-chip { white-space: nowrap; }
+@media (max-width: 480px) {
+  .cc-chip { font-size: 11px; padding: 6px 9px; }
+  .cc-chip-score { font-size: 14px; min-width: 56px; }
+}
+
+/* VD-4 (desktop short viewport): .cc-panel is internally scrollable but showed
+   no affordance — at 800px height the START CLIMB CTA sat below an invisible
+   fold. Visible slim scrollbar + compact paddings bring the CTA above it. */
+.cc-panel { scrollbar-width: thin; scrollbar-color: #3A4148 transparent; }
+.cc-panel::-webkit-scrollbar { width: 6px; }
+.cc-panel::-webkit-scrollbar-thumb { background: #3A4148; border-radius: 3px; }
+@media (max-height: 840px) {
+  .cc-panel { padding: 18px 20px 56px; }
+}
