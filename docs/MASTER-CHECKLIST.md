@@ -202,6 +202,20 @@ candle-rain ✓ · character system P3.11–P3.14 merged ✓ · **clean real-dev
 already shipped (bot→ghost→duel). REMAINING in repo: P7.4 realtime (traction-gated),
 P4–P6 (owner-side actions), visual debt VD-5..7 (LOW, accepted).
 
+### P-V — Visual & launch-polish phase (the "visuals LAST" phase) — ✅ CLOSED 2026-10-02
+- [x] **P-V.1** **Canvas fit system (V-1, HIGH)** — owner flagged a stretched look;
+  root cause = width-locked canvas transform (800×480 world overflowed viewport
+  height on wide/short desktops → ground row below fold, 2.4× giant zoom;
+  unframed strip on portrait phones). Fixed with contain-fit
+  `s=min(w/800,h/480)` + bottom-weighted band (62%) + full-canvas screen-space
+  clear + CSS letterbox bg. Input coordinate-free → zero gameplay impact.
+  Evidence: v2-fhd/laptop/mobile sweeps + real-device re-run (session 0a8f64e3).
+- [x] **P-V.2** **VD-5 + VD-6 + VD-7 closed** — char names wrap 2 lines (no ellipsis),
+  mobile footer lifted above SOUND ON + centered, archive lazy tags pulse+title.
+  Ledger `docs/VISUAL-DEBT.md` now EMPTY of open debt. All P-V gates green:
+  tsc / lint / 205 tests / build; engine/W5 untouched. Visual phase COMPLETE —
+  nothing visual blocks launch announcement.
+
 ### P7 — Rival AI & async duels (owner brainstorm, approved direction 2026-10-02)
 > Executable whenever P4–P6 are owner-blocked; does NOT gate them. Order below is
 > build order. All items decor/economy-side, W5 untouched.
@@ -281,7 +295,8 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 |---|---|---|
 | G1 | P1 | ✅ PASS 2026-09-30 (owner-confirmed) |
 | G2 | P2 | ✅ PASS 2026-10-01 (owner-confirmed in chat; feedback → P2.7) |
-| G3 | P3 | ⬜ pending |
+| G3 | P3 | ✅ CLOSED 2026-10-02 (evidence-based, pre-approved — real-device QA PASS) |
+| G-V | P-V | ✅ CLOSED 2026-10-02 (canvas fit + all visual debt closed, re-swept) |
 | G4 | P4 | ⬜ pending |
 | G5 | P5 | ⬜ pending |
 | G6 | P6 | ⬜ pending |
@@ -344,3 +359,15 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > Evidence: qa/realdevice/rd-0*.png + report-real-*.json. Remaining build items:
 > P7.4 (traction-gated), P4–P6 (owner actions), VD-5..7 (LOW accepted). No code
 > changes — QA-only run, W5/engine untouched.
+>
+> **UPDATE 2026-10-02 (autonomous run 4): P-V VISUAL PHASE CLOSED — the visuals-LAST
+> phase is done.** Owner flagged a "stretched" visual and authorized autonomous
+> phase selection. Chose P-V (launch-polish) — all tech layers were done and P4–P6
+> owner-blocked. Root-caused the stretch: width-locked canvas transform (V-1 HIGH).
+> Shipped V-1 contain-fit + VD-5/6/7 closures in `f9502a7` (tsc/lint/205 tests/build
+> green; engine/W5 untouched), deployed, then re-swept PROD: 3 viewports (1920×937
+> / 1280×800 / 412×915) × 4 states + REAL-DEVICE Pixel 7 re-run PASS ×5 (session
+> 0a8f64e3, 0 SEVERE). `docs/VISUAL-DEBT.md` open list now EMPTY. REMAINING:
+> P4–P6 owner actions (faucet ETH, wizard launch, X account), P7.4 traction-gated,
+> VD-4 full CTA (content problem, accepted). **Nothing in-repo blocks the launch
+> announcement — the next moves are the owner-side P4 wallet/account actions.**

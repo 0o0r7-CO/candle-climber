@@ -26,15 +26,35 @@ panel, archive browser, stock rails view (`?symbol=TSLA`), duel entry.
 Verified-fixed states (re-sweep after deploy): VD-1 m-07, VD-2 m-08, VD-3 m-09,
 VD-4 d-05 (see table footer when filled).
 
-## Open (accepted / deferred)
+## Sweep 2 — 2026-10-02 (V-PHASE, fixed in the same commit `f9502a7`)
+
+Trigger: owner flagged a "stretched" visual + all tech layers done → the planned
+visual phase. Root-cause analysis of the canvas fit found the real geometry bug.
+
+| ID | Severity | Found at | Symptom | Root cause | Fix |
+|----|----------|----------|---------|-----------|-----|
+| V-1 | HIGH | 1920×937 desktop (analysis + sweep) | World scaled width-locked (`rect.width/VIEW_W` uniform) → on wide/short desktops the 800×480 world overflowed viewport height: ground row + start platform rendered BELOW the fold, everything 2.4× giant ("stretched" look the owner flagged); on portrait phones the world was an unframed 247px strip with dead space | Transform scale derived from width only; no letterbox strategy | Contain-fit `s=min(w/800,h/480)`, band centered horizontally, bottom-weighted vertically (62% of leftover above → sky-above climber composition); full-canvas screen-space clear each frame (no letterbox smear) + `.cc-canvas` CSS bg so letterbox areas match the page. Input is coordinate-free (`engine.press()`) → zero gameplay impact; engine/W5 untouched |
+| VD-5 | LOW | roster chips | "GOLDEN BUL…", "FROST LIQ…" ellipsis truncation | nowrap + text-overflow on 54px names | 2-line wrap (`-webkit-line-clamp:2`), centered, min-height keeps chips uniform — verified: `overflow:false` on all names |
+| VD-6 | LOW | 412px mobile | Footer links crammed bottom-left in 2 lines against right-parked SOUND ON | asymmetric padding-right 104px reservation | Footer lifted `bottom: safe+36px`, centered, wraps cleanly above the sound chip — verified on real device |
+| VD-7 | LOW | archive browser | Lazy difficulty tags read as broken "· · ·" | honest placeholder, no affordance | Pulse animation (`cc-tag-pulse` 1.6s) + `title` hint; tags compute as rows scan (verified: LEGENDARY/BRUTAL/ROCKY live) |
+
+### Sweep 2 evidence (`qa/visual-sweep/` + `qa/realdevice/`)
+
+- `v2-fhd-1..4-*.png` 1920×937: ready / running (ground row at 55%, full world framed) / death / archive — fix proven on the problem viewport
+- `v2-laptop-*.png` 1280×800: unchanged-good composition (leftover ≈ 0 regression check)
+- `v2-mobile-*.png` 412×915: bottom-weighted band, footer lifted, archive tags computed
+- `v2-*-geo.json`: viewport + canvas rect + chip-name overflow probes
+- REAL DEVICE Pixel 7/Android 13 re-run after deploy: PASS ×5 (session `0a8f64e3-5835-432e-b809-88d4127a9726`, 0 SEVERE console, video on dashboard) — `rd-0*-20261002-183644.png`
+- Gates: tsc / lint / 205 tests / build green; CSS + component-decor only, engine/W5 untouched
+
+## Open (none — all recorded debt closed 2026-10-02)
 
 | ID | Severity | Symptom | Why open |
 |----|----------|---------|----------|
-| VD-5 | LOW | Character chip labels truncate with ellipsis ("GOLDEN BUL…", "FROST LIQ…") | Full names live in `title`/aria; chips are identifiable by sprite + portrait; deferring to the next art pass |
-| VD-6 | LOW | Mobile footer links wrap to 2 lines bottom-left while SOUND ON sits bottom-right | No overlap (Task 20 fix reserved panel space); cosmetic arrangement acceptable on 412px |
-| VD-7 | LOW | Archive lazy difficulty tags render as "· · ·" placeholder chips until computed | Honest lazy placeholder; fills on era play |
+| — | — | ledger empty | VD-1..7 + V-1 all fixed and re-swept |
 
 ## Next sweep
 
-Trigger: after any new screen ships (P4 wallet gate / Balance Gate UI), or at
-launch-prep. Re-run the same state matrix + add wallet-gate states.
+Trigger: launch-prep (pre-announcement final pass) or after any new screen ships
+(P4 wallet gate / Balance Gate UI). Re-run the same state matrix + wallet-gate
+states + a 2560×1440 ultrawide pass.
