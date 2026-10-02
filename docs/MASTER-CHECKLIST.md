@@ -196,9 +196,9 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   same world, heuristic jump planner (lookahead + jump-feasibility), character-personality
   params (risk/precision per vibe: venom reckless, cop precise, bull greedy, frost patient);
   rendered as translucent rival climber with its own skin+FX; toggle: "solo / vs bot" 🧪
-- [ ] **P7.2** **Ghost runs** — record position-stream (NOT inputs — physics determinism not
+- [x] **P7.2** **Ghost runs** — record position-stream (NOT inputs — physics determinism not
   required) per run, replay translucent ghost with rival's skin; storage: leaderboard-store
-  pattern (memory/Mongo) ⛓ none · server route ⛓ O1 (durability)
+  pattern (memory/Mongo) ⛓ none · server route ⛓ O1 (durability) ✅ shipped (2026-10-02): 30Hz recorder cap 3600, /api/ghosts token-pinned top-5 + 7d TTL, replay w/ recorded skin, GHOST toggle default ON; E2E verified (valid 200/GET/forged 403/horizon 400)
 - [ ] **P7.3** **Async duel** — challenge link/code → both climb SAME symbol+date+interval
   (buildPlatforms already byte-deterministic per (candles,seed)) → duel record + winner
   verdict + death-card integration (rivalry tag P3.1 becomes the invitation channel) ⛓ O1
@@ -285,4 +285,4 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > verify). Infra: Codespace exec channel LIVE (paramiko-over-stdio bridge, KB
 > tools/), 8 service secrets migrated to repo-level Codespaces secrets. G3 closure
 > remains blocked ONLY on the real-device session; everything else of G3 verified.
-> UPDATE 2026-10-02 (latest): P7.1 SHIPPED @ 84c0f10 (gates green, W5 untouched, bot never submitted; solo default). Next active build item: P7.2 ghost runs (position-stream recorder + replay via leaderboard-store pattern).
+> UPDATE 2026-10-02 (latest): P7.1 @ 84c0f10 + P7.2 ghost runs SHIPPED (gates green: tsc/lint/174 tests/build; E2E: token-verify 403/400 contracts live). Next active build item: P7.3 async duel (challenge link/code → same symbol+date+interval → duel record + winner verdict + death-card integration).
