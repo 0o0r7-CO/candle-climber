@@ -21,6 +21,13 @@ import { RivalBot, pickRivalCharId, rivalVerdict } from "@/game/cc/rival/bot";
 import { personalityForCharId } from "@/game/cc/rival/personality";
 // P7.2 ghost runs — position-stream recorder + replay (cosmetic, never scored)
 import { GhostRecorder, ghostViewAt, bestGhost, type GhostEntry, type GhostView } from "@/game/cc/ghost";
+// P7.3 async duels — a challenge code pins the SAME terrain and races the
+// recorded climb; verdict + tally are local/social (W5 untouched)
+import {
+  DUEL_CODE_RE, EMPTY_TALLY, applyDuelResult, challengeToGhost, duelUrl,
+  duelVerdict, parseTally, tallyLabel,
+  type DuelChallenge, type DuelTally,
+} from "@/game/cc/duel";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
 type Phase = "loading" | "ready" | "running" | "graduated" | "dead";
@@ -51,6 +58,7 @@ const RUNS_KEY = "cc_runs_v1";
 const TF_KEY = "cc_tf_v1"; // P3.5: remembered timeframe ("1w" classic default)
 const VS_KEY = "cc_vsbot_v1"; // P7.1: remembered SOLO / VS BOT choice (default SOLO)
 const GHOST_KEY = "cc_ghost_v1"; // P7.2: remembered ghost replay toggle (default ON)
+const DUEL_TALLY_KEY = "cc_duel_v1"; // P7.3: local duel W-L-D tally (no server identity exists)
 const CC_CHAR_KEY = CHAR_KEY; // P3.12: remembered character id ("default" = procedural)
 const UNSCORED_MSG = "offline terrain — scoring disabled";
 const ARCHIVE_MSG = "practice — archive terrain is unscored";
@@ -121,6 +129,50 @@ export default function GameCanvas() {
   const [ghostEntry, setGhostEntry] = useState<GhostEntry | null>(null); // UI mirror (refs don't re-render)
   const ghostRecRef = useRef<GhostRecorder>(new GhostRecorder());
 
+  // P7.3: async duel — the loaded challenge (target + replayable climb), the
+  // local W-L-D tally, and the code created from THIS device's last run.
+  const [duel, setDuel] = useState<DuelChallenge | null>(null);
+  const duelRef = useRef<DuelChallenge | null>(null); // death/grad handlers read the ref
+  const duelLockRef = useRef(false); // once a duel loads it owns the ghost replay slot
+  const [duelTally, setDuelTally] = useState<DuelTally>(EMPTY_TALLY);
+  const [duelCode, setDuelCode] = useState<string | null>(null); // challenge created from this run
+  const [duelBusy, setDuelBusy] = useState(false);
+  const [duelCopied, setDuelCopied] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false); // code entry reveal (collapsed = zero clutter)
+  const [codeInput, setCodeInput] = useState("");
+  const [codeErr, setCodeErr] = useState(false);
+
+  // P7.3: load a duel challenge by code (deep link ?duel= or a typed code).
+  // On success it pins the terrain refs BEFORE the loader effect runs (the
+  // deep-link path holds `booted` until this settles → exactly one fetch).
+  const loadDuel = useCallback(async (rawCode: string): Promise<boolean> => {
+    const code = rawCode.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    if (!DUEL_CODE_RE.test(code)) return false;
+    try {
+      const res = await fetch(`/api/duels?code=${code}`);
+      const j = (await res.json()) as { duel?: DuelChallenge | null };
+      const ch = j.duel ?? null;
+      // whitelist the challenge shape client-side too — a poisoned record can
+      // never pin the loader at a bogus terrain
+      if (!ch || !ALL_SYMBOLS.includes(ch.symbol) || !/^\d{4}-\d{2}-\d{2}$/.test(ch.date) || !isInterval(ch.interval)) {
+        return false;
+      }
+      duelLockRef.current = true; // the duel owns the ghost replay slot
+      duelRef.current = ch;
+      ghostRef.current = challengeToGhost(ch); // replay the climb you must beat
+      requestedSymRef.current = ch.symbol;
+      requestedDateRef.current = ch.date;
+      // past terrain = practice duel (W1 staleness stays authoritative: the
+      // archive run itself stays unscored, the duel verdict stays local)
+      setArchive(isArchiveDate(ch.date, utcDateStr()));
+      setTf(ch.interval);
+      setDuel(ch);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // init: persisted prefs + deep-link parsing (no fetching here — the loader
   // effect below owns the fetch so a timeframe change re-loads cleanly)
   useEffect(() => {
@@ -162,8 +214,17 @@ export default function GameCanvas() {
     const savedGhost = localStorage.getItem(GHOST_KEY) !== "0";
     setGhostOn(savedGhost);
     ghostOnRef.current = savedGhost;
-    setBooted(true);
-  }, []);
+    // P7.3: local duel tally (no server identity — the record lives here)
+    setDuelTally(parseTally(localStorage.getItem(DUEL_TALLY_KEY)));
+    // P7.3: ?duel=CODE deep link — hold the loader until the duel resolves so
+    // the terrain fetches exactly once (the duel's terrain, not the default).
+    const duelParam = (params.get("duel") ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    if (DUEL_CODE_RE.test(duelParam)) {
+      void loadDuel(duelParam).finally(() => setBooted(true));
+    } else {
+      setBooted(true);
+    }
+  }, [loadDuel]);
 
   // level loader — re-runs on timeframe change (P3.5): same pipeline, seed keys
   // carry the interval server-side; archive stays daily-only ("1w") in V1.
@@ -207,7 +268,7 @@ export default function GameCanvas() {
           fetch(`/api/ghosts?symbol=${d.seed.symbol}&date=${d.seed.date}&interval=${tf}`)
             .then((r) => r.json())
             .then((g: { ghosts?: GhostEntry[] }) => {
-              if (!alive) return;
+              if (!alive || duelLockRef.current) return; // P7.3: a loaded duel owns the ghost slot
               const best = bestGhost(g.ghosts ?? []);
               ghostRef.current = best;
               setGhostEntry(best);
@@ -302,9 +363,17 @@ export default function GameCanvas() {
             world2: eng.world2,
           });
           setHud({ score: Math.floor(eng.score), combo: 0, candles: eng.candlesPassed });
-          // P7.1: local verdict at the summit (rival is frozen while panels are up)
-          const bot = botRef.current;
-          if (vsBotRef.current && bot) setVerdict(rivalVerdict(eng.candlesPassed, bot.bestCandles).line);
+          // P7.1: local verdict at the summit (rival is frozen while panels are up).
+          // P7.3: a loaded duel outranks the bot in the verdict line (display
+          // only — the tally folds once, at death, since world 2 can still
+          // improve the run).
+          const botGrad = botRef.current;
+          const duelGrad = duelRef.current;
+          if (duelGrad) {
+            setVerdict(duelVerdict(duelGrad, { score: Math.floor(eng.score), candlesPassed: eng.candlesPassed }).line);
+          } else if (vsBotRef.current && botGrad) {
+            setVerdict(rivalVerdict(eng.candlesPassed, botGrad.bestCandles).line);
+          }
           setPhase("graduated");
         },
         onDeath: (r) => {
@@ -327,9 +396,21 @@ export default function GameCanvas() {
           setPhase("dead");
           ghostRecRef.current.stop(); // P7.2: stream ends at the death tick
           setHud({ score: r.score, combo: 0, candles: r.candlesPassed });
-          // P7.1: local verdict at death — purely client-side, never submitted
+          // P7.1: local verdict at death — purely client-side, never submitted.
+          // P7.3: the duel verdict is final here; the local W-L-D tally folds once.
           const bot = botRef.current;
-          if (vsBotRef.current && bot) setVerdict(rivalVerdict(r.candlesPassed, bot.bestCandles).line);
+          const dc = duelRef.current;
+          if (dc) {
+            const v = duelVerdict(dc, { score: r.score, candlesPassed: r.candlesPassed });
+            setVerdict(v.line);
+            setDuelTally((t) => {
+              const nt = applyDuelResult(t, v.outcome);
+              try { localStorage.setItem(DUEL_TALLY_KEY, JSON.stringify(nt)); } catch { /* private mode */ }
+              return nt;
+            });
+          } else if (vsBotRef.current && bot) {
+            setVerdict(rivalVerdict(r.candlesPassed, bot.bestCandles).line);
+          }
           if (r.score > Number(localStorage.getItem(BEST_KEY) ?? 0)) {
             localStorage.setItem(BEST_KEY, String(r.score));
             setBest(r.score);
@@ -364,6 +445,9 @@ export default function GameCanvas() {
     setVerdict(null);
     // P7.2: record THIS run's position stream (stopped at death; flushed at submit)
     ghostRecRef.current.start();
+    // P7.3: while a duel is loaded, its challenge owns the replay slot —
+    // every retry re-pins the challenger's climb (terrain ghosts stand down)
+    if (duelRef.current) ghostRef.current = challengeToGhost(duelRef.current);
     setHud({ score: 0, combo: 0, candles: 0 });
     setResult(null);
     setRank(null);
@@ -555,6 +639,45 @@ export default function GameCanvas() {
     }
   };
 
+  // P7.3: turn THIS completed run into an async duel — the code IS the
+  // invitation (?duel=CODE). The share text rides the P3.1 rivalry tag when
+  // one is typed, so the mockery loop and the duel loop are the same loop.
+  const createDuel = async () => {
+    if (!result || !data || !data.runToken || duelBusy || duelCode) return;
+    setDuelBusy(true);
+    try {
+      const finalName = (name.trim() || "ANON").slice(0, 14);
+      const res = await fetch("/api/duels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          runToken: data.runToken, name: finalName, charId: charIdRef.current,
+          score: result.score, candlesPassed: result.candlesPassed,
+          bestStreak: result.bestStreak, samples: ghostRecRef.current.flush(),
+        }),
+      });
+      const j = (await res.json()) as { ok?: boolean; code?: string };
+      if (res.ok && j.ok && j.code) {
+        setDuelCode(j.code);
+        const tag = normalizeRivalTag(rival);
+        if (rival.trim()) localStorage.setItem(RIVAL_KEY, rival.trim());
+        const link = duelUrl(window.location.origin, j.code);
+        const text = tag
+          ? `${tag} you're up — beat ${result.score} on today's ${data.seed.symbol} chart: ${link}`
+          : `beat my ${result.score} on today's ${data.seed.symbol} chart: ${link}`;
+        try {
+          await navigator.clipboard.writeText(text);
+          setDuelCopied(true);
+          setTimeout(() => setDuelCopied(false), 1600);
+        } catch { /* clipboard denied — the code still shows for manual share */ }
+      }
+    } catch {
+      // honest failure: the button stays available for another try
+    } finally {
+      setDuelBusy(false);
+    }
+  };
+
   const downloadCard = async () => {
     if (!result || !data) return;
     const top = topBoard[0];
@@ -572,6 +695,7 @@ export default function GameCanvas() {
       difficulty: stats?.difficulty,
       rivalTag: challenge ?? undefined,
       interval: data.seed.interval,
+      duelCode: duelCode ?? undefined, // P7.3: the card doubles as the invitation
     });
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -704,7 +828,7 @@ export default function GameCanvas() {
               {/* P3.5 timeframe selector — owner proposal. Crypto dailies only:
                   stock rails have no intraday feed, launch terrain is derived,
                   archive stays weekly (V1) — all three hide the chips. */}
-              {!archive && data.seed.source !== "stooq" && data.seed.source !== "vibe-launch" && (
+              {!archive && !duel && data.seed.source !== "stooq" && data.seed.source !== "vibe-launch" && (
                 <div className="cc-tf-row" role="group" aria-label="Chart timeframe">
                   {INTERVALS.map((iv) => (
                     <button
@@ -755,9 +879,44 @@ export default function GameCanvas() {
               </div>
               {ghostOn && !archive && (
                 <p className="cc-vs-note" aria-live="polite">
-                  GHOST: {ghostEntry ? `${getChar(ghostEntry.charId).name} · ${ghostEntry.candlesPassed} candles` : "no run recorded yet — be the first"}
+                  GHOST: {duel
+                    ? `${duel.name}'s run · ${duel.candlesPassed} candles — the climb to beat`
+                    : ghostEntry ? `${getChar(ghostEntry.charId).name} · ${ghostEntry.candlesPassed} candles` : "no run recorded yet — be the first"}
                 </p>
               )}
+              {/* P7.3 async duel — invitation banner (deep link / typed code) */}
+              {duel && (
+                <div className="cc-duel-banner" role="status">
+                  <span className="cc-duel-head">DUEL · {duel.name} SET THE BAR</span>
+                  <span className="cc-duel-target">BEAT <b>{duel.score.toLocaleString()}</b> PTS · {duel.candlesPassed} CANDLES</span>
+                  <span className="cc-duel-note">same chart · {duel.date === utcDateStr() ? "live terrain" : "archive terrain — practice duel"} · record {tallyLabel(duelTally)}</span>
+                </div>
+              )}
+              {!duel && !archive && (
+                <div className="cc-tf-row">
+                  {codeOpen ? (
+                    <div className="cc-duel-code-row">
+                      <input
+                        className={`cc-input cc-input-code${codeErr ? " cc-input-err" : ""}`}
+                        placeholder="CODE"
+                        maxLength={6}
+                        value={codeInput}
+                        aria-label="Duel code"
+                        onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeErr(false); }}
+                      />
+                      <button
+                        className="cc-tf-chip"
+                        onClick={() => { void loadDuel(codeInput).then((ok) => { if (!ok) setCodeErr(true); }); }}
+                      >
+                        RACE
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="cc-tf-chip" onClick={() => setCodeOpen(true)}>GOT A DUEL CODE?</button>
+                  )}
+                </div>
+              )}
+              {codeErr && <p className="cc-vs-note" aria-live="polite">NO SUCH DUEL — CHECK THE CODE</p>}
               {/* P3.12 character select — roster row on the ready flow.
                   Portraits are the sprites' own frame0; selection persists
                   (CC_CHAR_KEY) and feeds renderV2 via charIdRef. Decor-only:
@@ -879,6 +1038,11 @@ export default function GameCanvas() {
               )}
               {rivalGap === 0 && topBoard.length > 0 && <p className="cc-rival cc-rival-lead">YOU LEAD THE DAILY CHART. FLEX IT.</p>}
               {verdict && <p className="cc-vs-verdict" role="status">{verdict}</p>}
+              {duelCode && (
+                <p className="cc-duel-live" role="status">
+                  DUEL LIVE · <b>{duelCode}</b> · {duelCopied ? "INVITATION COPIED ✓" : "SHARE THE CODE"}
+                </p>
+              )}
               {rank !== null && <p className="cc-rank">GLOBAL RANK #{rank} TODAY</p>}
               <div className="cc-death-actions">
                 <input
@@ -906,6 +1070,16 @@ export default function GameCanvas() {
                   {!canSubmit && <span className="sr-only">{unscoredMsg}</span>}
                 </button>
                 <button className="cc-btn cc-btn-ghost" onClick={downloadCard}>DEATH CARD ↓</button>
+                {canSubmit && data?.seed.source !== "vibe-launch" && !duelCode && (
+                  <button
+                    className="cc-btn"
+                    onClick={createDuel}
+                    disabled={duelBusy}
+                    title="create an async duel — a rival opens the code and races your exact run"
+                  >
+                    {duelBusy ? "…" : "DUEL →"}
+                  </button>
+                )}
                 <button className="cc-btn cc-btn-start" onClick={startRun}>RETRY</button>
               </div>
               {board.length > 0 && (

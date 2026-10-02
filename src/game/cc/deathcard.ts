@@ -56,6 +56,7 @@ interface CardOpts {
   difficulty?: string;
   rivalTag?: string; // P3.1: normalized "@handle" challenge stamp (null/undefined = omit)
   interval?: string; // P3.5: seed.interval — picks the honest chart label
+  duelCode?: string; // P7.3: live duel code — the card carries the invitation
 }
 
 export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
@@ -207,6 +208,14 @@ export async function makeDeathCard(o: CardOpts): Promise<Blob | null> {
     ctx.fillStyle = COLORS.gold;
     ctx.font = "600 32px 'Clash Display', sans-serif";
     ctx.fillText(`CHALLENGE ISSUED → ${o.rivalTag} — YOU'RE UP`, 230, 1178);
+  }
+
+  // P7.3 duel stamp — when a duel was created from THIS run, the card doubles
+  // as the invitation: the code is all a rival needs (?duel=CODE deep link).
+  if (o.duelCode) {
+    ctx.fillStyle = COLORS.gold;
+    ctx.font = "600 34px 'JetBrains Mono', monospace";
+    ctx.fillText(`DUEL ${o.duelCode} — BEAT THIS RUN`, 230, o.rivalTag ? 1132 : 1178);
   }
 
   // footer

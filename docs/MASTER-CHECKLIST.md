@@ -199,9 +199,14 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
 - [x] **P7.2** **Ghost runs** — record position-stream (NOT inputs — physics determinism not
   required) per run, replay translucent ghost with rival's skin; storage: leaderboard-store
   pattern (memory/Mongo) ⛓ none · server route ⛓ O1 (durability) ✅ shipped (2026-10-02): 30Hz recorder cap 3600, /api/ghosts token-pinned top-5 + 7d TTL, replay w/ recorded skin, GHOST toggle default ON; E2E verified (valid 200/GET/forged 403/horizon 400)
-- [ ] **P7.3** **Async duel** — challenge link/code → both climb SAME symbol+date+interval
+- [x] **P7.3** **Async duel** — challenge link/code → both climb SAME symbol+date+interval
   (buildPlatforms already byte-deterministic per (candles,seed)) → duel record + winner
   verdict + death-card integration (rivalry tag P3.1 becomes the invitation channel) ⛓ O1
+  ✅ shipped (2026-10-02): /api/duels (POST token-pinned create w/ physical caps, GET by code),
+  6-char unambiguous codes (?duel=CODE deep link pins terrain + replays challenger's stream),
+  duel banner + verdict (score → candles → draw) + local W-L-D tally + DUEL → button on death
+  panel + duel stamp on death card; bot/dual coexist, verdicts local-only, W5 untouched;
+  25 new tests (199 total); E2E: create/fetch/forged 403/physical 403/horizon 400/bad-code null
 - [ ] **P7.4** **Realtime live race** (only on traction) — external WS service (PartyKit or
   self-hosted); both clients simulate locally, avatar sync ~200ms; matchmaking queue
   ⛓ infra decision (owner ping required for new service spend)
@@ -286,3 +291,4 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > tools/), 8 service secrets migrated to repo-level Codespaces secrets. G3 closure
 > remains blocked ONLY on the real-device session; everything else of G3 verified.
 > UPDATE 2026-10-02 (latest): P7.1 @ 84c0f10 + P7.2 ghost runs SHIPPED (gates green: tsc/lint/174 tests/build; E2E: token-verify 403/400 contracts live). Next active build item: P7.3 async duel (challenge link/code → same symbol+date+interval → duel record + winner verdict + death-card integration).
+> UPDATE 2026-10-02 (final): P7.3 async duel SHIPPED — P7 social loop complete (bot → ghost → duel). Gates: tsc/lint/199 tests/build green + live E2E on /api/duels. Also fixed: pre-existing test-dir typecheck gap in ghost.test.ts (missing maxCandles arg). NEXT: no active build item — P7.4 realtime only on traction; G3 blocked ONLY on LambdaTest real-device session (owner); P4–P6 owner-blocked. Suggested owner items: LambdaTest slots, Copilot web signup + $0 spending cap, Azure no-card activation.

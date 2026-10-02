@@ -559,6 +559,51 @@
   margin-top: 10px;
 }
 
+/* P7.3 async duels — challenge banner, code entry, live stamp */
+.cc-duel-banner {
+  margin: 10px auto 0;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: rgba(240, 177, 18, 0.07);
+  border: 1px solid rgba(240, 177, 18, 0.4);
+  border-radius: 12px;
+}
+.cc-duel-head {
+  font-family: var(--cc-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: #e0b04e;
+}
+.cc-duel-target {
+  font-family: var(--cc-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+.cc-duel-target b { color: #e0b04e; }
+.cc-duel-note {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--cc-faint);
+}
+.cc-duel-code-row { display: flex; gap: 6px; align-items: center; }
+.cc-input-code { width: 110px; letter-spacing: 0.24em; }
+.cc-input-err { border-color: rgba(224, 120, 86, 0.6) !important; }
+.cc-duel-live {
+  font-family: var(--cc-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #e0b04e;
+  margin-top: 8px;
+}
+.cc-duel-live b { color: #fff; }
+
 /* P3.12 character select — roster chips (decor-only cosmetic system) */
 .cc-char-block {
   margin-top: 12px;

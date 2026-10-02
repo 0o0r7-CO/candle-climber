@@ -129,7 +129,7 @@ describe("P7.2 validateGhost (W5-layered contract)", () => {
     const v = validateGhost(
       { name: "ZED", charId: "frost", candlesPassed: 2, samples,
         symbol: "FAKE", date: "1999-01-01", interval: "1h" },
-      TOK,
+      TOK, 5000,
     );
     expect(v.ok).toBe(true);
     if (v.ok) {
@@ -141,21 +141,21 @@ describe("P7.2 validateGhost (W5-layered contract)", () => {
   });
 
   test("rejects: non-array, odd length, non-finite, non-integer, over-cap, out-of-bounds", () => {
-    expect(validateGhost({ samples: "nope", candlesPassed: 1 }, TOK).ok).toBe(false);
-    expect(validateGhost({ samples: [0, 100, 10], candlesPassed: 1 }, TOK).ok).toBe(false);
-    expect(validateGhost({ samples: [0, NaN], candlesPassed: 1 }, TOK).ok).toBe(false);
-    expect(validateGhost({ samples: [0.5, 100], candlesPassed: 1 }, TOK).ok).toBe(false);
+    expect(validateGhost({ samples: "nope", candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
+    expect(validateGhost({ samples: [0, 100, 10], candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
+    expect(validateGhost({ samples: [0, NaN], candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
+    expect(validateGhost({ samples: [0.5, 100], candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
     expect(
-      validateGhost({ samples: new Array(MAX_GHOST_SAMPLES * 2 + 2).fill(0), candlesPassed: 1 }, TOK).ok,
+      validateGhost({ samples: new Array(MAX_GHOST_SAMPLES * 2 + 2).fill(0), candlesPassed: 1 }, TOK, 5000).ok,
     ).toBe(false);
-    expect(validateGhost({ samples: [-1, 0], candlesPassed: 1 }, TOK).ok).toBe(false);
-    expect(validateGhost({ samples: [GHOST_X_MAX + 1, 0], candlesPassed: 1 }, TOK).ok).toBe(false);
-    expect(validateGhost({ samples: [0, -2001], candlesPassed: 1 }, TOK).ok).toBe(false);
+    expect(validateGhost({ samples: [-1, 0], candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
+    expect(validateGhost({ samples: [GHOST_X_MAX + 1, 0], candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
+    expect(validateGhost({ samples: [0, -2001], candlesPassed: 1 }, TOK, 5000).ok).toBe(false);
   });
 
   test("physical sanity: candles cannot exceed the recorded horizon", () => {
     // 3 samples = 0.1 s of stream — claiming 5 candles from it is impossible
-    const v = validateGhost({ candlesPassed: 5, samples }, TOK);
+    const v = validateGhost({ candlesPassed: 5, samples }, TOK, 5000);
     expect(v.ok).toBe(false);
     if (!v.ok) expect(v.status).toBe(400);
   });
@@ -167,14 +167,14 @@ describe("P7.2 validateGhost (W5-layered contract)", () => {
   });
 
   test("name sanitized like the leaderboard (control chars stripped, ANON fallback)", () => {
-    const v = validateGhost({ candlesPassed: 1, samples, name: "  a\x01b<>c  " }, TOK);
+    const v = validateGhost({ candlesPassed: 1, samples, name: "  a\x01b<>c  " }, TOK, 5000);
     if (v.ok) expect(v.entry.name).toBe("abc");
-    const anon = validateGhost({ candlesPassed: 1, samples, name: "   " }, TOK);
+    const anon = validateGhost({ candlesPassed: 1, samples, name: "   " }, TOK, 5000);
     if (anon.ok) expect(anon.entry.name).toBe("ANON");
   });
 
   test("bad charId falls back to the default skin, never breaks replay", () => {
-    const v = validateGhost({ candlesPassed: 1, samples, charId: "../../etc/passwd" }, TOK);
+    const v = validateGhost({ candlesPassed: 1, samples, charId: "../../etc/passwd" }, TOK, 5000);
     if (v.ok) expect(v.entry.charId).toBe("default");
   });
 });
