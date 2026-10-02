@@ -101,7 +101,10 @@ export default function ArchiveBrowser({ onClose }: { onClose: () => void }) {
         <span className="cc-arch-meta">
           <span className="cc-arch-sym">{r.symbol}</span>
           <span className="cc-arch-date">{r.date}</span>
-          <span className={tag ? TAG_CLASS[tag] : "cc-arch-tag"}>{tag ?? "· · ·"}</span>
+          <span
+            className={tag ? TAG_CLASS[tag] : "cc-arch-tag"}
+            title={tag ? undefined : "difficulty loads as rows are scanned"}
+          >{tag ?? "· · ·"}</span>
         </span>
       </a>
     );

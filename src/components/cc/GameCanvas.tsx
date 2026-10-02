@@ -10,7 +10,7 @@ import { utcDateStr } from "@/game/cc/rng";
 import MiniChart from "@/components/cc/MiniChart";
 import ArchiveBrowser from "@/components/cc/ArchiveBrowser";
 import { isArchiveDate } from "@/game/cc/archive";
-import { render, COLORS } from "@/game/cc/render";
+import { render } from "@/game/cc/render";
 import { renderV2 } from "@/game/cc/render-v2";
 import { deriveWeather } from "@/game/cc/weather";
 import { recordWreck, wrecksFor, loadWreckDB, saveWreckDB, type WreckDB, type Wreck } from "@/game/cc/wreckage";
@@ -69,6 +69,8 @@ export default function GameCanvas() {
   const rafRef = useRef<number>(0);
   const lastRef = useRef<number>(0);
   const accRef = useRef<number>(0);
+  // V-PHASE V-1: canvas backing-store geometry for the screen-space clear
+  const fitRef = useRef<{ dpr: number; w: number; h: number }>({ dpr: 1, w: 0, h: 0 });
   const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<CandleData | null>(null);
   const [mutation, setMutation] = useState<Mutation | null>(null);
@@ -491,7 +493,18 @@ export default function GameCanvas() {
       const rect = canvas.getBoundingClientRect();
       canvas.width = Math.round(rect.width * dpr);
       canvas.height = Math.round(rect.height * dpr);
-      ctx.setTransform(dpr * rect.width / VIEW_W, 0, 0, dpr * rect.width / VIEW_W, 0, 0);
+      // V-PHASE V-1: contain-fit the 800×480 world — never crop, never stretch.
+      // The old width-locked scale overflowed viewport height on wide desktops
+      // (ground row rendered below the fold) and left an unframed strip on
+      // portrait phones. Landscape: leftover ≈ 0 (unchanged composition).
+      // Portrait: the band is bottom-weighted (62% of the leftover above it)
+      // so the climber reads with sky overhead and crumble debris keeps
+      // falling through the open space below the band.
+      const s = Math.min(rect.width / VIEW_W, rect.height / VIEW_H);
+      const ox = (rect.width - VIEW_W * s) / 2;
+      const oy = (rect.height - VIEW_H * s) * 0.62;
+      fitRef.current = { dpr, w: rect.width, h: rect.height };
+      ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
     };
     resize();
     window.addEventListener("resize", resize);
@@ -515,9 +528,14 @@ export default function GameCanvas() {
         if (phase === "running") ghostRecRef.current.tick(e.px, e.py);
         accRef.current -= FIXED;
       }
-      ctx.clearRect(0, 0, VIEW_W, VIEW_H);
-      ctx.fillStyle = COLORS.bg;
-      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      // V-1: full-canvas clear in SCREEN space — the renderer re-fills the
+      // world band itself; letterbox areas stay transparent (CSS bg shows)
+      // and any decor drawn beyond the band never smears between frames.
+      const fit = fitRef.current;
+      ctx.save();
+      ctx.setTransform(fit.dpr, 0, 0, fit.dpr, 0, 0);
+      ctx.clearRect(0, 0, fit.w, fit.h);
+      ctx.restore();
       const bot = vsBotRef.current ? botRef.current : null;
       // P7.2: ghost replay — position lookup by the human engine's own clock
       const gv: GhostView | null =
