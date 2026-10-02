@@ -20,10 +20,11 @@ import { pickSeed, syntheticCandles, INTERVAL, LIMIT, WATCHLIST, STOCKS, isInter
 import { isArchiveDate, endOfDayMs, clampCandlesTo, binanceKlinesUrl } from "@/game/cc/archive";
 import { signRunToken } from "@/lib/run-token";
 import { parseStooqCsv } from "@/lib/stooq";
+import { parseYahooChart, yahooChartUrl } from "@/lib/yahoo";
 import { getLaunchOfDay, launchSymbol, vibeLaunchCandles } from "@/lib/vibe-launch";
 import type { Candle, CandleData, SeedInfo } from "@/game/cc/types";
 
-type Source = SeedInfo["source"]; // "binance" | "stooq" | "vibe-launch" | "synthetic"
+type Source = SeedInfo["source"]; // "binance" | "stooq" | "yahoo" | "vibe-launch" | "synthetic"
 interface CacheEntry { ts: number; candles: Candle[]; source: Source }
 const cache = new Map<string, CacheEntry>();
 const TTL = 24 * 60 * 60 * 1000; // 24h — closed-candle terrain never changes within its UTC day
@@ -42,6 +43,48 @@ const BINANCE_HOSTS = [
 // (it serves a JS challenge to some datacenter IPs and denies others outright;
 // any failure here degrades to the synthetic tokenless path).
 const STOOQ_HOSTS = ["https://stooq.com"];
+
+// W3.1: Yahoo v8 chart — the PRIMARY stock feed. Stooq's anti-bot challenge
+// blocks Vercel's egress IPs, so from prod the stooq path degraded to synthetic
+// every time. Yahoo is keyless, challenge-free and serverless-reachable; stooq
+// remains the fallback host for environments where Yahoo is unreachable. Both
+// feeds are real weekly OHLC — the run token pins the exact candles used, so
+// the two feeds can never mix within one leaderboard.
+const YAHOO_HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
+
+async function fetchYahoo(symbol: string, clamp?: (rows: Candle[]) => Candle[]): Promise<Candle[] | null> {
+  for (const host of YAHOO_HOSTS) {
+    try {
+      const url = yahooChartUrl(symbol, host);
+      const res = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(8000),
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; CandleClimber/1.0)" },
+      });
+      if (!res.ok) { console.error("[candles/yahoo]", host, "HTTP", res.status); continue; }
+      const body: unknown = await res.json();
+      // Pure parser (W5 extraction — src/lib/yahoo.ts, contract pinned by
+      // test/feeds.test.ts): null = challenge/error payload OR <40 closed rows.
+      const parsed = parseYahooChart(body, Date.now());
+      if (!parsed) {
+        console.error("[candles/yahoo]", host, "unusable payload (error shape?) or <40 closed rows");
+        continue;
+      }
+      // Archive mode clamps the full history to closed-by-that-day rows; if
+      // the clamped window is too thin, the next feed takes over.
+      const clamped = clamp ? clamp(parsed) : parsed;
+      if (clamped.length < 40) {
+        console.error("[candles/yahoo]", host, "<40 rows closed by archive date");
+        continue;
+      }
+      return clamped;
+    } catch (err) {
+      console.error("[candles/yahoo]", host, "fetch failed:", (err as Error).message);
+      continue;
+    }
+  }
+  return null;
+}
 
 async function fetchBinance(symbol: string, interval: string, endMs?: number): Promise<Candle[] | null> {
   for (const host of BINANCE_HOSTS) {
@@ -174,7 +217,7 @@ export async function GET(req: Request) {
   const interval = !isArchive && !isStock && isInterval(requestedInterval) ? requestedInterval : INTERVAL;
 
   const key = `${symbol}|${date}|${interval}`;
-  let source: Source = isStock ? "stooq" : "binance";
+  let source: Source = isStock ? "yahoo" : "binance";
   let candles: Candle[] = [];
 
   const hit = cache.get(key);
@@ -185,14 +228,24 @@ export async function GET(req: Request) {
     // Archive mode ends every fetch window at the end of the archive day:
     // binance via endTime, stooq by clamping the parsed full history.
     const endMs = isArchive ? endOfDayMs(date) : undefined;
-    const live = isStock
-      ? (await fetchStooq(symbol, (rows) => (isArchive ? clampCandlesTo(rows, date) : rows)))
-      : await fetchBinance(symbol, interval, endMs);
-    if (live) {
-      candles = live;
+    const stockClamp = (rows: Candle[]) => (isArchive ? clampCandlesTo(rows, date) : rows);
+    // W3.1 stock chain: Yahoo v8 (Vercel-reachable) -> stooq (fallback) ->
+    // synthetic (tokenless). source follows whichever feed actually served.
+    const yahoo = isStock ? await fetchYahoo(symbol, stockClamp) : null;
+    if (yahoo) {
+      candles = yahoo;
+      source = "yahoo";
     } else {
-      candles = syntheticCandles(date, LIMIT, interval);
-      source = "synthetic";
+      const live = isStock
+        ? (await fetchStooq(symbol, stockClamp))
+        : await fetchBinance(symbol, interval, endMs);
+      if (live) {
+        candles = live;
+        if (isStock) source = "stooq";
+      } else {
+        candles = syntheticCandles(date, LIMIT, interval);
+        source = "synthetic";
+      }
     }
     cache.set(key, { ts: Date.now(), candles, source });
   }

@@ -1,0 +1,26 @@
+{
+  "stamp": "20261002-145303",
+  "results": [
+    {
+      "device": "Pixel 7",
+      "platform": "13",
+      "ok": false,
+      "error": "Message: ca971ca3b4cc5a3c9de71cb992879a92: Real Mobile Automation not allowed on your current plan. Please upgrade or contact support\n",
+      "secs": 3.4
+    },
+    {
+      "device": "Galaxy S23",
+      "platform": "13",
+      "ok": false,
+      "error": "Message: 243592e48dc8d7da0cd22b26354faf54: Real Mobile Automation not allowed on your current plan. Please upgrade or contact support\n",
+      "secs": 2.8
+    },
+    {
+      "device": "Pixel 6 Pro",
+      "platform": "12",
+      "ok": false,
+      "error": "Message: e2947a7762ee855630cfd944826ee38e: Real Mobile Automation not allowed on your current plan. Please upgrade or contact support\n",
+      "secs": 2.5
+    }
+  ]
+}

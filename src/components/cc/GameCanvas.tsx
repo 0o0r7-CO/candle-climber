@@ -794,7 +794,7 @@ export default function GameCanvas() {
               <div className="cc-daily">
                 <span className="cc-daily-label" title={archive ? "Real history — practice terrain" : "Levels reset at 00:00 UTC"}>{archive ? "ARCHIVE CHART · PRACTICE" : "TODAY'S CHART · UTC"}</span>
                 <span className="cc-daily-symbol">{data.seed.symbol}</span>
-                <span className="cc-daily-src">{data.seed.source === "binance" || data.seed.source === "stooq" ? "live data" : data.seed.source === "vibe-launch" ? "vibe launch" : "synthetic"}</span>
+                <span className="cc-daily-src">{data.seed.source === "binance" || data.seed.source === "stooq" || data.seed.source === "yahoo" ? "live data" : data.seed.source === "vibe-launch" ? "vibe launch" : "synthetic"}</span>
               </div>
               {stats && (
                 <div className="cc-realmove">
@@ -828,7 +828,7 @@ export default function GameCanvas() {
               {/* P3.5 timeframe selector — owner proposal. Crypto dailies only:
                   stock rails have no intraday feed, launch terrain is derived,
                   archive stays weekly (V1) — all three hide the chips. */}
-              {!archive && !duel && data.seed.source !== "stooq" && data.seed.source !== "vibe-launch" && (
+              {!archive && !duel && data.seed.source !== "stooq" && data.seed.source !== "yahoo" && data.seed.source !== "vibe-launch" && (
                 <div className="cc-tf-row" role="group" aria-label="Chart timeframe">
                   {INTERVALS.map((iv) => (
                     <button

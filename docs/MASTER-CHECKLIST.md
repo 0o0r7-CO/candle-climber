@@ -40,10 +40,15 @@
 ### P1 — product rails ✅ Gate G1 PASS (owner-confirmed)
 - [x] W3 stock-token rails (TSLA/AMZN/NFLX via stooq + vibe/vibe launch-of-the-day
   derived source, server date-clamp) 🧪
-- [ ] **W3.1 (open, found at prod gate)** stooq blocks Vercel egress too — `/api/candles?symbol=TSLA|AMZN|NFLX`
-  serve `source:"synthetic"` (honest label) from prod; rails verified tokened + deterministic.
-  Fix options: alternate no-key stock feed reachable from Vercel (Yahoo v8 chart / Alpha Vantage
-  free tier w/ key), or stooq via a proxy origin. Owner decision only if an API key is wanted.
+- [x] **W3.1** 2026-10-02 — **Yahoo v8 chart = primary stock feed** (no-key, no owner
+  decision needed): stooq's anti-bot challenge blocks Vercel egress -> prod stock rails
+  were honest-but-tokenless synthetic. New pure parser `src/lib/yahoo.ts`
+  (parseYahooChart, contract-pinned incl. null-OHLC-must-not-become-0 rule) + fetch
+  chain yahoo (query1/query2, 1wk/10y) -> stooq fallback -> synthetic tokenless;
+  source label `yahoo` -> "live data", tf chips hidden for stocks; run token pins
+  whichever feed served (two feeds can never mix one leaderboard). Live probe: Yahoo
+  523 weekly rows w/ volume from sandbox; prod verification pending deploy
+  (`/api/candles?symbol=TSLA` -> source). W5 +6 tests (205/205), tsc+lint+build green
 - [x] W4 graduation arc (SUMMIT milestone, GRADUATED victory state, post-grad WORLD 2)
 - [x] W5 vitest/bun anti-cheat & determinism suite — 25/25 (run-token, board-validation,
   stooq parser, vibe-launch, level determinism) 🧪
@@ -146,9 +151,16 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
   canvas animating, 0 runtime errors, video+console on dashboard (session
   d7574597efeeed8418b85c36eb76bd0e, screenshots `qa/realdevice-*`). REAL-DEVICE attempts
   (Galaxy S23 / Pixel 7 / Pixel 6 Pro × 3 rounds, queueTimeout 420s) all ended
-  `create-test-timeout` — device-automation slots appear unavailable on the plan. REMAINING
-  for closure: one real-device session; owner verify LambdaTest plan includes real-device
-  automation minutes (dashboard → Real Device → App/Web Automation availability) 🧪
+  `create-test-timeout` — ROOT CAUSE CONFIRMED 2026-10-02 via direct API error:
+  **"Real Mobile Automation not allowed on your current plan"** — real-device
+  automation is plan-gated, not a queue issue. Dashboard login (Real Time Testing
+  interactive route) needs account email+password — NOT on file (only
+  username+access-key, which work for API/grid only; username login → "Invalid
+  email"). REMAINING for closure: owner provides EITHER dashboard email+password
+  (or sets one) → I run interactive real-device session + capture evidence, OR
+  upgrades plan / enables real-device automation → I run the automation script
+  (scripts/lambdatest_realdevice.py, ready), OR runs 1 session on his own phone.
+  Mobile-emulation PASS evidence stands (session d7574597efeeed8418b85c36eb76bd0e) 🧪
 - [x] **P3.15** **Cosmetic fix from mobile QA** — `TODAY&apos;S` rendered literally
   (HTML entity inside a JS string literal, not JSX text) → real apostrophe; found in
   LambdaTest emulation screenshot; bun test 126/126, tsc+lint+build green (2026-10-02)
@@ -292,3 +304,15 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > remains blocked ONLY on the real-device session; everything else of G3 verified.
 > UPDATE 2026-10-02 (latest): P7.1 @ 84c0f10 + P7.2 ghost runs SHIPPED (gates green: tsc/lint/174 tests/build; E2E: token-verify 403/400 contracts live). Next active build item: P7.3 async duel (challenge link/code → same symbol+date+interval → duel record + winner verdict + death-card integration).
 > UPDATE 2026-10-02 (final): P7.3 async duel SHIPPED — P7 social loop complete (bot → ghost → duel). Gates: tsc/lint/199 tests/build green + live E2E on /api/duels. Also fixed: pre-existing test-dir typecheck gap in ghost.test.ts (missing maxCandles arg). NEXT: no active build item — P7.4 realtime only on traction; G3 blocked ONLY on LambdaTest real-device session (owner); P4–P6 owner-blocked. Suggested owner items: LambdaTest slots, Copilot web signup + $0 spending cap, Azure no-card activation.
+>
+> **UPDATE 2026-10-02 (autonomous run 2, owner directive "raise execution level — don't stop"):**
+> W3.1 CLOSED via Yahoo v8 primary stock feed (no-key, no owner decision needed) —
+> prod stock rails become real+scored pending deploy probe. P3.3 root cause confirmed
+> via direct API error: "Real Mobile Automation not allowed on your current plan" —
+> plan-gated, NOT a queue issue; interactive Real-Time-Testing route needs dashboard
+> email+password (username+accesskey on file → API/grid only; login test → "Invalid
+> email"). Three unblock paths documented on P3.3. Recovery of the reset sandbox done
+> via KB + Codespaces secrets channel (fantastic-space-journey vault, now stopped;
+> .lt_user/.lt_key restored 0600; bridge script paramiko-5.0-compatible). Gates this
+> run: 205/205 tests, tsc+lint+build green. NEXT in queue: visual-debt sweep (now
+> unblocked — tech layers P7.1–P7.3 done), then idle until owner input.

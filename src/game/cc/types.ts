@@ -16,7 +16,7 @@ export interface SeedInfo {
   date: string; // UTC YYYY-MM-DD
   symbol: string; // e.g. BTCUSDT / TSLA / launch ticker
   interval: string; // e.g. 1w; "derived" for vibe-launch terrain
-  source: 'binance' | 'stooq' | 'vibe-launch' | 'synthetic';
+  source: 'binance' | 'stooq' | 'yahoo' | 'vibe-launch' | 'synthetic';
 }
 
 export interface CandleData {

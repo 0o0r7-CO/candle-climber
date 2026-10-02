@@ -109,6 +109,105 @@ describe("W5 stooq CSV parser (pure)", () => {
   });
 });
 
+/* ---------------------------- yahoo v8 fixtures ---------------------------- */
+
+import { parseYahooChart, yahooChartUrl, MIN_CLOSED_ROWS_YAHOO } from "@/lib/yahoo";
+
+// Yahoo v8 chart fixture builder — mirrors the real wire shape:
+// { chart: { result: [ { timestamp: sec[], indicators: { quote: [ {...} ] } } ], error: null } }
+function yahooWeeks(n: number, startSec: number): { ts: number[]; q: Record<string, (number | null)[]> } {
+  const ts: number[] = [];
+  const open: number[] = [], high: number[] = [], low: number[] = [], close: number[] = [], volume: number[] = [];
+  for (let i = 0; i < n; i++) {
+    ts.push(startSec + i * 7 * 86400);
+    open.push(10 + i); high.push(11 + i); low.push(9.5 + i); close.push(10.5 + i); volume.push(1000 + i);
+  }
+  return { ts, q: { open, high, low, close, volume } };
+}
+
+function yahooBody(weeks: { ts: number[]; q: Record<string, (number | null)[]> } | null, withError = false): unknown {
+  if (withError) return { chart: { result: null, error: { code: "Bad Request", description: "Invalid input" } } };
+  if (!weeks) return { chart: { result: [], error: null } };
+  return {
+    chart: {
+      result: [{
+        meta: { currency: "USD", symbol: "TSLA", exchangeName: "NMS" },
+        timestamp: weeks.ts,
+        indicators: { quote: [weeks.q] },
+      }],
+      error: null,
+    },
+  };
+}
+
+const YAHOO_NOW = Date.parse("2026-09-30T12:00:00Z"); // a Wednesday
+// 52 weekly rows anchored RELATIVE to NOW (+1h offset): every row except the
+// last closes strictly before NOW (51 closed, last row = in-progress week).
+const YAHOO_START_SEC = Math.floor(YAHOO_NOW / 1000) - 52 * 7 * 86_400 + 3_600;
+
+describe("W5 yahoo v8 chart parser (pure) — W3.1 primary stock feed", () => {
+  test("valid chart JSON -> candles with t in ms and correct o/h/l/c", () => {
+    const weeks = yahooWeeks(52, YAHOO_START_SEC);
+    const candles = parseYahooChart(yahooBody(weeks), YAHOO_NOW);
+    expect(candles).not.toBeNull();
+    expect(candles!.length).toBe(51); // 52 rows - 1 in-progress
+    expect(candles![0]).toEqual({
+      t: YAHOO_START_SEC * 1000, o: 10, h: 11, l: 9.5, c: 10.5, v: 1000,
+    });
+    // weekly cadence preserved
+    expect(candles![1].t - candles![0].t).toBe(7 * 86_400_000);
+  });
+
+  test("in-progress week (week-start + 7d > now) dropped; boundary (== now) kept", () => {
+    // 45-row fixtures (>= MIN_CLOSED_ROWS) straddling the boundary by 1s:
+    // startA's last row closes exactly AT now (kept); startA+1s closes 1s
+    // after now (dropped as the in-progress week).
+    const startA = Math.floor(YAHOO_NOW / 1000) - 45 * 7 * 86_400;
+    const boundaryKept = parseYahooChart(yahooBody(yahooWeeks(45, startA)), YAHOO_NOW)!;
+    expect(boundaryKept.length).toBe(45);
+    const boundaryDropped = parseYahooChart(yahooBody(yahooWeeks(45, startA + 1)), YAHOO_NOW)!;
+    expect(boundaryDropped.length).toBe(44);
+  });
+
+  test(`volume field optional; malformed/zero volume omitted`, () => {
+    const weeks = yahooWeeks(45, YAHOO_START_SEC);
+    weeks.q.volume[0] = null;
+    weeks.q.volume[1] = 0;
+    const candles = parseYahooChart(yahooBody(weeks), YAHOO_NOW)!;
+    expect(candles).not.toBeNull();
+    expect(candles[0].v).toBeUndefined();
+    expect(candles[1].v).toBeUndefined();
+    expect(candles[2].v).toBe(1002);
+  });
+
+  test(`rows with null/non-finite OHLC skipped; <${MIN_CLOSED_ROWS_YAHOO} closed -> null`, () => {
+    const weeks = yahooWeeks(45, YAHOO_START_SEC);
+    weeks.q.open[0] = null;
+    weeks.q.close[1] = null;
+    const candles = parseYahooChart(yahooBody(weeks), YAHOO_NOW)!;
+    expect(candles.length).toBe(43); // 45 rows - 2 null-OHLC (fixture starts 52w back -> no in-progress row)
+    expect(parseYahooChart(yahooBody(yahooWeeks(40, YAHOO_START_SEC)), YAHOO_NOW)).not.toBeNull(); // 40 closed == MIN -> candles
+    expect(parseYahooChart(yahooBody(yahooWeeks(39, YAHOO_START_SEC)), YAHOO_NOW)).toBeNull(); // 39 closed < 40 -> null
+  });
+
+  test("error/empty/HTML-ish payloads -> null (never throws)", () => {
+    expect(parseYahooChart(yahooBody(null, true), YAHOO_NOW)).toBeNull(); // chart.error set
+    expect(parseYahooChart(yahooBody(null), YAHOO_NOW)).toBeNull(); // empty result[]
+    expect(parseYahooChart({ chart: { result: [{}] } }, YAHOO_NOW)).toBeNull(); // no timestamps
+    expect(parseYahooChart({ chart: { result: [{ timestamp: [] }] } }, YAHOO_NOW)).toBeNull();
+    expect(parseYahooChart({}, YAHOO_NOW)).toBeNull();
+    expect(parseYahooChart(null, YAHOO_NOW)).toBeNull();
+    expect(parseYahooChart("<!DOCTYPE html><body>Rate limited</body>", YAHOO_NOW)).toBeNull();
+    expect(parseYahooChart(undefined, YAHOO_NOW)).toBeNull();
+  });
+
+  test("yahooChartUrl — symbol interpolated, 1wk/10y params pinned", () => {
+    expect(yahooChartUrl("TSLA", "https://query1.finance.yahoo.com")).toBe(
+      "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1wk&range=10y"
+    );
+  });
+});
+
 /* --------------------------- vibe-launch fixtures -------------------------- */
 
 const LAUNCH: VibeLaunch = {

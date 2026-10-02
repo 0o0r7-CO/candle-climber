@@ -26,7 +26,8 @@
 | seed.source   | label        | scored? | data character                          |
 |---------------|--------------|---------|-----------------------------------------|
 | `binance`     | "live data"  | yes     | real Binance weekly OHLC                |
-| `stooq`       | "live data"  | yes     | real stooq weekly OHLC (stocks)         |
+| `yahoo`       | "live data"  | yes     | real Yahoo Finance weekly OHLC (stocks, primary) |
+| `stooq`       | "live data"  | yes     | real stooq weekly OHLC (stocks, fallback)|
 | `vibe-launch` | "vibe launch"| yes     | **DERIVED** terrain from real launch metrics — never labeled "live" |
 | `synthetic`   | "synthetic"  | no      | deterministic seeded fallback (tokenless)|
 
@@ -48,7 +49,36 @@
   fallback** (source "synthetic", unscored). Client also has a full offline
   synthetic path in `GameCanvas` when the API itself is unreachable.
 
-## 2. Stooq weekly CSV — stock rails (TSLA / AMZN / NFLX)
+## 2. Yahoo Finance v8 chart — stock rails, PRIMARY (W3.1)
+
+- **URL**: `https://query1.finance.yahoo.com/v8/finance/chart/<SYM>?interval=1wk&range=10y`
+  (fallback host `https://query2.finance.yahoo.com`, same path) — e.g.
+  `.../chart/TSLA?interval=1wk&range=10y` ≈ 520 weekly rows.
+- **Why (W3.1 closure)**: stooq's anti-bot challenge **blocks Vercel's egress
+  IPs**, so from prod every stock rail degraded to honest-but-tokenless
+  synthetic. Yahoo's keyless v8 endpoint serves serverless egress without a
+  challenge → stocks are REAL, scored terrain from prod. Stooq stays as the
+  fallback feed; the run token pins whichever candles served, so the two
+  feeds can never mix within one leaderboard (W1 invariant).
+- **Format**: JSON — `chart.result[0].timestamp[]` (unix SECONDS, week start)
+  + `chart.result[0].indicators.quote[0].{open,high,low,close,volume}[]`.
+  Parsed by **pure** `parseYahooChart` in `src/lib/yahoo.ts` (contract pinned
+  by `test/feeds.test.ts`; no new dependencies).
+- **Mapping**: `Candle.t = timestamp * 1000`; o/h/l/c per arrays; volume kept
+  when finite > 0 (feeds H2 weather fog). Rows with null/non-finite OHLC are
+  skipped (Yahoo emits nulls for halt/holiday stubs).
+- **Cost / license**: free, keyless, public chart endpoint (Yahoo ToS apply;
+  one symbol per UTC day + 24h cache = negligible load).
+- **Determinism**: a weekly row closes **7 days after its week-start stamp**;
+  rows whose close time is still in the future (the in-progress week) are
+  dropped — same closed-candles-only rule as every other path.
+- **Failure mode**: non-OK HTTP, JSON without a usable `chart.result[0]`
+  (rate-limit/error shapes), <40 closed rows, or network error → **stooq
+  fallback** → still failing → **synthetic tokenless fallback** (unscored).
+- **Source label**: `yahoo` → "live data" (real OHLC); timeframe chips hidden
+  (stocks are weekly-only rails).
+
+## 3. Stooq weekly CSV — stock rails, FALLBACK (W3)
 
 - **URL**: `https://stooq.com/q/d/l/?s=<lowercase>.us&i=w` — e.g.
   `https://stooq.com/q/d/l/?s=tsla.us&i=w`. Weekly rows, one per week.
@@ -73,7 +103,7 @@
   accepts the symbol so deep links keep working through a degraded day.
 - **Source label**: `stooq` → "live data" (real OHLC).
 
-## 3. vibe/vibe launches — launch-of-the-day (derived secondary source)
+## 4. vibe/vibe launches — launch-of-the-day (derived secondary source)
 
 - **URL**: `https://testnet.vibevibe.fun/api/v1/chains/46630/v6/launches?limit=5`
   (cursor API, max limit=5 — sufficient for launch-of-the-day). Real payload
@@ -119,7 +149,7 @@
 - **Failure mode**: fetch error, non-OK status, or no valid items → the daily
   **synthetic tokenless path** (same rule as every feed failure).
 
-## 4. Synthetic fallback (not a feed, but part of every failure path)
+## 5. Synthetic fallback (not a feed, but part of every failure path)
 
 - **Source**: `src/game/cc/level-source.ts` `syntheticCandles(date, LIMIT)` —
   `mulberry32(hashString("cc-daily-v1:" + date))` over the daily seed; identical
