@@ -317,3 +317,15 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > .lt_user/.lt_key restored 0600; bridge script paramiko-5.0-compatible). Gates this
 > run: 205/205 tests, tsc+lint+build green. NEXT in queue: visual-debt sweep (now
 > unblocked — tech layers P7.1–P7.3 done), then idle until owner input.
+>
+> **UPDATE 2026-10-02 (autonomous run 2, later):** W3.1 PROD-VERIFIED (yahoo +
+> runToken + 521 candles). VISUAL-DEBT SWEEP 1 EXECUTED (ledger: docs/VISUAL-DEBT.md,
+> evidence: qa/visual-sweep/): VD-1 HUD/title overlap FIXED (overlay 76px clearance),
+> VD-2+2b archive edge-clip FIXED (panel calc-width + blurbs wrap, h-scroll gone),
+> VD-3 seed-chip 3-line wrap FIXED (nowrap + compact chips), VD-4 desktop invisible
+> fold PARTIAL (visible scrollbar + sticky ▾ hint + compact paddings; full above-fold
+> CTA at 800px deferred — content problem, not CSS). Footer z-index below overlay.
+> Commits 830cf30 → e80b359 → f34c32e, both remotes; CSS-only, engine/W5 untouched.
+> OPEN VISUAL DEBT: VD-5 chip-label truncation, VD-6 footer 2-line mobile, VD-7 lazy
+> tag placeholders (all LOW, accepted). NEXT: idle until owner input — G3 needs ONE
+> owner action (LambdaTest dashboard creds / plan / own phone); P4–P6 owner-blocked.
