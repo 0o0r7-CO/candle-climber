@@ -15,8 +15,10 @@ import { renderV2 } from "@/game/cc/render-v2";
 import { deriveWeather } from "@/game/cc/weather";
 import { recordWreck, wrecksFor, loadWreckDB, saveWreckDB, type WreckDB, type Wreck } from "@/game/cc/wreckage";
 import { makeDeathCard, normalizeRivalTag } from "@/game/cc/deathcard";
-import { rosterList, isValidCharId, DEFAULT_CHAR_ID, CHAR_KEY } from "@/game/cc/characters";
+import { rosterList, isValidCharId, DEFAULT_CHAR_ID, CHAR_KEY, getChar } from "@/game/cc/characters";
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
+import { RivalBot, pickRivalCharId, rivalVerdict } from "@/game/cc/rival/bot";
+import { personalityForCharId } from "@/game/cc/rival/personality";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
 type Phase = "loading" | "ready" | "running" | "graduated" | "dead";
@@ -45,6 +47,7 @@ const RIVAL_KEY = "cc_rival_v1"; // P3.1: remembered rivalry tag
 const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
 const TF_KEY = "cc_tf_v1"; // P3.5: remembered timeframe ("1w" classic default)
+const VS_KEY = "cc_vsbot_v1"; // P7.1: remembered SOLO / VS BOT choice (default SOLO)
 const CC_CHAR_KEY = CHAR_KEY; // P3.12: remembered character id ("default" = procedural)
 const UNSCORED_MSG = "offline terrain — scoring disabled";
 const ARCHIVE_MSG = "practice — archive terrain is unscored";
@@ -61,7 +64,7 @@ export default function GameCanvas() {
   // P3.2: mutation id flows into the renderers via ref — the RAF loop must not
   // re-subscribe on mutation change (same pattern as seedRef/wrecksRef)
   const mutationIdRef = useRef<string | undefined>(undefined);
-  const [hud, setHud] = useState({ score: 0, combo: 0 });
+  const [hud, setHud] = useState({ score: 0, combo: 0, candles: 0 });
   const [result, setResult] = useState<RunResult | null>(null);
   const [graduated, setGraduated] = useState(false); // W4: summit reached
   const [world2, setWorld2] = useState(false); // W4: post-grad buyback world
@@ -98,6 +101,12 @@ export default function GameCanvas() {
   // P3.12: selected character — ref feeds the RAF renderer without re-subscribing
   const [charId, setCharId] = useState<string>(DEFAULT_CHAR_ID);
   const charIdRef = useRef<string>(DEFAULT_CHAR_ID);
+  // P7.1: rival bot — local headless engine + heuristic planner; zero network,
+  // its score/height are local UI only (W5 anti-cheat red line: never submitted)
+  const [vsBot, setVsBot] = useState(false);
+  const vsBotRef = useRef(false); // RAF loop reads the ref (no re-subscribe)
+  const botRef = useRef<RivalBot | null>(null);
+  const [verdict, setVerdict] = useState<string | null>(null);
 
   // init: persisted prefs + deep-link parsing (no fetching here — the loader
   // effect below owns the fetch so a timeframe change re-loads cleanly)
@@ -132,6 +141,10 @@ export default function GameCanvas() {
     const picked = isValidCharId(urlChar) ? (urlChar as string) : isValidCharId(savedChar) ? savedChar : DEFAULT_CHAR_ID;
     setCharId(picked);
     charIdRef.current = picked;
+    // P7.1: default SOLO — every existing flow is untouched unless opted in
+    const savedVs = localStorage.getItem(VS_KEY) === "1";
+    setVsBot(savedVs);
+    vsBotRef.current = savedVs;
     setBooted(true);
   }, []);
 
@@ -213,12 +226,30 @@ export default function GameCanvas() {
     sfx.land();
   }, []);
 
+  // P7.1: SOLO / VS BOT toggle — persists (VS_KEY); default SOLO keeps every
+  // existing QA/leaderboard/anti-cheat flow byte-identical.
+  const changeVsBot = useCallback((on: boolean) => {
+    setVsBot(on);
+    vsBotRef.current = on;
+    try { localStorage.setItem(VS_KEY, on ? "1" : "0"); } catch { /* private mode — cosmetic only */ }
+    sfx.land();
+  }, []);
+
+  // P7.1: the rival's skin/personality is deterministic per level seed — the
+  // same daily chart pits every player against the same-flavored ghost
+  const rivalCharId = useMemo(
+    () => (data ? pickRivalCharId(seedRef.current) : "wickvenom"),
+    [data],
+  );
+  const rivalPers = useMemo(() => personalityForCharId(rivalCharId), [rivalCharId]);
+  const rivalName = getChar(rivalCharId).name;
+
   const buildEngine = useCallback((d: CandleData, mut: Mutation) => {
     const plats = buildPlatforms(d.candles, d.seed.date + d.seed.symbol);
     return new Engine(
       plats,
       {
-        onScore: (score, combo) => setHud({ score, combo }),
+        onScore: (score, combo) => setHud({ score, combo, candles: engineRef.current?.candlesPassed ?? 0 }),
         onSfx: (s) => sfx[s](),
         onGraduate: () => {
           // W4: summit reached — pause for the celebration panel; the run is
@@ -234,7 +265,10 @@ export default function GameCanvas() {
             graduated: true,
             world2: eng.world2,
           });
-          setHud({ score: Math.floor(eng.score), combo: 0 });
+          setHud({ score: Math.floor(eng.score), combo: 0, candles: eng.candlesPassed });
+          // P7.1: local verdict at the summit (rival is frozen while panels are up)
+          const bot = botRef.current;
+          if (vsBotRef.current && bot) setVerdict(rivalVerdict(eng.candlesPassed, bot.bestCandles).line);
           setPhase("graduated");
         },
         onDeath: (r) => {
@@ -255,7 +289,10 @@ export default function GameCanvas() {
           }
           setResult(r);
           setPhase("dead");
-          setHud({ score: r.score, combo: 0 });
+          setHud({ score: r.score, combo: 0, candles: r.candlesPassed });
+          // P7.1: local verdict at death — purely client-side, never submitted
+          const bot = botRef.current;
+          if (vsBotRef.current && bot) setVerdict(rivalVerdict(r.candlesPassed, bot.bestCandles).line);
           if (r.score > Number(localStorage.getItem(BEST_KEY) ?? 0)) {
             localStorage.setItem(BEST_KEY, String(r.score));
             setBest(r.score);
@@ -281,7 +318,14 @@ export default function GameCanvas() {
     eng.showHints = runs < 2;
     localStorage.setItem(RUNS_KEY, String(runs + 1));
     engineRef.current = eng;
-    setHud({ score: 0, combo: 0 });
+    // P7.1: a fresh rival per run — same candles + same seed ⇒ the SAME
+    // deterministic level build (reused, never forked); the bot restarts
+    // with a fresh personality-consistent plan on every human retry.
+    botRef.current = vsBotRef.current
+      ? new RivalBot(data.candles, seedRef.current, rivalCharId, mutation.mods)
+      : null;
+    setVerdict(null);
+    setHud({ score: 0, combo: 0, candles: 0 });
     setResult(null);
     setRank(null);
     setGraduated(false);
@@ -289,7 +333,7 @@ export default function GameCanvas() {
     setPhase("running");
     lastRef.current = performance.now();
     accRef.current = 0;
-  }, [data, mutation, buildEngine]);
+  }, [data, mutation, buildEngine, rivalCharId]);
 
   // W4: from the GRADUATED panel, continue into the post-graduation buyback
   // world — doubled gains, endless procedural sky. The run keeps its score.
@@ -340,13 +384,18 @@ export default function GameCanvas() {
       while (accRef.current >= FIXED) {
         // "graduated" pauses the simulation while the celebration panel is up
         if (phase === "running" || phase === "dead") e.step(FIXED);
+        // P7.1: the rival steps on the SAME fixed-timestep clock inside this
+        // SAME RAF loop (never a second loop). Frozen while any panel is up,
+        // so the verdict numbers freeze with the human's run.
+        if (phase === "running" && vsBotRef.current) botRef.current?.tick(FIXED);
         accRef.current -= FIXED;
       }
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current, charIdRef.current);
-      else render(ctx, e, seedRef.current, mutationIdRef.current);
+      const bot = vsBotRef.current ? botRef.current : null;
+      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current, charIdRef.current, bot);
+      else render(ctx, e, seedRef.current, mutationIdRef.current, bot);
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
@@ -515,6 +564,12 @@ export default function GameCanvas() {
           {v2 && <div className="cc-chip cc-chip-mut" title="renderer v2 — grammar + parallax + juice">RENDER V2</div>}
           {weatherChip && <div className="cc-chip cc-chip-weather" title="H2 weather — ATR wind · volume fog">{weatherChip}</div>}
           {archive && <div className="cc-chip cc-chip-arch" title="archive terrain — practice only">ARCHIVE</div>}
+          {/* P7.1: live rival race — local-only numbers, never submitted */}
+          {vsBot && botRef.current && !botRef.current.stopped && (
+            <div className="cc-chip cc-chip-rival" title="rival bot — local simulation, never scored">
+              RIVAL {botRef.current.candles} / YOU {hud.candles}
+            </div>
+          )}
         </div>
         <div className="cc-hud-right">
           <div className="cc-chip cc-chip-score">{hud.score.toLocaleString()}</div>
@@ -594,6 +649,30 @@ export default function GameCanvas() {
                   ))}
                 </div>
               )}
+              {/* P7.1 rival bot — local SOLO/VS toggle. Default SOLO: existing
+                  behavior + QA flows are 100% unchanged; choice persists. The
+                  rival is a local headless engine — zero network, never scored. */}
+              <div className="cc-tf-row" role="group" aria-label="Rival bot">
+                <button
+                  className={`cc-tf-chip${!vsBot ? " cc-tf-on" : ""}`}
+                  onClick={() => changeVsBot(false)}
+                  aria-pressed={!vsBot}
+                >
+                  SOLO
+                </button>
+                <button
+                  className={`cc-tf-chip${vsBot ? " cc-tf-on" : ""}`}
+                  onClick={() => changeVsBot(true)}
+                  aria-pressed={vsBot}
+                >
+                  VS BOT
+                </button>
+              </div>
+              {vsBot && (
+                <p className="cc-vs-note" aria-live="polite">
+                  RIVAL: <b>{rivalName}</b> · {rivalPers.label} — local bot, never scored
+                </p>
+              )}
               {/* P3.12 character select — roster row on the ready flow.
                   Portraits are the sprites' own frame0; selection persists
                   (CC_CHAR_KEY) and feeds renderV2 via charIdRef. Decor-only:
@@ -672,6 +751,7 @@ export default function GameCanvas() {
                   {result.candlesPassed} candles · best streak x{result.bestStreak} · PB {best.toLocaleString()}
                 </span>
               </div>
+              {verdict && <p className="cc-vs-verdict" role="status">{verdict}</p>}
               <div className="cc-death-actions">
                 <button className="cc-btn cc-btn-start" onClick={enterWorld2}>WORLD 2 →</button>
                 <button className="cc-btn cc-btn-ghost" onClick={downloadCard}>DEATH CARD ↓</button>
@@ -713,6 +793,7 @@ export default function GameCanvas() {
                 </p>
               )}
               {rivalGap === 0 && topBoard.length > 0 && <p className="cc-rival cc-rival-lead">YOU LEAD THE DAILY CHART. FLEX IT.</p>}
+              {verdict && <p className="cc-vs-verdict" role="status">{verdict}</p>}
               {rank !== null && <p className="cc-rank">GLOBAL RANK #{rank} TODAY</p>}
               <div className="cc-death-actions">
                 <input

@@ -19,6 +19,8 @@ import { drawCandleRain } from "./rain";
 import { type Wreck } from "./wreckage";
 import { hashString, mulberry32 } from "./rng";
 import { getChar, type CharDef } from "./characters";
+import { drawRival } from "./rival/rival-render";
+import type { RivalBot } from "./rival/bot";
 import type { Platform } from "./types";
 
 interface V2State {
@@ -820,7 +822,7 @@ function drawWrecks(ctx: CanvasRenderingContext2D, e: Engine, wrecks: Wreck[]) {
 
 /* --------------------------------- entry ----------------------------------- */
 
-export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = [], mutationId?: string, charId = "default") {
+export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: string, weather: Weather = NEUTRAL_WEATHER, wrecks: Wreck[] = [], mutationId?: string, charId = "default", rival?: RivalBot | null) {
   const st = getState(e, seedStr);
   const t = st.terrain;
 
@@ -877,6 +879,9 @@ export function renderV2(ctx: CanvasRenderingContext2D, e: Engine, seedStr: stri
   drawParticles(ctx, e.particles, e.camX, e.camY);
   drawFloats(ctx, e.floats, e.camX, e.camY);
   if (!e.dead || e.deathT < 2.2) drawPlayerV2(ctx, e, st, charId);
+  // P7.1: translucent rival ghost — decor only (own skin, RIVAL outline),
+  // drawn over the playfield before the per-device wreckage layer
+  if (rival) drawRival(ctx, e, rival);
   drawWrecks(ctx, e, wrecks);
   drawForegroundV2(ctx, e, st, weather);
   // P3.13: per-character mood overlay — decor only, drawn LAST (over everything,

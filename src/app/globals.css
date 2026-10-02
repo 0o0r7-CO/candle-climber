@@ -538,6 +538,27 @@
   border-color: rgba(204, 255, 0, 0.45);
 }
 
+/* P7.1 rival bot — SOLO/VS toggle note + live chip + verdict line (local-only) */
+.cc-vs-note {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--cc-faint);
+  margin-top: 6px;
+  text-align: center;
+}
+.cc-vs-note b { color: #fff; }
+.cc-chip-rival { color: #e0b04e; border-color: rgba(224, 176, 78, 0.35); }
+.cc-vs-verdict {
+  font-family: var(--cc-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #e0b04e;
+  margin-top: 10px;
+}
+
 /* P3.12 character select — roster chips (decor-only cosmetic system) */
 .cc-char-block {
   margin-top: 12px;

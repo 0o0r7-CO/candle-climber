@@ -8,25 +8,27 @@ import { hashString, mulberry32 } from "./rng";
 export const VIEW_W = 800; // logical units (canvas is scaled to fit)
 export const VIEW_H = 480;
 
-const GRAVITY = 2100;
+// P7.1: physics constants are exported (read-only) so the rival-bot planner
+// mirrors the EXACT engine math from one source of truth. Values untouched.
+export const GRAVITY = 2100;
 // G2 owner feedback (2026-10-01): runs died in the first 1–2 candles — the speed
 // curve ramped too hot and jumps felt undelivered. New curve: gentler start,
 // slower ramp, lower cap; higher jump + wider coyote/buffer windows for
 // readable, forgiving control. Terrain fairness clamps (MAX_UP) unchanged.
-const JUMP_V = 815;      // was 760 — reach ≈ 158px, more margin over MAX_UP 112
-const JUMP_CUT = 0.72;   // release early = short hop (variable-height jump)
-const COYOTE = 0.12;     // was 0.09
-const BUFFER = 0.16;     // was 0.12
+export const JUMP_V = 815;      // was 760 — reach ≈ 158px, more margin over MAX_UP 112
+export const JUMP_CUT = 0.72;   // release early = short hop (variable-height jump)
+export const COYOTE = 0.12;     // was 0.09
+export const BUFFER = 0.16;     // was 0.12
 const CRUMBLE_TIME = 0.26;
 // P3.6 skill-jump controls (PLATFORMER-UX-RESEARCH §5/§6 contract):
-const RUSH_SPEED = 1.28;   // SHIFT held → camera ×1.28 (opt-in risk, may exceed the un-rushed cap)
-const HANG_GRAVITY = 0.5;  // half gravity while RISING with jump held (Celeste #3 "hang")
-const PLAYER_X_FRAC = 0.3; // screen anchor
-const PLAYER_W = 34;
-const PLAYER_H = 40;
-const CAM_BASE = 148; // was 175 — readable start, learn the chart first
-const CAM_ACCEL = 3.2; // was 5.5 — the climb heats up slower
-const CAM_MAX = 400; // was 470 — late-game still tense, no longer frantic
+export const RUSH_SPEED = 1.28;   // SHIFT held → camera ×1.28 (opt-in risk, may exceed the un-rushed cap)
+export const HANG_GRAVITY = 0.5;  // half gravity while RISING with jump held (Celeste #3 "hang")
+export const PLAYER_X_FRAC = 0.3; // screen anchor
+export const PLAYER_W = 34;
+export const PLAYER_H = 40;
+export const CAM_BASE = 148; // was 175 — readable start, learn the chart first
+export const CAM_ACCEL = 3.2; // was 5.5 — the climb heats up slower
+export const CAM_MAX = 400; // was 470 — late-game still tense, no longer frantic
 
 export type SfxName = "jump" | "land" | "crumble" | "milestone" | "victory";
 
