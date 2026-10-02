@@ -192,7 +192,7 @@ determinism invariants intact (W5). Owner confirmation in chat required → then
 ### P7 — Rival AI & async duels (owner brainstorm, approved direction 2026-10-02)
 > Executable whenever P4–P6 are owner-blocked; does NOT gate them. Order below is
 > build order. All items decor/economy-side, W5 untouched.
-- [ ] **P7.1** **Rival AI bot (local, zero-infra)** — second headless Engine instance in the
+- [x] **P7.1** **Rival AI bot (local, zero-infra)** ✅ 84c0f10 (2026-10-02): headless engine + forward-sim planner, 4 personalities, translucent rival, SOLO/VS BOT toggle; gates tsc/lint/152 tests/build green — second headless Engine instance in the
   same world, heuristic jump planner (lookahead + jump-feasibility), character-personality
   params (risk/precision per vibe: venom reckless, cop precise, bull greedy, frost patient);
   rendered as translucent rival climber with its own skin+FX; toggle: "solo / vs bot" 🧪
@@ -285,4 +285,4 @@ owner confirmation → mainnet watch (CC-PLAN D11–14).
 > verify). Infra: Codespace exec channel LIVE (paramiko-over-stdio bridge, KB
 > tools/), 8 service secrets migrated to repo-level Codespaces secrets. G3 closure
 > remains blocked ONLY on the real-device session; everything else of G3 verified.
-> Proceed: keep P7.1 (rival AI bot, local zero-infra) as the active build item.
+> UPDATE 2026-10-02 (latest): P7.1 SHIPPED @ 84c0f10 (gates green, W5 untouched, bot never submitted; solo default). Next active build item: P7.2 ghost runs (position-stream recorder + replay via leaderboard-store pattern).
