@@ -21,7 +21,8 @@ interface RivalSprite {
 // module-level sprite cache — images load once per char id (client only)
 const rivalSprites = new Map<string, RivalSprite>();
 
-function ensureRivalSprite(def: CharDef): RivalSprite | null {
+// P7.2: shared with ghost-render — one sprite cache for ALL translucent climbers
+export function ensureRivalSprite(def: CharDef): RivalSprite | null {
   if (!def.sheet || typeof window === "undefined" || typeof document === "undefined") return null;
   let cs = rivalSprites.get(def.id);
   if (!cs) {

@@ -3,6 +3,8 @@ import { Engine, VIEW_W, VIEW_H, type FloatText } from "./engine";
 import { CANDLE_W } from "./level";
 import { drawCandleRain } from "./rain";
 import { drawRival } from "./rival/rival-render";
+import { drawGhost } from "./ghost-render";
+import type { GhostView } from "./ghost";
 import type { RivalBot } from "./rival/bot";
 import type { Platform, Particle } from "./types";
 
@@ -229,7 +231,7 @@ function drawBackdrop(ctx: CanvasRenderingContext2D, camX: number, camY: number)
   ctx.fillRect(0, VIEW_H - 130, VIEW_W, 130);
 }
 
-export function render(ctx: CanvasRenderingContext2D, e: Engine, seedStr = "", mutationId?: string, rival?: RivalBot | null) {
+export function render(ctx: CanvasRenderingContext2D, e: Engine, seedStr = "", mutationId?: string, rival?: RivalBot | null, ghost?: GhostView | null) {
   ctx.save();
   const sx = e.shake > 0 ? (Math.random() - 0.5) * e.shake : 0;
   const sy = e.shake > 0 ? (Math.random() - 0.5) * e.shake : 0;
@@ -248,6 +250,7 @@ export function render(ctx: CanvasRenderingContext2D, e: Engine, seedStr = "", m
   drawFloats(ctx, e.floats, e.camX, e.camY);
   if (!e.dead || e.deathT < 2.2) drawPlayer(ctx, e);
   // P7.1: translucent rival ghost — decor only, drawn over the playfield
+  if (ghost) drawGhost(ctx, e.camX, e.camY, ghost);
   if (rival) drawRival(ctx, e, rival);
 
   // progress candle ticker (top center, in-canvas)

@@ -19,6 +19,8 @@ import { rosterList, isValidCharId, DEFAULT_CHAR_ID, CHAR_KEY, getChar } from "@
 import { sfx, setMuted, unlockAudio } from "@/game/cc/sound";
 import { RivalBot, pickRivalCharId, rivalVerdict } from "@/game/cc/rival/bot";
 import { personalityForCharId } from "@/game/cc/rival/personality";
+// P7.2 ghost runs — position-stream recorder + replay (cosmetic, never scored)
+import { GhostRecorder, ghostViewAt, bestGhost, type GhostEntry, type GhostView } from "@/game/cc/ghost";
 import type { CandleData, RunResult } from "@/game/cc/types";
 
 type Phase = "loading" | "ready" | "running" | "graduated" | "dead";
@@ -48,6 +50,7 @@ const MUTE_KEY = "cc_mute_v1";
 const RUNS_KEY = "cc_runs_v1";
 const TF_KEY = "cc_tf_v1"; // P3.5: remembered timeframe ("1w" classic default)
 const VS_KEY = "cc_vsbot_v1"; // P7.1: remembered SOLO / VS BOT choice (default SOLO)
+const GHOST_KEY = "cc_ghost_v1"; // P7.2: remembered ghost replay toggle (default ON)
 const CC_CHAR_KEY = CHAR_KEY; // P3.12: remembered character id ("default" = procedural)
 const UNSCORED_MSG = "offline terrain — scoring disabled";
 const ARCHIVE_MSG = "practice — archive terrain is unscored";
@@ -108,6 +111,16 @@ export default function GameCanvas() {
   const botRef = useRef<RivalBot | null>(null);
   const [verdict, setVerdict] = useState<string | null>(null);
 
+  // P7.2: ghost replay — the best submitted run on THIS terrain, replayed as a
+  // translucent climber. Recorder is honest-local; the ghost POST rides the
+  // SAME verified run-token as the leaderboard (server pins terrain from it).
+  // Cosmetic contract: ghosts never affect scores/ranks (W5 untouched).
+  const [ghostOn, setGhostOn] = useState(true);
+  const ghostOnRef = useRef(true); // RAF loop reads the ref (no re-subscribe)
+  const ghostRef = useRef<GhostEntry | null>(null); // RAF loop reads the ref
+  const [ghostEntry, setGhostEntry] = useState<GhostEntry | null>(null); // UI mirror (refs don't re-render)
+  const ghostRecRef = useRef<GhostRecorder>(new GhostRecorder());
+
   // init: persisted prefs + deep-link parsing (no fetching here — the loader
   // effect below owns the fetch so a timeframe change re-loads cleanly)
   useEffect(() => {
@@ -145,6 +158,10 @@ export default function GameCanvas() {
     const savedVs = localStorage.getItem(VS_KEY) === "1";
     setVsBot(savedVs);
     vsBotRef.current = savedVs;
+    // P7.2: ghost replay defaults ON (cosmetic); the opt-out persists
+    const savedGhost = localStorage.getItem(GHOST_KEY) !== "0";
+    setGhostOn(savedGhost);
+    ghostOnRef.current = savedGhost;
     setBooted(true);
   }, []);
 
@@ -160,6 +177,7 @@ export default function GameCanvas() {
     setGraduated(false);
     setWorld2(false);
     const isArch = archive;
+    ghostRef.current = null; // terrain switch invalidates the previous ghost
     const query = new URLSearchParams();
     if (requestedSymRef.current) query.set("symbol", requestedSymRef.current);
     if (isArch && requestedDateRef.current) query.set("date", requestedDateRef.current); // server re-validates (past dates only)
@@ -184,6 +202,16 @@ export default function GameCanvas() {
           fetch("/api/report")
             .then((r) => r.json())
             .then((rp: ReportResp) => { if (alive) setReport(rp); })
+            .catch(() => {});
+          // P7.2: best submitted ghost for THIS terrain (champion first)
+          fetch(`/api/ghosts?symbol=${d.seed.symbol}&date=${d.seed.date}&interval=${tf}`)
+            .then((r) => r.json())
+            .then((g: { ghosts?: GhostEntry[] }) => {
+              if (!alive) return;
+              const best = bestGhost(g.ghosts ?? []);
+              ghostRef.current = best;
+              setGhostEntry(best);
+            })
             .catch(() => {});
         }
       })
@@ -224,6 +252,14 @@ export default function GameCanvas() {
     charIdRef.current = id;
     try { localStorage.setItem(CC_CHAR_KEY, id); } catch { /* private mode — cosmetic only */ }
     sfx.land();
+  }, []);
+
+  // P7.2: ghost replay toggle — persists (GHOST_KEY); default ON. Replay is
+  // render-only: no engine reads beyond the ghost's own recorded stream.
+  const changeGhost = useCallback((on: boolean) => {
+    setGhostOn(on);
+    ghostOnRef.current = on;
+    try { localStorage.setItem(GHOST_KEY, on ? "1" : "0"); } catch { /* private mode — cosmetic only */ }
   }, []);
 
   // P7.1: SOLO / VS BOT toggle — persists (VS_KEY); default SOLO keeps every
@@ -289,6 +325,7 @@ export default function GameCanvas() {
           }
           setResult(r);
           setPhase("dead");
+          ghostRecRef.current.stop(); // P7.2: stream ends at the death tick
           setHud({ score: r.score, combo: 0, candles: r.candlesPassed });
           // P7.1: local verdict at death — purely client-side, never submitted
           const bot = botRef.current;
@@ -325,6 +362,8 @@ export default function GameCanvas() {
       ? new RivalBot(data.candles, seedRef.current, rivalCharId, mutation.mods)
       : null;
     setVerdict(null);
+    // P7.2: record THIS run's position stream (stopped at death; flushed at submit)
+    ghostRecRef.current.start();
     setHud({ score: 0, combo: 0, candles: 0 });
     setResult(null);
     setRank(null);
@@ -388,14 +427,21 @@ export default function GameCanvas() {
         // SAME RAF loop (never a second loop). Frozen while any panel is up,
         // so the verdict numbers freeze with the human's run.
         if (phase === "running" && vsBotRef.current) botRef.current?.tick(FIXED);
+        // P7.2: recorder samples every 2nd fixed tick (30 Hz) while the run is live
+        if (phase === "running") ghostRecRef.current.tick(e.px, e.py);
         accRef.current -= FIXED;
       }
       ctx.clearRect(0, 0, VIEW_W, VIEW_H);
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
       const bot = vsBotRef.current ? botRef.current : null;
-      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current, charIdRef.current, bot);
-      else render(ctx, e, seedRef.current, mutationIdRef.current, bot);
+      // P7.2: ghost replay — position lookup by the human engine's own clock
+      const gv: GhostView | null =
+        ghostOnRef.current && ghostRef.current && (phase === "running" || phase === "dead" || phase === "graduated")
+          ? ghostViewAt(ghostRef.current, e.time)
+          : null;
+      if (v2) renderV2(ctx, e, seedRef.current, weather ?? undefined, wrecksRef.current, mutationIdRef.current, charIdRef.current, bot, gv);
+      else render(ctx, e, seedRef.current, mutationIdRef.current, bot, gv);
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
@@ -477,6 +523,29 @@ export default function GameCanvas() {
       const b = await fetch(`/api/leaderboard?date=${data.seed.date}&interval=${tf}`).then((r) => r.json());
       setBoard(b.entries ?? []);
       setTopBoard(b.entries ?? []);
+      // P7.2: submit the run's ghost with the SAME verified run-token
+      // (best-effort — a ghost failure must never fail the score submission;
+      // the ghost is cosmetic and the next load simply replays nothing).
+      const samples = ghostRecRef.current.flush();
+      if (samples.length > 0) {
+        fetch("/api/ghosts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            runToken: data.runToken, name: finalName, charId: charIdRef.current,
+            candlesPassed: result.candlesPassed, samples,
+          }),
+        })
+          .then((r) => { if (r.ok) return r.json(); throw new Error("ghost rejected"); })
+          .then(() => fetch(`/api/ghosts?symbol=${data.seed.symbol}&date=${data.seed.date}&interval=${tf}`))
+          .then((r) => r.json())
+          .then((g: { ghosts?: GhostEntry[] }) => {
+            const best = bestGhost(g.ghosts ?? []);
+            ghostRef.current = best;
+            setGhostEntry(best);
+          })
+          .catch(() => {});
+      }
     } catch {
       // Same incident class as CANDLE-CLIMBER-2 (unhandled rejection): a failed
       // POST / JSON parse must not escape as an unhandled promise rejection.
@@ -671,6 +740,22 @@ export default function GameCanvas() {
               {vsBot && (
                 <p className="cc-vs-note" aria-live="polite">
                   RIVAL: <b>{rivalName}</b> · {rivalPers.label} — local bot, never scored
+                </p>
+              )}
+              {/* P7.2 ghost replay — best submitted run on this terrain, replayed
+                  translucently with the recorded climber's skin. Render-only. */}
+              <div className="cc-tf-row" role="group" aria-label="Ghost replay">
+                <button
+                  className={`cc-tf-chip${ghostOn ? " cc-tf-on" : ""}`}
+                  onClick={() => changeGhost(!ghostOn)}
+                  aria-pressed={ghostOn}
+                >
+                  {ghostOn ? "GHOST ON" : "GHOST OFF"}
+                </button>
+              </div>
+              {ghostOn && !archive && (
+                <p className="cc-vs-note" aria-live="polite">
+                  GHOST: {ghostEntry ? `${getChar(ghostEntry.charId).name} · ${ghostEntry.candlesPassed} candles` : "no run recorded yet — be the first"}
                 </p>
               )}
               {/* P3.12 character select — roster row on the ready flow.
