@@ -47,8 +47,9 @@
   chain yahoo (query1/query2, 1wk/10y) -> stooq fallback -> synthetic tokenless;
   source label `yahoo` -> "live data", tf chips hidden for stocks; run token pins
   whichever feed served (two feeds can never mix one leaderboard). Live probe: Yahoo
-  523 weekly rows w/ volume from sandbox; prod verification pending deploy
-  (`/api/candles?symbol=TSLA` -> source). W5 +6 tests (205/205), tsc+lint+build green
+  523 weekly rows w/ volume from sandbox; **PROD VERIFIED: /api/candles?symbol=TSLA ->
+  source:"yahoo" + runToken present + 521 candles** (deploy 21a991a). W5 +6 tests
+  (205/205), tsc+lint+build green
 - [x] W4 graduation arc (SUMMIT milestone, GRADUATED victory state, post-grad WORLD 2)
 - [x] W5 vitest/bun anti-cheat & determinism suite — 25/25 (run-token, board-validation,
   stooq parser, vibe-launch, level determinism) 🧪
