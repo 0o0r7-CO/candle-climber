@@ -1131,3 +1131,13 @@
 @media (max-height: 840px) {
   .cc-panel { padding: 18px 20px 56px; }
 }
+
+/* VD-2b (re-sweep finding): era blurbs are nowrap+ellipsis, so their min-content
+   width pushed archive rows past the panel box (20px horizontal scroll; text
+   appeared edge-clipped). Blurbs now wrap — full copy always readable; the name
+   stays the single ellipsized line. min-width:0 on rows kills the flex
+   min-content push; footer drops below the overlay so tall panels never
+   collide with the compliance line. */
+.cc-arch-blurb { white-space: normal; overflow-wrap: anywhere; }
+.cc-arch-row { min-width: 0; }
+.cc-footer { z-index: 15; }
