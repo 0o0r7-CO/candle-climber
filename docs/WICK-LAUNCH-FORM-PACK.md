@@ -95,13 +95,26 @@
    curl -s https://testnet.vibevibe.fun/api/v1/chains/46630/config | jq '.data.protocol | {policyVersion, netGraduationTargetWei, creationFeeWei, curveWalletCapBps, transfersLockedUntilGraduation}'
    ```
    (re-verified 2026-10-03: policy v3 unchanged؛ فیلدها الان زیر `.data.protocol` تو در تو شده‌اند — مسیر قدیمی null برمی‌گرداند)
-4. ☐ در **review screen** چک کن: pair = Classic ETH · creation fee · آدرس factory با config زنده بخواند.
-5. ☐ امضا — کل لانچ **یک تراکنش** است (توکن + منحنی در همان tx دیپلوی می‌شوند).
-6. ☐ بلافاصله بعد از لانچ: پست **#project-showcase** (قالب §6) + آدرس توکن را برای من بفرست تا Balance Gate (P4.2) و حساب‌وزن‌ها (P4.4) را ببندم.
+4. ☐ **Sweep فیلدهای جدید ویزارد (آپدیت Sep 29 «big merge»)** — بعد از ما فرم عوض شده؛ این‌ها را حین پر کردن چک کن و اگر بود، همان پیش‌فرض پک را نگه دار:
+   - تب‌های pair: اگر علاوه بر Classic، **Stock pairs / Anything pairs** دیدی → همان Classic (native ETH) را انتخاب کن.
+   - اگر تیک/فیلد **holder reflections** در STEP 2/TAX دیدی → همان تفکیک 75/20/5/0 پک را وارد کن (اعداد دست نزن).
+   - گزینه‌های **fully customizable token** → هیچ‌کدام را اضافه نکن (نام/تیکر/لوگو/توضیح کافی است).
+   - اگر بخش **graduation airdrop registration** دیدی → خالی بگذار؛ ثبتش بعد از graduation است (بعداً ثبت می‌شویم).
+5. ☐ در **review screen** چک کن: pair = Classic ETH · creation fee · آدرس factory با config زنده بخواند.
+6. ☐ امضا — کل لانچ **یک تراکنش** است (توکن + منحنی در همان tx دیپلوی می‌شوند).
+7. ☐ بلافاصله بعد از لانچ: پست **#project-showcase** (قالب §6) + آدرس توکن را برای من بفرست تا Balance Gate (P4.2) و حساب‌وزن‌ها (P4.4) را ببندم.
 
 ---
 
 ## 6️⃣ قالب پست #project-showcase (بعد از لانچ — کپی کن، جای <token URL> را پر کن)
+
+> **پست X در روز لانچ — دیالکت بنیان‌گذار (اندازه‌گیری‌شده از تایم‌لاینش، 2026-10-03):**
+> هیچ هشتگی استفاده نکن. فقط `$WICK` + منشن `@vibevibefun` + یک هوک محصول‌محور (سبک "chef
+> v/v just cooked…" / "one verb for today: cook") + ادعاهای قابل‌اثبات (QA، anti-cheat،
+> server-verified). جمله‌ی سلب مسئولیت همان الگوی بازی ترفیع‌شده: "Community project built on
+> @vibevibefun testnet. Not affiliated with the vibe/vibe team. $WICK is a testnet token with no
+> monetary value." یک پست قوی، نه ریپلای پراکنده. (معیار انتقادش به بازی ترفیع‌شده:
+> **پیدا کردن بازی در صفحه سخت بود** → لندینگ ما باید بازی را همان اول صفحه نشان بدهد.)
 
 ```
 🧱 CANDLE CLIMBER — the chart is the level
