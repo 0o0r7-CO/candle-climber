@@ -92,8 +92,9 @@
 2. ☐ مودال User Agreement را قبول کن (انتظارش را داشتی).
 3. ☐ (اختیاری، حرفه‌ای) همان لحظه‌ی لانچ، config زنده را re-verify کن — سیاست ممکن است از 2026-09-30 عوض شده باشد:
    ```bash
-   curl -s https://testnet.vibevibe.fun/api/v1/chains/46630/config | jq '.data | {netGraduationTargetWei, creationFeeWei, curveWalletCapBps, transfersLockedUntilGraduation}'
+   curl -s https://testnet.vibevibe.fun/api/v1/chains/46630/config | jq '.data.protocol | {policyVersion, netGraduationTargetWei, creationFeeWei, curveWalletCapBps, transfersLockedUntilGraduation}'
    ```
+   (re-verified 2026-10-03: policy v3 unchanged؛ فیلدها الان زیر `.data.protocol` تو در تو شده‌اند — مسیر قدیمی null برمی‌گرداند)
 4. ☐ در **review screen** چک کن: pair = Classic ETH · creation fee · آدرس factory با config زنده بخواند.
 5. ☐ امضا — کل لانچ **یک تراکنش** است (توکن + منحنی در همان tx دیپلوی می‌شوند).
 6. ☐ بلافاصله بعد از لانچ: پست **#project-showcase** (قالب §6) + آدرس توکن را برای من بفرست تا Balance Gate (P4.2) و حساب‌وزن‌ها (P4.4) را ببندم.
